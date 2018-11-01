@@ -4,7 +4,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
 
 public class SparkTraceJob {
-    SparkSession sparkSession;
+    protected SparkSession sparkSession;
 
     public SparkTraceJob(String masterUrl, String jobName) {
         SparkConf conf = new SparkConf();
