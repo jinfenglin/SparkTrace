@@ -12,4 +12,6 @@ public class SparkTraceJob {
         conf.setAppName(jobName);
         sparkSession = SparkSession.builder().config(conf).getOrCreate();
     }
+
+
 }
