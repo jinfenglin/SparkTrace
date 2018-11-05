@@ -14,12 +14,9 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import traceability.Artifact;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.apache.spark.sql.functions.monotonically_increasing_id;
 
 /**
  * A hard coded example of running a vsm job
