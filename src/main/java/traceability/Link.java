@@ -4,23 +4,15 @@ package traceability;
 import java.io.Serializable;
 
 public class Link implements Serializable {
-    private double score;
-    private Artifact from, to;
-    private boolean hasOrder;
+    protected Artifact from, to;
+    protected boolean hasOrder;
 
     public Link(Artifact from, Artifact to) {
         this.from = from;
         this.to = to;
-        this.score = 0;
         hasOrder = false;
     }
 
-    public Link(Artifact from, Artifact to, double score) {
-        this.from = from;
-        this.to = to;
-        this.score = score;
-        hasOrder = false;
-    }
 
     public Artifact getFrom() {
         return from;
@@ -46,13 +38,6 @@ public class Link implements Serializable {
         this.hasOrder = hasOrder;
     }
 
-    public double getScore() {
-        return score;
-    }
-
-    public void setScore(double score) {
-        this.score = score;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -87,7 +72,6 @@ public class Link implements Serializable {
     @Override
     public String toString() {
         return "Link{" +
-                "score='" + score + '\'' +
                 ", from=" + from +
                 ", to=" + to +
                 ", hasOrder=" + hasOrder +
