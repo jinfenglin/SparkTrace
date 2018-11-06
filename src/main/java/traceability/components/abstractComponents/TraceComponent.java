@@ -1,4 +1,4 @@
-package traceability;
+package traceability.components.abstractComponents;
 
 import java.io.Serializable;
 

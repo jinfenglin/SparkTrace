@@ -1,4 +1,6 @@
-package traceability;
+package traceability.components.basic;
+
+import traceability.components.abstractComponents.TraceArtifact;
 
 /**
  * Basic artifact which only have ID and Content field. The POJOs must have default constructor which have no parameters

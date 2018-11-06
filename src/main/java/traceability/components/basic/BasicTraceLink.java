@@ -1,4 +1,6 @@
-package traceability;
+package traceability.components.basic;
+
+import traceability.components.abstractComponents.TraceLink;
 
 public class BasicTraceLink extends TraceLink {
     private String sourceArtifactID, targetArtifactID;

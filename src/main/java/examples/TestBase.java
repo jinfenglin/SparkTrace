@@ -4,11 +4,12 @@ package examples;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
-import traceability.BasicTraceArtifact;
-import traceability.BasicTraceLink;
+import traceability.components.basic.BasicTraceArtifact;
+import traceability.components.basic.BasicTraceLink;
 import traceability.TraceDatasetFactory;
 
 
+import javax.xml.crypto.Data;
 import java.util.*;
 
 public class TestBase {
@@ -20,7 +21,6 @@ public class TestBase {
         conf.setMaster(masterUrl);
         conf.setAppName(jobName);
         sparkSession = SparkSession.builder().config(conf).getOrCreate();
-
     }
 
     /**
