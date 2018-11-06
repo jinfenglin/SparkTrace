@@ -4,20 +4,17 @@ package examples;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataTypes;
-import traceability.Artifact;
-import traceability.BasicArtifact;
+import traceability.BasicTraceArtifact;
+import traceability.BasicTraceLink;
 import traceability.TraceDatasetFactory;
 
 
-import java.sql.Timestamp;
 import java.util.*;
 
 public class TestBase {
-    SparkSession sparkSession;
+    protected SparkSession sparkSession;
 
-
-    public  TestBase(String masterUrl) {
+    public TestBase(String masterUrl) {
         String jobName = "SparkTest";
         SparkConf conf = new SparkConf();
         conf.setMaster(masterUrl);
@@ -26,21 +23,31 @@ public class TestBase {
 
     }
 
-    public List<Artifact> getArtifacts() {
-        BasicArtifact a1 = new BasicArtifact("a1");
-        BasicArtifact a2 = new BasicArtifact("a2");
-        List<BasicArtifact> basicArtifacts = new ArrayList<>();
-        basicArtifacts.add(a1);
-        basicArtifacts.add(a2);
-
-        Dataset<BasicArtifact> dataset = TraceDatasetFactory.createArtifacts(sparkSession, basicArtifacts, BasicArtifact.class);
-        dataset.collectAsList();
-        return Arrays.asList(a1, a2);
+    /**
+     * Create N BasicArtifacts and put them into a dataset
+     *
+     * @param n
+     * @return
+     */
+    public Dataset<BasicTraceArtifact> getBasicTraceArtifacts(int n) {
+        List<BasicTraceArtifact> basicArtifacts = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            String id = "artifact_" + String.valueOf(i);
+            BasicTraceArtifact basicArtifact = new BasicTraceArtifact(id);
+            basicArtifacts.add(basicArtifact);
+        }
+        return TraceDatasetFactory.createArtifacts(sparkSession, basicArtifacts, BasicTraceArtifact.class);
     }
 
-    public static void main(String[] args) {
-        TestBase testBase = new TestBase("local");
-        testBase.getArtifacts();
-
+    public Dataset<BasicTraceLink> getBasicTraceLinks(int n) {
+        List<BasicTraceLink> basicTraceLinks = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            String sourceId = "artifact_" + String.valueOf(i);
+            String targetId = "artifact_" + String.valueOf(i);
+            String label = "0.0";
+            BasicTraceLink basicTraceLink = new BasicTraceLink(sourceId, targetId, label);
+            basicTraceLinks.add(basicTraceLink);
+        }
+        return TraceDatasetFactory.createLinks(sparkSession, basicTraceLinks, BasicTraceLink.class);
     }
 }

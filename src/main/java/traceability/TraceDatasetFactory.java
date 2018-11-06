@@ -2,10 +2,6 @@ package traceability;
 
 
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.types.StructType;
-
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 
@@ -20,9 +16,11 @@ public class TraceDatasetFactory {
 
     }
 
-    public static <T extends Artifact> Dataset<T> createArtifacts(SparkSession session, List<T> artifacts, Class<T> bean) {
+    public static <T extends TraceArtifact> Dataset<T> createArtifacts(SparkSession session, List<T> artifacts, Class<T> bean) {
         return createDataset(session, artifacts, bean);
     }
 
-
+    public static <T extends TraceLink> Dataset<T> createLinks(SparkSession session, List<T> links, Class<T> bean) {
+        return createDataset(session, links, bean);
+    }
 }
