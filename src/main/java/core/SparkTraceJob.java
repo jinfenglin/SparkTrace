@@ -44,6 +44,7 @@ public class SparkTraceJob {
         Dataset<Row> sourceSDFeatureVecs = sourceSDFPipelien.apply(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFPipeline.apply(targetArtifacts);
 
+        goldenLinks.join()
         Dataset<Row> goldLinksWithFeatureVec = goldenLinks.join(sourceSDFeatureVecs);
         goldLinksWithFeatureVec = goldLinksWithFeatureVec.join(targetSDFeatureVecs);
         ddfPipeline.fit(goldLinksWithFeatureVec);

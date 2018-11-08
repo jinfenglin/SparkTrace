@@ -2,7 +2,7 @@ package traceability.components.maven;
 
 import traceability.components.abstractComponents.TraceLink;
 
-public class MavenLink extends TraceLink{
+public class MavenLink extends TraceLink {
     String issue_id, commit_id, method, score;
 
     public String getIssue_id() {
@@ -35,5 +35,15 @@ public class MavenLink extends TraceLink{
 
     public void setScore(String score) {
         this.score = score;
+    }
+
+    @Override
+    public String getSourceArtifactID() {
+        return getIssue_id();
+    }
+
+    @Override
+    public String getTargetArtifactID() {
+        return getCommit_id();
     }
 }
