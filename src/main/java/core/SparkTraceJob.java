@@ -4,7 +4,16 @@ import featurePipeline.DDFPipeline;
 import featurePipeline.TraceModelPipeline;
 import featurePipeline.SDFPipeline;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.mllib.linalg.DenseVector;
+import org.apache.spark.mllib.linalg.Vector;
+import org.apache.spark.mllib.linalg.distributed.CoordinateMatrix;
+import org.apache.spark.mllib.linalg.distributed.IndexedRowMatrix;
+import org.apache.spark.mllib.linalg.distributed.MatrixEntry;
+import org.apache.spark.mllib.linalg.distributed.RowMatrix;
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.types.DataTypes;
 import traceability.components.abstractComponents.TraceArtifact;
 import traceability.components.abstractComponents.TraceLink;
 import traceability.components.basic.BasicTraceLink;
@@ -22,6 +31,10 @@ public class SparkTraceJob {
         conf.setMaster(masterUrl);
         conf.setAppName(jobName);
         sparkSession = SparkSession.builder().config(conf).getOrCreate();
+    }
+
+    public SparkTraceJob(SparkSession session) {
+        this.sparkSession = session;
     }
 
     /**
@@ -43,12 +56,11 @@ public class SparkTraceJob {
         //TODO Prototyping.... It is not runnable yet
         Dataset<Row> sourceSDFeatureVecs = sourceSDFPipelien.apply(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFPipeline.apply(targetArtifacts);
-
-        Dataset<Row> goldLinksWithFeatureVec = goldenLinks.join(sourceSDFeatureVecs);
-        goldLinksWithFeatureVec = goldLinksWithFeatureVec.join(targetSDFeatureVecs);
+        Dataset<Row> goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
         ddfPipeline.fit(goldLinksWithFeatureVec);
 
         Dataset<Row> fullFeatures = ddfPipeline.apply(goldLinksWithFeatureVec);
+        //TODO Add feature selection/merging at this spot, collection features into a single vector for model processing.
         modelPipeline.fit(fullFeatures);
     }
 
@@ -61,13 +73,63 @@ public class SparkTraceJob {
         Dataset<Row> sourceFeatures = sourceSDFPipelien.apply(sourceArtifacts);
         Dataset<Row> targetFeatures = targetSDFPipeline.apply(targetArtifacts);
         Dataset<Row> candidateLinks = sourceArtifacts.crossJoin(targetArtifacts); //Cross join
-        candidateLinks = candidateLinks.join(sourceFeatures);
-        candidateLinks = candidateLinks.join(targetFeatures);
+        candidateLinks = appendFeaturesToLinks(candidateLinks, sourceFeatures, targetFeatures);
         Dataset<Row> finalFeatures = ddfPipeline.apply(candidateLinks);
+
         Dataset<Row> linkWithScores = modelPipeline.apply(finalFeatures);
         Encoder<BasicTraceLink> basicTraceLinkEncoder = Encoders.bean(BasicTraceLink.class);
         return linkWithScores.as(basicTraceLinkEncoder).collectAsList();
     }
 
+    private Dataset<Row> appendFeaturesToLinks(Dataset<Row> links, Dataset<Row> sourceFeatures, Dataset<Row> targetFeatures) {
+        Column sourceArtifactIdCol = sourceFeatures.col(sourceSDFPipelien.getIdColName());
+        Column targetArtifactIdCol = targetFeatures.col(targetSDFPipeline.getIdColName());
 
+        Column linkSourceIdCol = links.col(ddfPipeline.getSourceArtifactColName());
+        Column linkTargetIdCol = links.col(ddfPipeline.getTargetArtifactColName());
+
+        Dataset<Row> linksWithFeatureVec = links.join(sourceFeatures, sourceArtifactIdCol.equalTo(linkSourceIdCol));
+        linksWithFeatureVec = linksWithFeatureVec.join(targetFeatures, targetArtifactIdCol.equalTo(linkTargetIdCol));
+        return linksWithFeatureVec;
+    }
+
+    public SparkSession getSparkSession() {
+        return sparkSession;
+    }
+
+    public void setSparkSession(SparkSession sparkSession) {
+        this.sparkSession = sparkSession;
+    }
+
+    public SDFPipeline getSourceSDFPipelien() {
+        return sourceSDFPipelien;
+    }
+
+    public void setSourceSDFPipelien(SDFPipeline sourceSDFPipelien) {
+        this.sourceSDFPipelien = sourceSDFPipelien;
+    }
+
+    public SDFPipeline getTargetSDFPipeline() {
+        return targetSDFPipeline;
+    }
+
+    public void setTargetSDFPipeline(SDFPipeline targetSDFPipeline) {
+        this.targetSDFPipeline = targetSDFPipeline;
+    }
+
+    public DDFPipeline getDdfPipeline() {
+        return ddfPipeline;
+    }
+
+    public void setDdfPipeline(DDFPipeline ddfPipeline) {
+        this.ddfPipeline = ddfPipeline;
+    }
+
+    public TraceModelPipeline getModelPipeline() {
+        return modelPipeline;
+    }
+
+    public void setModelPipeline(TraceModelPipeline modelPipeline) {
+        this.modelPipeline = modelPipeline;
+    }
 }

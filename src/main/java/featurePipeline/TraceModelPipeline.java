@@ -1,23 +1,17 @@
 package featurePipeline;
 
-import org.apache.spark.ml.Pipeline;
-import org.apache.spark.ml.PipelineModel;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+public class TraceModelPipeline extends TraceSparkPipeline {
+    private String featureColName;
 
-public class TraceModelPipeline {
-    private PipelineModel traceModel;
-    private Pipeline traceModelPipeline;
-
-    public TraceModelPipeline() {
-
+    public TraceModelPipeline(String featureColName) {
+        this.featureColName = featureColName;
     }
 
-    public void fit(Dataset<Row> trainingData) {
-        traceModel = traceModelPipeline.fit(trainingData);
+    public void setFeatureColName(String featureColName) {
+        this.featureColName = featureColName;
     }
 
-    public Dataset<Row> apply(Dataset<Row> rawData) {
-        return traceModel.transform(rawData);
+    public String getFeatureColName() {
+        return featureColName;
     }
 }
