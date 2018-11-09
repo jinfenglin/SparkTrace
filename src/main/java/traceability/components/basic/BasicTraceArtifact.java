@@ -32,11 +32,19 @@ public class BasicTraceArtifact extends TraceArtifact {
         this.content = content;
     }
 
-    public String getId() {
+    public String getCommit_id() {
         return id;
     }
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "BasicTraceArtifact{" +
+                "id='" + id + '\'' +
+                ", content='" + content + '\'' +
+                '}';
     }
 }

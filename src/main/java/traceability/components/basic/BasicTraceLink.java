@@ -38,6 +38,14 @@ public class BasicTraceLink extends TraceLink {
 
     public void setSourceArtifactID(String sourceArtifactID) {
         this.sourceArtifactID = sourceArtifactID;
+    }
 
+    @Override
+    public String toString() {
+        return "BasicTraceLink{" +
+                "sourceArtifactID='" + sourceArtifactID + '\'' +
+                ", targetArtifactID='" + targetArtifactID + '\'' +
+                ", label='" + label + '\'' +
+                '}';
     }
 }

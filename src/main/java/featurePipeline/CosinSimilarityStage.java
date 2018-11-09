@@ -18,20 +18,26 @@ import org.apache.spark.sql.types.StructType;
 import java.util.Map;
 
 public class CosinSimilarityStage extends Transformer {
-
     private static final long serialVersionUID = 5667889784880518528L;
     private static final String COSIN_SIMILAIRY_UDF = "cosin_similarity";
-    private static final String OUTPUT_COLUMN_NAME = "cosin_similarity";
+    private String outputCol;
+    private String inputCol1, inputCol2;
+
+    public CosinSimilarityStage() {
+        super();
+        setInputCol1("vector1");
+        setInputCol2("vector2");
+        setOutputCol("cosin_similarity");
+
+    }
 
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
-        dataset.sqlContext().udf().register(COSIN_SIMILAIRY_UDF, (Vector v1, Vector v2) -> {
-            SparseVector sv1 = (SparseVector) v1;
-            SparseVector sv2 = (SparseVector) v2;
-            int[] sv1Indices = sv1.indices();
-            double[] sv1Value = sv1.values();
-            int[] sv2Indices = sv2.indices();
-            double[] sv2Value = sv2.values();
+        dataset.sqlContext().udf().register(COSIN_SIMILAIRY_UDF, (SparseVector v1, SparseVector v2) -> {
+            int[] sv1Indices = v1.indices();
+            double[] sv1Value = v1.values();
+            int[] sv2Indices = v2.indices();
+            double[] sv2Value = v2.values();
 
             int v1Length = sv1Indices.length;
             int v2Length = sv2Indices.length;
@@ -40,38 +46,37 @@ public class CosinSimilarityStage extends Transformer {
             double v1SquSum = 0;
             double v2SquSum = 0;
             for (int v1IndexCursor = 0, v2IndexCursor = 0; v1IndexCursor < v1Length || v2IndexCursor < v2Length; ) {
-
-                while (sv1Indices[v1IndexCursor] < sv2Indices[v2IndexCursor] && v1IndexCursor < v1Length) {
+                while (v1IndexCursor < v1Length && (v2IndexCursor >= v2Length || sv1Indices[v1IndexCursor] < sv2Indices[v2IndexCursor])) {
+                    v1SquSum += sv1Value[v1IndexCursor] * sv1Value[v1IndexCursor];
                     v1IndexCursor += 1;
-                    int curIndex = sv1Indices[v1IndexCursor];
-                    v1SquSum += sv1Value[curIndex] * sv1Value[curIndex];
                 }
-                int v1TopIndex = sv1Indices[v1IndexCursor];
-                int v2TopIndex = sv2Indices[v2IndexCursor];
-                if (v1TopIndex == v2TopIndex) {
-                    productScore += sv1Value[v1TopIndex] * sv2Value[v2TopIndex];
-                    v1SquSum += sv1Value[v1TopIndex] * sv1Value[v1TopIndex];
-                    v2SquSum += sv2Value[v2TopIndex] * sv2Value[v2TopIndex];
-                }
-                while (sv1Indices[v1IndexCursor] > sv2Indices[v2IndexCursor] & v2IndexCursor < v2Length) {
+
+                while (v2IndexCursor < v2Length && (v1IndexCursor >= v1Length || sv1Indices[v1IndexCursor] > sv2Indices[v2IndexCursor])) {
+
+                    v2SquSum += sv2Value[v2IndexCursor] * sv2Value[v2IndexCursor];
                     v2IndexCursor += 1;
-                    int curIndex = sv1Indices[v2IndexCursor];
-                    v2SquSum += sv2Value[curIndex] * sv2Value[curIndex];
+                }
+
+
+                if (v1IndexCursor < v1Length && v2IndexCursor < v2Length && sv1Indices[v1IndexCursor] == sv2Indices[v2IndexCursor]) {
+                    productScore += sv1Value[v1IndexCursor] * sv2Value[v2IndexCursor];
+                    v1SquSum += sv1Value[v1IndexCursor] * sv1Value[v1IndexCursor];
+                    v2SquSum += sv2Value[v2IndexCursor] * sv2Value[v2IndexCursor];
+                    v1IndexCursor += 1;
+                    v2IndexCursor += 1;
                 }
             }
-
-
             return productScore / (Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum));
         }, DataTypes.DoubleType);
-        Column col1 = dataset.col("vec1");
-        Column col2 = dataset.col("vec2");
-        Column outputCol = functions.callUDF(COSIN_SIMILAIRY_UDF, col1, col2);
-        return dataset.withColumn(OUTPUT_COLUMN_NAME, outputCol);
+        Column col1 = dataset.col(this.inputCol1);
+        Column col2 = dataset.col(this.inputCol2);
+        Column outputColumn = functions.callUDF(COSIN_SIMILAIRY_UDF, col1, col2);
+        return dataset.withColumn(getOutputCol(), outputColumn);
     }
 
     @Override
     public StructType transformSchema(StructType structType) {
-        structType.add("cosine_similarity", DataTypes.DoubleType, false);
+        structType.add(outputCol, DataTypes.DoubleType, false);
         return null;
     }
 
@@ -85,4 +90,30 @@ public class CosinSimilarityStage extends Transformer {
         return this.getClass().getName() + serialVersionUID;
     }
 
+    public String getOutputCol() {
+        return outputCol;
+    }
+
+    public CosinSimilarityStage setOutputCol(String outputCol) {
+        this.outputCol = outputCol;
+        return this;
+    }
+
+    public String getInputCol1() {
+        return inputCol1;
+    }
+
+    public CosinSimilarityStage setInputCol1(String inputCol1) {
+        this.inputCol1 = inputCol1;
+        return this;
+    }
+
+    public String getInputCol2() {
+        return inputCol2;
+    }
+
+    public CosinSimilarityStage setInputCol2(String inputCol2) {
+        this.inputCol2 = inputCol2;
+        return this;
+    }
 }

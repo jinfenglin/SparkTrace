@@ -3,14 +3,14 @@ package traceability.components.maven;
 import traceability.components.abstractComponents.TraceArtifact;
 
 public class MavenCommit extends TraceArtifact {
-    private String id,commit_date,content,author,type;
+    private String commit_id,commit_date,content,author,type;
 
-    public String getId() {
-        return id;
+    public String getCommit_id() {
+        return commit_id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setCommit_id(String commit_id) {
+        this.commit_id = commit_id;
     }
 
     public String getCommit_date() {

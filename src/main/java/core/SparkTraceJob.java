@@ -5,6 +5,7 @@ import featurePipeline.TraceModelPipeline;
 import featurePipeline.SDFPipeline;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.mllib.linalg.DenseVector;
 import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.mllib.linalg.distributed.CoordinateMatrix;
@@ -18,6 +19,7 @@ import traceability.components.abstractComponents.TraceArtifact;
 import traceability.components.abstractComponents.TraceLink;
 import traceability.components.basic.BasicTraceLink;
 
+import java.io.Serializable;
 import java.util.List;
 
 public class SparkTraceJob {
@@ -53,7 +55,6 @@ public class SparkTraceJob {
         sourceSDFPipelien.fit(sourceArtifacts);
         targetSDFPipeline.fit(targetArtifacts);
 
-        //TODO Prototyping.... It is not runnable yet
         Dataset<Row> sourceSDFeatureVecs = sourceSDFPipelien.apply(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFPipeline.apply(targetArtifacts);
         Dataset<Row> goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
@@ -72,13 +73,21 @@ public class SparkTraceJob {
                                       Dataset<? extends TraceArtifact> targetArtifacts) {
         Dataset<Row> sourceFeatures = sourceSDFPipelien.apply(sourceArtifacts);
         Dataset<Row> targetFeatures = targetSDFPipeline.apply(targetArtifacts);
+
         Dataset<Row> candidateLinks = sourceArtifacts.crossJoin(targetArtifacts); //Cross join
         candidateLinks = appendFeaturesToLinks(candidateLinks, sourceFeatures, targetFeatures);
         Dataset<Row> finalFeatures = ddfPipeline.apply(candidateLinks);
 
         Dataset<Row> linkWithScores = modelPipeline.apply(finalFeatures);
-        Encoder<BasicTraceLink> basicTraceLinkEncoder = Encoders.bean(BasicTraceLink.class);
-        return linkWithScores.as(basicTraceLinkEncoder).collectAsList();
+
+
+        linkWithScores = linkWithScores.select("commit_id", "issue_id", "score");
+        linkWithScores = linkWithScores.withColumnRenamed("commit_id", "sourceArtifactID");
+        linkWithScores = linkWithScores.withColumnRenamed("issue_id", "targetArtifactID");
+        linkWithScores = linkWithScores.withColumnRenamed("score", "label");
+        linkWithScores.sort(linkWithScores.col("label").desc());
+        List<Row> rows = linkWithScores.collectAsList();
+        return null;
     }
 
     private Dataset<Row> appendFeaturesToLinks(Dataset<Row> links, Dataset<Row> sourceFeatures, Dataset<Row> targetFeatures) {
@@ -90,6 +99,7 @@ public class SparkTraceJob {
 
         Dataset<Row> linksWithFeatureVec = links.join(sourceFeatures, sourceArtifactIdCol.equalTo(linkSourceIdCol));
         linksWithFeatureVec = linksWithFeatureVec.join(targetFeatures, targetArtifactIdCol.equalTo(linkTargetIdCol));
+        linksWithFeatureVec = linksWithFeatureVec.drop(sourceArtifactIdCol).drop(targetArtifactIdCol);
         return linksWithFeatureVec;
     }
 

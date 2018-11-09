@@ -15,6 +15,7 @@ public abstract class TraceSparkPipeline {
 
     public TraceSparkPipeline() {
         pipeline = new Pipeline();
+        pipeline.setStages(new PipelineStage[]{});
     }
 
     public void fit(Dataset trainingData) {

@@ -2,11 +2,10 @@ package traceability.components.maven;
 
 import traceability.components.abstractComponents.TraceArtifact;
 
-import java.sql.Timestamp;
-
 public class MavenImprovement extends TraceArtifact {
-    private String id, resolution, content, priority, assignee, assignee_username, summary, status, type;
+    private String issue_id, resolution, content, priority, assignee, assignee_username, summary, status, type;
     private String resolved_date, created_date;
+
 
     public String getResolved_date() {
         return resolved_date;
@@ -24,12 +23,12 @@ public class MavenImprovement extends TraceArtifact {
         this.created_date = created_date;
     }
 
-    public String getId() {
-        return id;
+    public String getCommit_id() {
+        return issue_id;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setIssue_id(String issue_id) {
+        this.issue_id = issue_id;
     }
 
     public String getResolution() {
