@@ -2,20 +2,13 @@ package featurePipeline;
 
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.linalg.SparseVector;
-import org.apache.spark.ml.linalg.Vectors;
-import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.param.shared.HasOutputCol;
-import org.apache.spark.mllib.linalg.Vector;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
-
-import java.util.Map;
 
 public class CosinSimilarityStage extends Transformer {
     private static final long serialVersionUID = 5667889784880518528L;
@@ -56,7 +49,6 @@ public class CosinSimilarityStage extends Transformer {
                     v2SquSum += sv2Value[v2IndexCursor] * sv2Value[v2IndexCursor];
                     v2IndexCursor += 1;
                 }
-
 
                 if (v1IndexCursor < v1Length && v2IndexCursor < v2Length && sv1Indices[v1IndexCursor] == sv2Indices[v2IndexCursor]) {
                     productScore += sv1Value[v1IndexCursor] * sv2Value[v2IndexCursor];

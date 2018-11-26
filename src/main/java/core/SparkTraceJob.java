@@ -19,6 +19,7 @@ import traceability.components.abstractComponents.TraceArtifact;
 import traceability.components.abstractComponents.TraceLink;
 import traceability.components.basic.BasicTraceLink;
 
+import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.List;
 
