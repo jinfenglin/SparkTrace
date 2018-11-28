@@ -1,6 +1,11 @@
 package featurePipeline;
 
-public class DDFPipeline extends TraceSparkPipeline {
+import org.apache.spark.ml.Pipeline;
+
+/**
+ * idea: DDFPipeline and SDF pipleline can be a resolver for name conflicts
+ */
+public class DDFPipeline extends Pipeline {
     private String sourceArtifactColName, targetArtifactColName;
 
     public DDFPipeline(String sourceArtifactColName, String targetArtifactColName) {

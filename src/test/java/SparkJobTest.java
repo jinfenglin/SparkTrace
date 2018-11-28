@@ -9,15 +9,11 @@ import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.junit.Test;
 import traceability.TraceDatasetFactory;
-import traceability.components.basic.BasicTraceLink;
 import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenImprovement;
 import traceability.components.maven.MavenLink;
-
-import java.util.List;
 
 public class SparkJobTest extends TestBase {
     private static String masterUrl = "local";
@@ -37,12 +33,13 @@ public class SparkJobTest extends TestBase {
 
         //Merge the common part of commit and issue to enable vsm training on larger dataset
         SparkTraceJob job = new SparkTraceJob(sparkSession);
+        SparkTraceJob fooJob = new SparkTraceJob(sparkSession);
         SDFPipeline commitPipeline = new SDFPipeline("commit_id");
         Tokenizer commitTokenizer = new Tokenizer().setInputCol("content").setOutputCol("commit_token");
         HashingTF commitHashingTF = new HashingTF().setInputCol(commitTokenizer.getOutputCol()).setOutputCol("commit_tf");
         IDF commitIdf = new IDF().setInputCol(commitHashingTF.getOutputCol()).setOutputCol("commit_tfidf_vec");
         commitPipeline.setPipelineStages(new PipelineStage[]{commitTokenizer, commitHashingTF, commitIdf});
-        job.setSourceSDFPipelien(commitPipeline);
+        job.setSourceSDFPipeline(commitPipeline);
 
         SDFPipeline improvementSDFPipeline = new SDFPipeline("issue_id");
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("issue_token");

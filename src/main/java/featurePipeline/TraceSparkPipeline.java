@@ -7,29 +7,30 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 /**
- * A warpper for spark pipeline. Include pipeline and pipeline model at the same time
+ * A warpper for spark pipeline. Include pipeline and pipeline pipelineModel at the same time
  */
 public abstract class TraceSparkPipeline {
     protected Pipeline pipeline;
-    protected PipelineModel model;
+    protected PipelineModel pipelineModel;
 
     public TraceSparkPipeline() {
         pipeline = new Pipeline();
         pipeline.setStages(new PipelineStage[]{});
     }
 
-    public void fit(Dataset trainingData) {
+    public PipelineModel fit(Dataset trainingData) {
         if (pipeline.getStages().length == 0) {
-            return;
+            return null;
         }
-        model = pipeline.fit(trainingData);
+        pipelineModel = pipeline.fit(trainingData);
+        return pipelineModel;
     }
 
     public Dataset<Row> apply(Dataset rawData) {
-        if (model == null) {
+        if (pipelineModel == null) {
             return rawData;
         }
-        return model.transform(rawData);
+        return pipelineModel.transform(rawData);
     }
 
     public void setPipelineStages(PipelineStage[] stages) {
