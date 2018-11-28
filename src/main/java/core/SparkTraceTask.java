@@ -71,8 +71,8 @@ public class SparkTraceTask extends Predictor {
 
         Dataset<Row> fullFeatures = ddfModel.transform(goldLinksWithFeatureVec);
         PredictionModel predictionModel = predictor.train(fullFeatures);
-        SparkTraceTaskModel traceModel = new SparkTraceTaskModel();
-        return predictionModel;
+        SparkTraceTaskModel traceModel = new SparkTraceTaskModel(sourceSDFModel, targetSDFModel, ddfModel, predictionModel);
+        return traceModel;
     }
 
     @Override

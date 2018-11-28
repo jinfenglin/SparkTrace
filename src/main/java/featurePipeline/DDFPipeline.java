@@ -3,7 +3,7 @@ package featurePipeline;
 import org.apache.spark.ml.Pipeline;
 
 /**
- * idea: DDFPipeline and SDF pipleline can be a resolver for name conflicts
+ * Apply VetorAssember to produce feature vectors for the predictionModel
  */
 public class DDFPipeline extends Pipeline {
     private String sourceArtifactColName, targetArtifactColName;

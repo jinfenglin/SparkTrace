@@ -29,6 +29,7 @@ public class SparkTraceTaskModel extends PredictionModel<Vector, SparkTraceTaskM
 
     @Override
     public double predict(Vector vector) {
+
         return 0;
     }
 

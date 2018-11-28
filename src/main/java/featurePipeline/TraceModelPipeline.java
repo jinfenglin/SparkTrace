@@ -1,6 +1,6 @@
 package featurePipeline;
 
-public class TraceModelPipeline extends TraceSparkPipeline {
+public class TraceModelPipeline {
     private String featureColName;
 
     public TraceModelPipeline(String featureColName) {
