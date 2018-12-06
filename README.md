@@ -11,4 +11,6 @@ A framework which can create a traceability models on Spark.
 
 
 Note:
-1. Param interface is broken for Java, related with issue #https://issues.apache.org/jira/browse/SPARK-15605
+1. Param interface is broken for Java, related with issue #https://issues.apache.org/jira/browse/SPARK-15605 
+
+This problem actually had been fixed. When create a param, java user should put the new() function in a method rather than call directly in static area or constructor.

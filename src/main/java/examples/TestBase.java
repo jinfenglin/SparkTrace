@@ -3,7 +3,13 @@ package examples;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import traceability.components.basic.BasicTraceArtifact;
 import traceability.components.basic.BasicTraceLink;
 import traceability.TraceDatasetFactory;
@@ -49,5 +55,22 @@ public class TestBase {
             basicTraceLinks.add(basicTraceLink);
         }
         return TraceDatasetFactory.createLinks(sparkSession, basicTraceLinks, BasicTraceLink.class);
+    }
+
+    public Dataset<Row> getSentenceDataset() {
+        List<Row> data = Arrays.asList(
+                RowFactory.create(0.0, "Welcome to TutorialKart."),
+                RowFactory.create(0.0, "Learn Spark at TutorialKart."),
+                RowFactory.create(1.0, "Spark Mllib has TF-IDF.")
+        );
+
+        StructType schema = new StructType(new StructField[]{
+                new StructField("label", DataTypes.DoubleType, false, Metadata.empty()),
+                new StructField("sentence", DataTypes.StringType, false, Metadata.empty())
+        });
+
+        // import data with the schema
+        Dataset<Row> sentenceData = sparkSession.createDataFrame(data, schema);
+        return sentenceData;
     }
 }

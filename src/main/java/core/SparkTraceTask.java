@@ -23,32 +23,33 @@ public class SparkTraceTask extends Predictor {
     public final static String TARGET_PREFIX = "target";
     public final static String ID_COL_NAME = "id";
 
+    private String sourceArtifactIdColName, targetArtifactIdColName;
 
     private Pipeline sourceSDFPipeline, targetSDFPipeline;
     private Pipeline ddfPipeline;
     private Predictor predictor;
 
     //Data fields
-    private Dataset<? extends TraceArtifact> sourceArtifacts, targetArtifacts;
-    Dataset<? extends TraceLink> goldenLinks;
+//    private Dataset<? extends TraceArtifact> sourceArtifacts, targetArtifacts;
+//    Dataset<? extends TraceLink> goldenLinks;
 
 
     //Task parameters
-    final Param<String> sourceArtifactIdColName = new Param<String>(this, "sourceIdColName", "Name of the id column for source artifacts dataset");
-    final Param<String> targetArtifactIdColName = new Param<String>(this, "targetIdColName", "Name of the id column for target artifacts dataset");
+    //final Param<String> sourceArtifactIdColName = new Param<String>(this, "sourceIdColName", "Name of the id column for source artifacts dataset");
+    //final Param<String> targetArtifactIdColName = new Param<String>(this, "targetIdColName", "Name of the id column for target artifacts dataset");
 
     public SparkTraceTask(Dataset<? extends TraceArtifact> sourceArtifacts,
                           Dataset<? extends TraceArtifact> targetArtifacts,
                           Dataset<? extends TraceLink> goldenLinks) {
-        this.sourceArtifacts = sourceArtifacts;
-        this.targetArtifacts = targetArtifacts;
-        this.goldenLinks = goldenLinks;
+//        this.sourceArtifacts = sourceArtifacts;
+//        this.targetArtifacts = targetArtifacts;
+//        this.goldenLinks = goldenLinks;
 
         //Init Param
         String defaultSourceIdColName = String.join("_", SOURCE_PREFIX, ID_COL_NAME);
         String defaultTargetIdColName = String.join("_", TARGET_PREFIX, ID_COL_NAME);
-        setDefault(sourceArtifactIdColName, defaultSourceIdColName);
-        setDefault(targetArtifactIdColName, defaultTargetIdColName);
+        sourceArtifactIdColName = defaultSourceIdColName;
+        targetArtifactIdColName = defaultTargetIdColName;
     }
 
 
@@ -58,20 +59,20 @@ public class SparkTraceTask extends Predictor {
     }
 
     @Override
-    public PredictionModel train(Dataset dataset) {
+    public PredictionModel train(Dataset goldLinksWithFeatureVec) {
 
         //Process the document with SDF pipeline
-        PipelineModel sourceSDFModel = sourceSDFPipeline.fit(sourceArtifacts);
-        PipelineModel targetSDFModel = targetSDFPipeline.fit(targetArtifacts);
-        Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
-        Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
-
-        Dataset<Row> goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
+//        PipelineModel sourceSDFModel = sourceSDFPipeline.fit(sourceArtifacts);
+//        PipelineModel targetSDFModel = targetSDFPipeline.fit(targetArtifacts);
+//        Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
+//        Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
+//
+//        Dataset<Row> goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
         PipelineModel ddfModel = ddfPipeline.fit(goldLinksWithFeatureVec);
 
         Dataset<Row> fullFeatures = ddfModel.transform(goldLinksWithFeatureVec);
         PredictionModel predictionModel = predictor.train(fullFeatures);
-        SparkTraceTaskModel traceModel = new SparkTraceTaskModel(sourceSDFModel, targetSDFModel, ddfModel, predictionModel);
+        SparkTraceTaskModel traceModel = new SparkTraceTaskModel(ddfModel, predictionModel);
         return traceModel;
     }
 
@@ -94,19 +95,21 @@ public class SparkTraceTask extends Predictor {
     }
 
     public String getSourceArtifactColName() {
-        return getOrDefault(sourceArtifactIdColName);
+        return sourceArtifactIdColName;
     }
 
     public String getTargetArtifactColName() {
-        return getOrDefault(targetArtifactIdColName);
+        return targetArtifactIdColName;
     }
 
     public SparkTraceTask setSourceArtifactIdColName(String idColName) {
-        return (SparkTraceTask) set(sourceArtifactIdColName, idColName);
+        sourceArtifactIdColName = idColName;
+        return this;
     }
 
     public SparkTraceTask setTargetArtifactColName(String idColName) {
-        return (SparkTraceTask) set(targetArtifactIdColName, idColName);
+        targetArtifactIdColName = idColName;
+        return this;
     }
 
 }

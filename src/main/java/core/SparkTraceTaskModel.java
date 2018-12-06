@@ -16,13 +16,11 @@ import java.io.Serializable;
 public class SparkTraceTaskModel extends PredictionModel<Vector, SparkTraceTaskModel> {
     private static final long serialVersionUID = 5428298810981398146L;
 
-    private PipelineModel sourceSDFModel, targetSDFModel;
+
     private PipelineModel ddfModel;
     private PredictionModel predictionModel;
 
-    public SparkTraceTaskModel(PipelineModel sourceSDFModel, PipelineModel targetSDFModel, PipelineModel ddfModel, PredictionModel predictionModel) {
-        this.sourceSDFModel = sourceSDFModel;
-        this.targetSDFModel = targetSDFModel;
+    public SparkTraceTaskModel(PipelineModel ddfModel, PredictionModel predictionModel) {
         this.ddfModel = ddfModel;
         this.predictionModel = predictionModel;
     }
