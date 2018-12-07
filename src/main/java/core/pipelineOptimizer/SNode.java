@@ -2,7 +2,6 @@ package core.pipelineOptimizer;
 
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
-import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.shared.HasInputCol;
 import org.apache.spark.ml.param.shared.HasInputCols;
 import org.apache.spark.ml.param.shared.HasOutputCol;
@@ -45,24 +44,24 @@ public class SNode extends Vertex {
                 Logger.getLogger(this.getClass().getName()).warning(String.format(mismatchedInputColNumMessage, getVertexId(), "inputColumn", inputCells.size()));
             }
             HasInputCol hasInputColStage = (HasInputCol) sparkPipelineStage;
-            hasInputColStage.set(hasInputColStage.inputCol(), inputCells.get(0).fieldSymbol.getSymbolValue());
+            hasInputColStage.set(hasInputColStage.inputCol(), inputCells.get(0).getFieldSymbol().getSymbolValue());
         } else if (sparkPipelineStage instanceof HasInputCols) {
             HasInputCols hasInputCols = (HasInputCols) sparkPipelineStage;
             List<String> inputColNames = new ArrayList<>();
-            inputCells.stream().forEach(cell -> inputColNames.add(cell.fieldSymbol.getSymbolValue()));
+            inputCells.forEach(cell -> inputColNames.add(cell.getFieldSymbol().getSymbolValue()));
             hasInputCols.set(hasInputCols.inputCols(), inputColNames.toArray(new String[0]));
         }
 
         if (sparkPipelineStage instanceof HasOutputCol) {
             if (outputCells.size() != 1) {
-                Logger.getLogger(this.getClass().getName()).warning(String.format(mismatchedInputColNumMessage, getVertexId(), "outputColum", outputCells.size()));
+                Logger.getLogger(this.getClass().getName()).warning(String.format(mismatchedInputColNumMessage, getVertexId(), "outputColumn", outputCells.size()));
             }
             HasOutputCol hasOutputCol = (HasOutputCol) sparkPipelineStage;
-            hasOutputCol.set(hasOutputCol.outputCol(), outputCells.get(0).fieldSymbol.getSymbolValue());
+            hasOutputCol.set(hasOutputCol.outputCol(), outputCells.get(0).getFieldSymbol().getSymbolValue());
         } else if (sparkPipelineStage instanceof HasOutputCols) {
             HasOutputCols hasOutputCols = (HasOutputCols) sparkPipelineStage;
             List<String> outputColNames = new ArrayList<>();
-            outputCells.stream().forEach(cell -> outputColNames.add(cell.fieldSymbol.getSymbolValue()));
+            outputCells.stream().forEach(cell -> outputColNames.add(cell.getFieldSymbol().getSymbolValue()));
             hasOutputCols.set(hasOutputCols.outputCols(), outputColNames.toArray(new String[0]));
         }
         pipeline.setStages(new PipelineStage[]{sparkPipelineStage});

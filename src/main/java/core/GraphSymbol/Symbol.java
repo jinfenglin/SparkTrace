@@ -4,46 +4,57 @@ import core.pipelineOptimizer.Vertex;
 
 /**
  * A symbol used in the SGraph. A symbol name should be unique within a scope and a scope is a graph/node where
- * this symbols resides.
+ * this symbols resides. The symbol is immutable, and global just like String.
  */
 public class Symbol {
-    private Vertex scope; //The graph/node this symbol resides
-    private String symbolName; // The name of symbol in the scope which should be locally unique
-    private String symbolValue; // The value of symbol that will be converted into column name in dataset, this should be globally unique
+    private final Vertex scope; //The graph/node this symbol resides
+    private final String symbolName; // The name of symbol in the scope which should be locally unique
 
     public Symbol(Vertex vertex, String symbolName) {
         this.scope = vertex;
         this.symbolName = symbolName;
-        this.symbolValue = symbolName; //The symbolValue same as its symbol name in default, but will be changed when conflict happens
     }
 
     public Vertex getScope() {
         return scope;
     }
 
-    public void setScope(Vertex scope) {
-        this.scope = scope;
-    }
-
     public String getSymbolName() {
         return symbolName;
     }
 
-    public void setSymbolName(String symbolName) {
-        this.symbolName = symbolName;
-        this.symbolValue = symbolName;
-    }
-
     public String getSymbolValue() {
-        return symbolValue;
+        if (scope.getInputTable().containsSymbol(this)) {
+            return SymbolTable.getInputSymbolValue(this);
+        } else if (scope.getOutputTable().containsSymbol(this)) {
+            return SymbolTable.getOutputSymbolValue(this);
+        }
+        return null;
     }
 
     @Override
     public String toString() {
         return "Symbol{" +
-                "scope=" + scope +
+                "scope=" + scope.getVertexId() +
                 ", symbolName='" + symbolName + '\'' +
-                ", symbolValue='" + symbolValue + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Symbol symbol = (Symbol) o;
+
+        if (!scope.equals(symbol.scope)) return false;
+        return symbolName.equals(symbol.symbolName);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = scope.hashCode();
+        result = 31 * result + symbolName.hashCode();
+        return result;
     }
 }

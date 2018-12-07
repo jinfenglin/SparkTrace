@@ -4,13 +4,14 @@ import core.GraphSymbol.Symbol;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 
 /**
  * A cell in the IOTable.
  */
 public class IOTableCell {
-    private List<IOTableCell> inputSource, outputTarget; //Record the connected cells
-    Symbol fieldSymbol;
+    private List<IOTableCell> inputSource,outputTarget; //Record the connected cells
+    private Symbol fieldSymbol;
 
     public IOTableCell(Symbol symbol) {
         inputSource = new ArrayList<>();
@@ -51,5 +52,26 @@ public class IOTableCell {
 
     public void setFieldSymbol(Symbol fieldSymbol) {
         this.fieldSymbol = fieldSymbol;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{");
+        builder.append("Cell_Symbol:" + fieldSymbol.toString());
+        builder.append(" From_Symbol:");
+        StringJoiner j1 = new StringJoiner(",");
+        for (IOTableCell cell : inputSource) {
+            j1.add(cell.getFieldSymbol().toString());
+        }
+        builder.append(j1.toString());
+        builder.append(" To_Symbol:");
+        StringJoiner j2 = new StringJoiner(",");
+        for (IOTableCell cell : outputTarget) {
+            j2.add(cell.getFieldSymbol().toString());
+        }
+        builder.append(j2.toString());
+        builder.append("}");
+        return builder.toString();
     }
 }

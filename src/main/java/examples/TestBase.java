@@ -1,7 +1,10 @@
 package examples;
 
 
+import core.GraphSymbol.Symbol;
 import org.apache.spark.SparkConf;
+import org.apache.spark.ml.Pipeline;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -72,5 +75,19 @@ public class TestBase {
         // import data with the schema
         Dataset<Row> sentenceData = sparkSession.createDataFrame(data, schema);
         return sentenceData;
+    }
+
+    public void printPipeline(Pipeline pipeline) {
+        PipelineStage[] stages = pipeline.getStages();
+        for (PipelineStage stage : stages) {
+            if (stage instanceof Pipeline) {
+                Pipeline subPipeline = (Pipeline) stage;
+                printPipeline(subPipeline);
+            } else {
+                System.out.println("==========================");
+                System.out.println(stage);
+                System.out.println(stage.explainParams());
+            }
+        }
     }
 }

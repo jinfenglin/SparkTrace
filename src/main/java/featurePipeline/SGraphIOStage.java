@@ -30,8 +30,8 @@ public class SGraphIOStage extends Transformer implements HasInputCols, HasOutpu
     StringArrayParam outputCols;
 
     public SGraphIOStage() {
-        inputCols = inputCols();
-        outputCols = outputCols();
+        inputCols = initInputCols();
+        outputCols = initOutputCols();
     }
 
     private void mapIOTableToIOParam(IOTable table, StringArrayParam IOParam) {
@@ -77,6 +77,10 @@ public class SGraphIOStage extends Transformer implements HasInputCols, HasOutpu
 
     @Override
     public StringArrayParam inputCols() {
+        return inputCols;
+    }
+
+    public StringArrayParam initInputCols() {
         return new StringArrayParam(this, "inputCols", "input columns for a vertex in SGraph");
     }
 
@@ -96,6 +100,10 @@ public class SGraphIOStage extends Transformer implements HasInputCols, HasOutpu
 
     @Override
     public StringArrayParam outputCols() {
+        return outputCols;
+    }
+
+    public StringArrayParam initOutputCols() {
         return new StringArrayParam(this, "outputCols", "output columns for a vertex in SGraph");
     }
 

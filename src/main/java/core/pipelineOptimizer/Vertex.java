@@ -1,8 +1,11 @@
 package core.pipelineOptimizer;
 
 import core.GraphSymbol.Symbol;
+import core.GraphSymbol.SymbolTable;
 import org.apache.spark.ml.Pipeline;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -18,61 +21,76 @@ abstract public class Vertex {
         outputTable = new IOTable(this);
     }
 
+    /**
+     * Get vertices which provide in degree to the vertex
+     *
+     * @return
+     */
+    public Set<Vertex> getInputVertices() {
+        Set<Vertex> inputNodes = new HashSet<>();
+        for (IOTableCell cell : inputTable.getCells()) {
+            for (IOTableCell sourceCell : cell.getInputSource()) {
+                inputNodes.add(sourceCell.getFieldSymbol().getScope());
+            }
+        }
+        return inputNodes;
+    }
+
+    /**
+     * Get vertices which provide out degree to the vertex
+     *
+     * @return
+     */
+    public Set<Vertex> getOutputVertices() {
+        Set<Vertex> outputNodes = new HashSet<>();
+        for (IOTableCell cell : outputTable.getCells()) {
+            for (IOTableCell targetCell : cell.getOutputTarget()) {
+                outputNodes.add(targetCell.getFieldSymbol().getScope());
+            }
+        }
+        return outputNodes;
+    }
+
     public abstract Pipeline toPipeline() throws Exception;
 
-    public Vertex addInputFields(Symbol[] symbols) {
+    public Vertex addInputFields(Symbol[] symbols) throws Exception {
         for (Symbol symbol : symbols) {
             addInputField(symbol);
         }
         return this;
     }
 
-    public Vertex addInputField(Symbol symbol) {
+    public Vertex addInputField(Symbol symbol) throws Exception {
         IOTableCell cell = new IOTableCell(symbol);
         inputTable.addCell(cell);
+        SymbolTable.registerInputSymbol(symbol);
         return this;
     }
 
-    public Vertex addOutputFields(Symbol[] symbols) {
+    public Vertex addInputField(String symbolName) throws Exception {
+        Symbol symbol = new Symbol(this, symbolName);
+        return addInputField(symbol);
+    }
+
+    public Vertex addOutputFields(Symbol[] symbols) throws Exception {
         for (Symbol symbol : symbols) {
             addOutputField(symbol);
         }
         return this;
     }
 
-    public Vertex addOutputField(Symbol symbol) {
+    public Vertex addOutputField(String symbolName) throws Exception {
+        Symbol symbol = new Symbol(this, symbolName);
+        return addOutputField(symbol);
+    }
+
+    public Vertex addOutputField(Symbol symbol) throws Exception {
         IOTableCell cell = new IOTableCell(symbol);
         outputTable.addCell(cell);
+        SymbolTable.registerOutputSymbol(symbol);
         return this;
     }
 
-    public Vertex removeInputField(Symbol symbol) {
-        if (inputTable.containsSymbol(symbol)) {
-            inputTable.removeCell(symbol);
-        }
-        return this;
-    }
-
-    public Vertex removeOutputField(Symbol symbol) {
-        if (outputTable.containsSymbol(symbol)) {
-            outputTable.removeCell(symbol);
-        }
-        return this;
-    }
-
-    public Vertex removeInputFields(Symbol[] symbols) {
-        for (Symbol symbol : symbols) {
-            removeInputField(symbol);
-        }
-        return this;
-    }
-
-    public Vertex removeOutputFields(Symbol[] symbols) {
-        for (Symbol symbol : symbols) {
-            removeOutputField(symbol);
-        }
-        return this;
-    }
 
     public IOTable getInputTable() {
         return inputTable;

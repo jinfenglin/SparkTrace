@@ -1,11 +1,9 @@
 package core.pipelineOptimizer;
 
 import core.GraphSymbol.Symbol;
+import core.GraphSymbol.SymbolTable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * IOTable recorded the mapping relationships between two SNode. The IOTableCells will connect to another IOTableCell.In
@@ -29,12 +27,15 @@ public class IOTable {
         return cells.getOrDefault(symbol, null);
     }
 
-    public void addCell(IOTableCell cell) {
-        cells.put(cell.fieldSymbol, cell);
+    public void addCell(IOTableCell cell) throws Exception {
+        String errorMessage = "It is not valid to add cell %s to vertex %s because the context is different";
+        if (cell.getFieldSymbol().getScope() != context)
+            throw new Exception(String.format(errorMessage, cell.toString(), context.toString()));
+        cells.put(cell.getFieldSymbol(), cell);
     }
 
     public void removeCell(IOTableCell cell) {
-        removeCell(cell.fieldSymbol);
+        removeCell(cell.getFieldSymbol());
     }
 
     public void removeCell(Symbol symbol) {
@@ -70,5 +71,15 @@ public class IOTable {
 
     public boolean containsSymbol(Symbol symbol) {
         return cells.containsKey(symbol);
+    }
+
+    @Override
+    public String toString() {
+        StringJoiner joiner = new StringJoiner("\n");
+        for (Symbol symbol : cells.keySet()) {
+            IOTableCell cell = cells.get(symbol);
+            joiner.add(cell.toString());
+        }
+        return joiner.toString();
     }
 }

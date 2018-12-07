@@ -1,6 +1,7 @@
 package core.pipelineOptimizer;
 
 import core.GraphSymbol.Symbol;
+import core.GraphSymbol.SymbolTable;
 import featurePipeline.SGraphIOStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
@@ -18,74 +19,101 @@ import java.util.logging.Logger;
  * 5. Call toPipeline to create a fully configured and runnable pipeline
  */
 public class SGraph extends Vertex {
-    private List<Vertex> nodes;
-    private List<SEdge> edges;
+    private Map<String, Vertex> nodes;
+    private Set<SEdge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
 
     public SNode sourceNode, sinkNode;
 
     public SGraph() {
-        nodes = new ArrayList<>();
-        edges = new ArrayList<>();
+        nodes = new HashMap<>();
+        edges = new HashSet<>();
         sourceNode = new SNode(new SGraphIOStage());
         sinkNode = new SNode(new SGraphIOStage());
-        nodes.add(sourceNode);
+        nodes.put(sourceNode.vertexId, sourceNode);
+        nodes.put(sinkNode.vertexId, sinkNode);
     }
 
     public SGraph(String graphId) {
-        nodes = new ArrayList<>();
-        edges = new ArrayList<>();
+        nodes = new HashMap<>();
+        edges = new HashSet<>();
         sourceNode = new SNode(new SGraphIOStage());
-        nodes.add(sourceNode);
+        sinkNode = new SNode(new SGraphIOStage());
+        nodes.put(sourceNode.vertexId, sourceNode);
+        nodes.put(sinkNode.vertexId, sinkNode);
         vertexId = graphId;
     }
 
+    /**
+     * Modify the inputIOTable be synchronized to sourceNode
+     *
+     * @param symbol
+     * @return
+     * @throws Exception
+     */
     @Override
-    public Vertex addInputField(Symbol symbol) {
+    public Vertex addInputField(Symbol symbol) throws Exception {
         super.addInputField(symbol);
         Symbol addedSymbol = new Symbol(sourceNode, symbol.getSymbolName());
-        sourceNode.addInputField(addedSymbol);
+        //sourceNode.addInputField(addedSymbol);
         sourceNode.addOutputField(addedSymbol);
         return this;
     }
 
     @Override
-    public Vertex addOutputField(Symbol symbol) {
+    public Vertex addOutputField(Symbol symbol) throws Exception {
         super.addOutputField(symbol);
         Symbol addedSymbol = new Symbol(sinkNode, symbol.getSymbolName());
         sinkNode.addInputField(addedSymbol);
-        sinkNode.addOutputField(addedSymbol);
+        //sinkNode.addOutputField(addedSymbol);
         return this;
     }
 
-    @Override
-    public Vertex removeInputField(Symbol symbol) {
-        super.removeInputField(symbol);
-        Symbol removedSymbol = new Symbol(sourceNode, symbol.getSymbolName());
-        sourceNode.removeInputField(removedSymbol);
-        return this;
-    }
+    /**
+     * Let the connected symbols share same value
+     */
+    private void syncSymbolValues(SGraph graph) throws Exception {
+        //SourceNode and SinkNode are special in the graph. The sourceNode don't have connection on its InputTable,
+        //Instead, it consume graph's InputTable directly. However, the consumption is through parameters thus no explicit
+        //connections are specified between graph.inputTable and sourceNode.outputTable (And inputTable should receive and have no out going links)
+        for (IOTableCell graphInputCell : this.getInputTable().getCells()) {
+            Symbol graphProviderSymbol = graphInputCell.getFieldSymbol();
+            Symbol sourceNodeReceiverSymbol = sourceNode.getOutputTable().getSymbolByVarName(graphProviderSymbol.getSymbolName());
+            SymbolTable.shareSymbolValue(graphProviderSymbol, sourceNodeReceiverSymbol, false);
+        }
 
-    @Override
-    public Vertex removeOutputField(Symbol symbol) {
-        super.removeOutputField(symbol);
-        Symbol removedSymbol = new Symbol(sinkNode, symbol.getSymbolName());
-        sinkNode.removeInputField(removedSymbol);
-        return this;
-    }
+        for (IOTableCell graphOutputCell : this.getOutputTable().getCells()) {
+            Symbol graphReceiverSymbol = graphOutputCell.getFieldSymbol();
+            Symbol sinkNodeProviderSymbol = sinkNode.getInputTable().getSymbolByVarName(graphReceiverSymbol.getSymbolName());
+            SymbolTable.shareSymbolValue(sinkNodeProviderSymbol, graphReceiverSymbol, false);
+        }
 
+        for (Vertex node : graph.getNodes()) {
+            for (IOTableCell providerCell : node.outputTable.getCells()) {
+                Symbol providerSymbol = providerCell.getFieldSymbol();
+                for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
+                    Symbol receiverSymbol = receiverCell.getFieldSymbol();
+                    SymbolTable.shareSymbolValue(providerSymbol, receiverSymbol, true);
+                }
+            }
+            if (node instanceof SGraph) {
+                syncSymbolValues((SGraph) node);
+            }
+        }
+    }
 
     @Override
     public Pipeline toPipeline() throws Exception {
         //Config the SGraphIOStage to parse the InputTable which translate the Symbols to real column names
         SGraphIOStage initStage = (SGraphIOStage) sourceNode.getSparkPipelineStage();
         initStage.setInputCols(inputTable);
-        initStage.setOutputCols(inputTable);
+        initStage.setOutputCols(inputTable);//IOTable consumed by inner method mapIOTableToIOParam(), the graph's inputTabel will be used
 
         //Config the SGraphSinkStage
         SGraphIOStage outStage = (SGraphIOStage) sinkNode.getSparkPipelineStage();
         outStage.setInputCols(outputTable);
         outStage.setOutputCols(outputTable);
 
+        syncSymbolValues(this);
         Pipeline pipeline = new Pipeline();
         List<PipelineStage> stages = new ArrayList<>();
         List<Vertex> topSortNodes = topologicalSort(this);
@@ -166,28 +194,31 @@ public class SGraph extends Vertex {
 
 
     public List<Vertex> getNodes() {
-        return nodes;
+        return new ArrayList<>(nodes.values());
     }
 
     public List<SEdge> getEdges() {
-        return edges;
+        return new ArrayList<>(edges);
     }
 
     public void addNode(Vertex node) {
-        nodes.add(node);
+        nodes.put(node.getVertexId(), node);
     }
 
     public void addEdge(SEdge edge) {
         edges.add(edge);
-        Map<Symbol, Symbol> symbolConnection = edge.getConnections();
-        for (Symbol from : symbolConnection.keySet()) {
-            connect(from, symbolConnection.get(from));
-        }
+    }
+
+    public void connect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
+        Symbol s1 = new Symbol(v1, symbolName1);
+        Symbol s2 = new Symbol(v2, symbolName2);
+        SEdge edge = new SEdge(s1.getScope(), s2.getScope());
+        addEdge(edge);
+        connect(s1, s2);
     }
 
     /**
      * Connect the parent node of symbol from with parent node of to. It will update the edge sets as well.
-     * TODO add connection validation by using the tree of nested Graphs. If the from symbol and to symbol partents are not in same graph then no connection should be made
      *
      * @param from
      * @param to
@@ -201,5 +232,4 @@ public class SGraph extends Vertex {
             Logger.getLogger(this.getClass().getName()).info(String.format("Symbol %s to Symbol %s can not be connected", from, to));
         }
     }
-
 }

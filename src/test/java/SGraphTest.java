@@ -1,4 +1,3 @@
-import core.GraphSymbol.Symbol;
 import core.pipelineOptimizer.*;
 import examples.TestBase;
 import org.apache.spark.ml.Pipeline;
@@ -11,10 +10,8 @@ import org.apache.spark.sql.Row;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.xml.crypto.Data;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 /**
  *
@@ -26,67 +23,44 @@ public class SGraphTest extends TestBase {
         super(masterUrl);
     }
 
-    private SGraph createGraph() {
+    private SGraph createGraph() throws Exception {
         Tokenizer tk = new Tokenizer();
-        HashingTF htf = new HashingTF();
+        HashingTF htf1 = new HashingTF();
+        HashingTF htf2 = new HashingTF();
         IDF idf = new IDF();
 
-        SNode n1 = new SNode(tk, "tokenizer");
-        n1.addInputField(new Symbol(n1, "text"));
-        n1.addOutputField(new Symbol(n1, "tokens"));
+        SGraph g1 = new SGraph();
+        g1.setId("graph");
+        g1.addInputField("sentence");
+        g1.addOutputField("output_idf");
 
-        SNode n2 = new SNode(htf, "hashTF");
-        n2.addInputField(new Symbol(n2, "token"));
-        n2.addOutputField(new Symbol(n2, "htf"));
+        SNode n1 = new SNode(tk, "tokenizer");
+        n1.addInputField("text");
+        n1.addOutputField("tokens");
+
+        SNode n2 = new SNode(htf1, "hashTF");
+        n2.addInputField("token");
+        n2.addOutputField("htf");
 
         SNode n3 = new SNode(idf, "IDF");
-        n3.addInputField(new Symbol(n2, "true_htf"));
-        n3.addOutputField(new Symbol(n2, "idf"));
+        n3.addInputField("true_htf");
+        n3.addOutputField("idf");
 
-        SNode n4 = new SNode(htf, "dummyTokenizer");
-        n4.addInputField(new Symbol(n4, "tokens"));
-        n4.addOutputField(new Symbol(n4, "n4_htf"));
-
-
-        SGraph g1 = new SGraph();
-        g1.addInputField(new Symbol(g1, "sentence"));
-        g1.addOutputField(new Symbol(g1, "output_idf"));
+        SNode n4 = new SNode(htf2, "dummyTokenizer");
+        n4.addInputField("tokens");
+        n4.addOutputField("n4_htf");
 
         g1.addNode(n1);
         g1.addNode(n2);
         g1.addNode(n3);
         g1.addNode(n4);
 
-        //Connect sourceNode and n1
-        Map<Symbol, Symbol> er1Map = new HashMap<>();
-        er1Map.put(g1.sourceNode.getOutputTable().getSymbolByVarName("sentence"), n1.getInputTable().getSymbolByVarName("text"));
-        SEdge er1 = new SEdge(g1.sourceNode, n1, er1Map);
+        g1.connect(g1.sourceNode, "sentence", n1, "text");
+        g1.connect(n1, "tokens", n2, "token");
+        g1.connect(n2, "htf", n3, "true_htf");
+        g1.connect(n1, "tokens", n4, "tokens");
+        g1.connect(n3, "idf", g1.sinkNode, "output_idf");
 
-        //Connect n1 and n2
-        Map<Symbol, Symbol> e12Map = new HashMap<>();
-        e12Map.put(n1.getOutputTable().getSymbolByVarName("tokens"), n2.getInputTable().getSymbolByVarName("token"));
-        SEdge e12 = new SEdge(n1, n2, e12Map);
-
-        //Connect n2,n3
-        Map<Symbol, Symbol> e23Map = new HashMap<>();
-        e23Map.put(n2.getOutputTable().getSymbolByVarName("htf"), n3.getInputTable().getSymbolByVarName("true_htf"));
-        SEdge e23 = new SEdge(n2, n3, e23Map);
-
-        //connect n1,n4
-        Map<Symbol, Symbol> e14Map = new HashMap<>();
-        e14Map.put(n1.getOutputTable().getSymbolByVarName("tokens"), n4.getInputTable().getSymbolByVarName("tokens"));
-        SEdge e14 = new SEdge(n1, n4, e14Map);
-
-        //Connect n3 and sink node
-        Map<Symbol, Symbol> e3eMap = new HashMap<>();
-        e3eMap.put(n3.getOutputTable().getSymbolByVarName("idf"), g1.sinkNode.getInputTable().getSymbolByVarName("output_idf"));
-        SEdge e3e = new SEdge(n4, n3, e3eMap);
-
-        g1.addEdge(e12);
-        g1.addEdge(e23);
-        g1.addEdge(e14);
-        g1.addEdge(e3e);
-        g1.addEdge(er1);
         return g1;
     }
 
@@ -130,6 +104,7 @@ public class SGraphTest extends TestBase {
     public void idfCreationTest() throws Exception {
         Dataset<Row> dataset = getSentenceDataset();
         Pipeline pipeline = createGraph().toPipeline();
+        printPipeline(pipeline);
         PipelineModel model = pipeline.fit(dataset);
         Dataset<Row> processedData = model.transform(dataset);
         processedData.show();
