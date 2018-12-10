@@ -64,7 +64,6 @@ public class SGraph extends Vertex {
         super.addOutputField(symbol);
         Symbol addedSymbol = new Symbol(sinkNode, symbol.getSymbolName());
         sinkNode.addInputField(addedSymbol);
-        //sinkNode.addOutputField(addedSymbol);
         return this;
     }
 
@@ -124,7 +123,13 @@ public class SGraph extends Vertex {
         return pipeline;
     }
 
-    private static Map<Vertex, List<Vertex>> buildIndex(SGraph graph, boolean useFromAsIndex) {
+    /**
+     * Collect the connected verteics for each vertex in the graph
+     * @param graph
+     * @param useFromAsIndex
+     * @return
+     */
+    private static Map<Vertex, List<Vertex>> buildEdgeIndex(SGraph graph, boolean useFromAsIndex) {
         List<SEdge> edges = graph.getEdges();
         List<Vertex> vertices = graph.getNodes();
         Map<Vertex, List<Vertex>> indexMap = new HashMap<>();
@@ -164,7 +169,7 @@ public class SGraph extends Vertex {
 
     private static List<Vertex> topologicalSort(SGraph graph) throws Exception {
         List<Vertex> nodes = new ArrayList<>(graph.getNodes());
-        Map<Vertex, List<Vertex>> edgeIndex = buildIndex(graph, true);
+        Map<Vertex, List<Vertex>> edgeIndex = buildEdgeIndex(graph, true);
         Map<Vertex, Integer> inDegrees = inDegreeMap(graph);
         List<Vertex> sortedNodes = new ArrayList<>();
         int cnt = 0;

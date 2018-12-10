@@ -32,8 +32,6 @@ public class SparkTraceJob {
         this.sparkSession = session;
     }
 
-
-
     public SparkSession getSparkSession() {
         return sparkSession;
     }

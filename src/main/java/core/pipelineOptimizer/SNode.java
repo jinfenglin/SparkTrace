@@ -20,14 +20,14 @@ public class SNode extends Vertex {
     private PipelineStage sparkPipelineStage;
 
     public SNode(PipelineStage pipelineStage) {
-        inputTable = new IOTable(this);
-        outputTable = new IOTable(this);
+        inputTable = new IOTable(this, IOTable.TableType.INPUT_TABLE);
+        outputTable = new IOTable(this, IOTable.TableType.OUTPUT_TABLE);
         sparkPipelineStage = pipelineStage;
     }
 
     public SNode(PipelineStage pipelineStage, String nodeId) {
-        inputTable = new IOTable(this);
-        outputTable = new IOTable(this);
+        inputTable = new IOTable(this, IOTable.TableType.INPUT_TABLE);
+        outputTable = new IOTable(this, IOTable.TableType.OUTPUT_TABLE);
         sparkPipelineStage = pipelineStage;
         vertexId = nodeId;
     }

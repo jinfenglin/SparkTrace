@@ -10,10 +10,11 @@ import java.util.StringJoiner;
  * A cell in the IOTable.
  */
 public class IOTableCell {
-    private List<IOTableCell> inputSource,outputTarget; //Record the connected cells
+    private List<IOTableCell> inputSource, outputTarget; //Record the connected cells
     private Symbol fieldSymbol;
+    private IOTable parentTable;
 
-    public IOTableCell(Symbol symbol) {
+    public IOTableCell(IOTable parentTable, Symbol symbol) {
         inputSource = new ArrayList<>();
         outputTarget = new ArrayList<>();
         fieldSymbol = symbol;
@@ -73,5 +74,9 @@ public class IOTableCell {
         builder.append(j2.toString());
         builder.append("}");
         return builder.toString();
+    }
+
+    public void penetrate(IOTableCell outputCell) {
+        parentTable.getContext();
     }
 }

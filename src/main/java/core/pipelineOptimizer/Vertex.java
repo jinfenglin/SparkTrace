@@ -17,8 +17,8 @@ abstract public class Vertex {
 
     public Vertex() {
         vertexId = UUID.randomUUID().toString();
-        inputTable = new IOTable(this);
-        outputTable = new IOTable(this);
+        inputTable = new IOTable(this, IOTable.TableType.INPUT_TABLE);
+        outputTable = new IOTable(this, IOTable.TableType.OUTPUT_TABLE);
     }
 
     /**
@@ -61,7 +61,7 @@ abstract public class Vertex {
     }
 
     public Vertex addInputField(Symbol symbol) throws Exception {
-        IOTableCell cell = new IOTableCell(symbol);
+        IOTableCell cell = new IOTableCell(inputTable, symbol);
         inputTable.addCell(cell);
         SymbolTable.registerInputSymbol(symbol);
         return this;
@@ -70,6 +70,11 @@ abstract public class Vertex {
     public Vertex addInputField(String symbolName) throws Exception {
         Symbol symbol = new Symbol(this, symbolName);
         return addInputField(symbol);
+    }
+
+    public IOTableCell getInputField(String symbolName) {
+        Symbol symbol = new Symbol(this, symbolName);
+        return getInputTable().getCellBySymbol(symbol);
     }
 
     public Vertex addOutputFields(Symbol[] symbols) throws Exception {
@@ -84,8 +89,13 @@ abstract public class Vertex {
         return addOutputField(symbol);
     }
 
+    public IOTableCell getOutputField(String symbolName) {
+        Symbol symbol = new Symbol(this, symbolName);
+        return getOutputTable().getCellBySymbol(symbol);
+    }
+
     public Vertex addOutputField(Symbol symbol) throws Exception {
-        IOTableCell cell = new IOTableCell(symbol);
+        IOTableCell cell = new IOTableCell(outputTable, symbol);
         outputTable.addCell(cell);
         SymbolTable.registerOutputSymbol(symbol);
         return this;

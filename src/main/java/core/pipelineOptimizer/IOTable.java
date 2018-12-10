@@ -12,10 +12,12 @@ import java.util.*;
 public class IOTable {
     private Vertex context; //IOTable must reside within a vertex
     private Map<Symbol, IOTableCell> cells; //A HahsMap for fast access to IOTableCell
+    private TableType tableType;
 
-    public IOTable(Vertex context) {
+    public IOTable(Vertex context, TableType tableType) {
         this.context = context;
         cells = new HashMap<>();
+        this.tableType = tableType;
     }
 
     /**
@@ -81,5 +83,9 @@ public class IOTable {
             joiner.add(cell.toString());
         }
         return joiner.toString();
+    }
+
+    public enum TableType {
+        INPUT_TABLE, OUTPUT_TABLE;
     }
 }
