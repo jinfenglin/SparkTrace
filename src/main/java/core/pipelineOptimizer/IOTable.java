@@ -12,12 +12,10 @@ import java.util.*;
 public class IOTable {
     private Vertex context; //IOTable must reside within a vertex
     private Map<Symbol, IOTableCell> cells; //A HahsMap for fast access to IOTableCell
-    private TableType tableType;
 
-    public IOTable(Vertex context, TableType tableType) {
+    public IOTable(Vertex context) {
         this.context = context;
         cells = new HashMap<>();
-        this.tableType = tableType;
     }
 
     /**
@@ -33,6 +31,7 @@ public class IOTable {
         String errorMessage = "It is not valid to add cell %s to vertex %s because the context is different";
         if (cell.getFieldSymbol().getScope() != context)
             throw new Exception(String.format(errorMessage, cell.toString(), context.toString()));
+        cell.setParentTable(this);
         cells.put(cell.getFieldSymbol(), cell);
     }
 
@@ -41,8 +40,10 @@ public class IOTable {
     }
 
     public void removeCell(Symbol symbol) {
-        if (cells.containsKey(symbol))
+        if (cells.containsKey(symbol)) {
+            cells.get(symbol).setParentTable(null);
             cells.remove(symbol);
+        }
     }
 
     /**

@@ -109,4 +109,37 @@ public class SGraphTest extends TestBase {
         Dataset<Row> processedData = model.transform(dataset);
         processedData.show();
     }
+
+    @Test
+    public void penetrationTest() throws Exception {
+        SGraph globalGraph = new SGraph();
+        globalGraph.setId("top_graph");
+        globalGraph.addInputField("sentence");
+
+        globalGraph.addOutputField("output_idf");
+        globalGraph.addOutputField("tokens");
+
+        Tokenizer tk = new Tokenizer();
+        SNode n1 = new SNode(tk, "global_tokenizer");
+        n1.addInputField("text");
+        n1.addOutputField("tokens");
+
+        SGraph subGraph = createGraph();
+
+        globalGraph.addNode(n1);
+        globalGraph.addNode(subGraph);
+
+        globalGraph.connect(globalGraph.sourceNode, "sentence", subGraph, "sentence");
+        globalGraph.connect(globalGraph.sourceNode, "sentence", n1, "text");
+        globalGraph.connect(n1, "tokens", globalGraph.sinkNode, "tokens");
+        globalGraph.connect(subGraph, "output_idf", globalGraph.sinkNode, "output_idf");
+
+        GraphHierarchyTree ght = new GraphHierarchyTree(null, globalGraph);
+        PipelineOptimizer.penetrate(n1.getOutputField("tokens"), subGraph.getNode("tokenizer").getOutputField("tokens"), ght);
+
+        Dataset<Row> dataset = getSentenceDataset();
+        PipelineModel model = globalGraph.toPipeline().fit(dataset);
+        Dataset<Row> processedData = model.transform(dataset);
+        processedData.show();
+    }
 }

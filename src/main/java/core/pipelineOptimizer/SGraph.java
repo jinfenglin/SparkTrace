@@ -25,6 +25,7 @@ public class SGraph extends Vertex {
     public SNode sourceNode, sinkNode;
 
     public SGraph() {
+        super();
         nodes = new HashMap<>();
         edges = new HashSet<>();
         sourceNode = new SNode(new SGraphIOStage());
@@ -34,13 +35,13 @@ public class SGraph extends Vertex {
     }
 
     public SGraph(String graphId) {
+        super(graphId);
         nodes = new HashMap<>();
         edges = new HashSet<>();
         sourceNode = new SNode(new SGraphIOStage());
         sinkNode = new SNode(new SGraphIOStage());
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
-        vertexId = graphId;
     }
 
     /**
@@ -54,7 +55,6 @@ public class SGraph extends Vertex {
     public Vertex addInputField(Symbol symbol) throws Exception {
         super.addInputField(symbol);
         Symbol addedSymbol = new Symbol(sourceNode, symbol.getSymbolName());
-        //sourceNode.addInputField(addedSymbol);
         sourceNode.addOutputField(addedSymbol);
         return this;
     }
@@ -125,6 +125,7 @@ public class SGraph extends Vertex {
 
     /**
      * Collect the connected verteics for each vertex in the graph
+     *
      * @param graph
      * @param useFromAsIndex
      * @return
@@ -202,6 +203,10 @@ public class SGraph extends Vertex {
         return new ArrayList<>(nodes.values());
     }
 
+    public Vertex getNode(String vertexId) {
+        return nodes.get(vertexId);
+    }
+
     public List<SEdge> getEdges() {
         return new ArrayList<>(edges);
     }
@@ -214,12 +219,39 @@ public class SGraph extends Vertex {
         edges.add(edge);
     }
 
+    public void removeEdge(SEdge edge) {
+        edges.remove(edge);
+    }
+
     public void connect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
         Symbol s1 = new Symbol(v1, symbolName1);
         Symbol s2 = new Symbol(v2, symbolName2);
         SEdge edge = new SEdge(s1.getScope(), s2.getScope());
         addEdge(edge);
         connect(s1, s2);
+    }
+
+    public void disconnect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
+        Symbol s1 = new Symbol(v1, symbolName1);
+        Symbol s2 = new Symbol(v2, symbolName2);
+        SEdge edge = new SEdge(s1.getScope(), s2.getScope());
+        disconnect(s1, s2);
+        if (noConnectionBetweenVertex(v1, v2)) {
+            removeEdge(edge);
+        }
+    }
+
+    private boolean noConnectionBetweenVertex(Vertex v1, Vertex v2) {
+        boolean noConnectionLeft = true;
+        for (IOTableCell cell : v1.getOutputTable().getCells()) {
+            for (IOTableCell targetCell : cell.getOutputTarget()) {
+                if (targetCell.getParentTable().getContext().equals(v2)) {
+                    noConnectionLeft = false;
+                    break;
+                }
+            }
+        }
+        return noConnectionLeft;
     }
 
     /**
@@ -236,5 +268,19 @@ public class SGraph extends Vertex {
         } else {
             Logger.getLogger(this.getClass().getName()).info(String.format("Symbol %s to Symbol %s can not be connected", from, to));
         }
+    }
+
+    private void disconnect(Symbol from, Symbol to) {
+        IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
+        IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
+        if (fromCell != null && toCell != null) {
+            fromCell.removeOutputTo(toCell);
+        } else {
+            Logger.getLogger(this.getClass().getName()).info(String.format("Symbol %s to Symbol %s can not be connected", from, to));
+        }
+    }
+
+    boolean containsNode(Vertex vertex) {
+        return nodes.containsKey(vertex.getVertexId());
     }
 }

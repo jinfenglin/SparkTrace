@@ -14,7 +14,7 @@ public class IOTableCell {
     private Symbol fieldSymbol;
     private IOTable parentTable;
 
-    public IOTableCell(IOTable parentTable, Symbol symbol) {
+    public IOTableCell(Symbol symbol) {
         inputSource = new ArrayList<>();
         outputTarget = new ArrayList<>();
         fieldSymbol = symbol;
@@ -28,6 +28,21 @@ public class IOTableCell {
     public void receiveInputFrom(IOTableCell inputCell) {
         inputSource.add(inputCell);
         inputCell.getOutputTarget().add(this);
+    }
+
+    /**
+     * Remove the connection sent to the give target cell;
+     *
+     * @param targetCell
+     */
+    public void removeOutputTo(IOTableCell targetCell) {
+        outputTarget.remove(targetCell);
+        targetCell.getInputSource().remove(this);
+    }
+
+    public void removeInputFrom(IOTableCell inputCell) {
+        inputSource.add(inputCell);
+        inputCell.getOutputTarget().remove(this);
     }
 
 
@@ -55,6 +70,14 @@ public class IOTableCell {
         this.fieldSymbol = fieldSymbol;
     }
 
+    public IOTable getParentTable() {
+        return parentTable;
+    }
+
+    public void setParentTable(IOTable parentTable) {
+        this.parentTable = parentTable;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -74,9 +97,5 @@ public class IOTableCell {
         builder.append(j2.toString());
         builder.append("}");
         return builder.toString();
-    }
-
-    public void penetrate(IOTableCell outputCell) {
-        parentTable.getContext();
     }
 }
