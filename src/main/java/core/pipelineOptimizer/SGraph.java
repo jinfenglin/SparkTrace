@@ -178,6 +178,9 @@ public class SGraph extends Vertex {
                         demandTable.put(sourceCell, remainDemand);
                         if (remainDemand == 0 && sourceCell.isRemovable()) {
                             SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
+                            if("global_tokenizer_tokens".equals(sourceCell.getFieldSymbol().getSymbolValue())){
+                                System.out.print("");
+                            }
                             removalStage.setInputCols(new String[]{sourceCell.getFieldSymbol().getSymbolValue()});
                             stages.add(removalStage);
                         }

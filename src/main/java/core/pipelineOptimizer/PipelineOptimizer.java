@@ -63,6 +63,7 @@ public class PipelineOptimizer {
                         String toFieldName = linkedCell.getFieldSymbol().getSymbolName();
                         curGraph.disconnect(fromVertex, fromFieldName, toVertex, toFieldName);
                         curGraph.connect(curGraph.sourceNode, addedInputFieldName, toVertex, toFieldName);
+                        curGraph.sourceNode.getOutputField(addedInputFieldName).setRemovable(false);
                     }
                     isPenetratedVertex = false;
                 } else {
