@@ -1,5 +1,6 @@
 import core.pipelineOptimizer.*;
 import examples.TestBase;
+import featurePipeline.SGraphColumnRemovalStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.feature.HashingTF;
@@ -141,5 +142,14 @@ public class SGraphTest extends TestBase {
         PipelineModel model = globalGraph.toPipeline().fit(dataset);
         Dataset<Row> processedData = model.transform(dataset);
         processedData.show();
+    }
+
+    @Test
+    public void columnRemovalStageTest() {
+        Dataset<Row> dataset = getSentenceDataset();
+        SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
+        removalStage.setInputCols(new String[]{"sentence", "label"});
+        dataset = removalStage.transform(dataset);
+        Assert.assertEquals(0, dataset.columns().length);
     }
 }

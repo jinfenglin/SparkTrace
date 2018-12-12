@@ -50,12 +50,6 @@ public class SGraphIOStage extends Transformer implements HasInputCols, HasOutpu
 
     @Override
     public StructType transformSchema(StructType structType) {
-        Set<String> fieldNames = new HashSet<>(Arrays.asList(structType.fieldNames()));
-        for (String inputCol : getInputCols()) {
-            if (!fieldNames.contains(inputCol)) {
-                Logger.getLogger(this.getClass().getName()).log(Level.ERROR, String.format("%s is not found in the input dataframe.", inputCol));
-            }
-        }
         return structType;
     }
 

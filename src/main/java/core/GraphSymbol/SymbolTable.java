@@ -31,7 +31,7 @@ public final class SymbolTable {
     }
 
     private static String resolveValueConflicts(Symbol symbol) {
-        return symbol.getScope().toString() + "_" + symbol.getSymbolName();
+        return symbol.getScope().getVertexId() + "_" + symbol.getSymbolName();
     }
 
     /**

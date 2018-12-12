@@ -2,6 +2,7 @@ package core.pipelineOptimizer;
 
 import core.GraphSymbol.Symbol;
 import core.GraphSymbol.SymbolTable;
+import featurePipeline.SGraphColumnRemovalStage;
 import featurePipeline.SGraphIOStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
@@ -70,19 +71,19 @@ public class SGraph extends Vertex {
     /**
      * Let the connected symbols share same value
      */
-    private void syncSymbolValues(SGraph graph) throws Exception {
+    private static void syncSymbolValues(SGraph graph) throws Exception {
         //SourceNode and SinkNode are special in the graph. The sourceNode don't have connection on its InputTable,
         //Instead, it consume graph's InputTable directly. However, the consumption is through parameters thus no explicit
         //connections are specified between graph.inputTable and sourceNode.outputTable (And inputTable should receive and have no out going links)
-        for (IOTableCell graphInputCell : this.getInputTable().getCells()) {
+        for (IOTableCell graphInputCell : graph.getInputTable().getCells()) {
             Symbol graphProviderSymbol = graphInputCell.getFieldSymbol();
-            Symbol sourceNodeReceiverSymbol = sourceNode.getOutputTable().getSymbolByVarName(graphProviderSymbol.getSymbolName());
+            Symbol sourceNodeReceiverSymbol = graph.sourceNode.getOutputTable().getSymbolByVarName(graphProviderSymbol.getSymbolName());
             SymbolTable.shareSymbolValue(graphProviderSymbol, sourceNodeReceiverSymbol, false);
         }
 
-        for (IOTableCell graphOutputCell : this.getOutputTable().getCells()) {
+        for (IOTableCell graphOutputCell : graph.getOutputTable().getCells()) {
             Symbol graphReceiverSymbol = graphOutputCell.getFieldSymbol();
-            Symbol sinkNodeProviderSymbol = sinkNode.getInputTable().getSymbolByVarName(graphReceiverSymbol.getSymbolName());
+            Symbol sinkNodeProviderSymbol = graph.sinkNode.getInputTable().getSymbolByVarName(graphReceiverSymbol.getSymbolName());
             SymbolTable.shareSymbolValue(sinkNodeProviderSymbol, graphReceiverSymbol, false);
         }
 
@@ -97,6 +98,56 @@ public class SGraph extends Vertex {
             if (node instanceof SGraph) {
                 syncSymbolValues((SGraph) node);
             }
+        }
+    }
+
+    /**
+     * @return
+     */
+    public Map<IOTableCell, Integer> getDemandTable() {
+        Map<IOTableCell, Integer> demandTable = new HashMap<>();
+        for (Vertex vertex : getNodes()) {
+            for (IOTableCell cell : vertex.getOutputTable().getCells()) {
+                demandTable.put(cell, demandTable.getOrDefault(cell, 0) + 1);
+            }
+        }
+        return demandTable;
+    }
+
+    public void removeNode(Vertex node) {
+        this.nodes.remove(node.getVertexId());
+        for (Vertex fromNode : getInputVertices()) {
+            clearConnection(fromNode, node);
+        }
+        for (Vertex toNode : getOutputVertices()) {
+            clearConnection(node, toNode);
+        }
+    }
+
+    /**
+     * Remove the graph which have no out-degree
+     *
+     * @param graph
+     */
+    private static void removeRedundantVertices(SGraph graph) {
+        List<Vertex> vertices = graph.getNodes();
+        vertices.remove(graph.sourceNode);
+        vertices.remove(graph.sinkNode);
+        Queue<Vertex> deletionQueue = new LinkedList<>();
+        for (Vertex node : vertices) {
+            if (node.getOutputVertices().size() == 0) {
+                deletionQueue.add(node);
+            }
+        }
+        while (deletionQueue.size() > 0) {
+            Vertex curNode = deletionQueue.poll();
+            graph.removeNode(curNode);
+            Set<Vertex> inputVertices = curNode.getInputVertices();
+            inputVertices.forEach(vertex -> {
+                if (vertex.getOutputVertices().size() == 0) {
+                    deletionQueue.add(vertex);
+                }
+            });
         }
     }
 
@@ -115,8 +166,22 @@ public class SGraph extends Vertex {
         syncSymbolValues(this);
         Pipeline pipeline = new Pipeline();
         List<PipelineStage> stages = new ArrayList<>();
+        removeRedundantVertices(this);
         List<Vertex> topSortNodes = topologicalSort(this);
+        Map<IOTableCell, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
+            for (IOTableCell targetCell : node.getInputTable().getCells()) {
+                for (IOTableCell sourceCell : targetCell.getOutputTarget()) {
+                    int remainDemand = demandTable.get(sourceCell) - 1;
+                    demandTable.put(sourceCell, remainDemand);
+                    if (remainDemand == 0) {
+                        SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
+                        removalStage.setInputCols(new String[]{sourceCell.getFieldSymbol().getSymbolValue()});
+                        stages.add(removalStage);
+                    }
+                }
+            }
+
             stages.add(node.toPipeline());
         }
         pipeline.setStages(stages.toArray(new PipelineStage[0]));
@@ -217,6 +282,22 @@ public class SGraph extends Vertex {
 
     public void addEdge(SEdge edge) {
         edges.add(edge);
+    }
+
+    /**
+     * Clear all connection between two vertices
+     *
+     * @param from
+     * @param to
+     */
+    private void clearConnection(Vertex from, Vertex to) {
+        for (IOTableCell sourceCell : from.getOutputTable().getCells()) {
+            for (IOTableCell receiverCell : sourceCell.getOutputTarget()) {
+                if (receiverCell.getParentTable().getContext().equals(to)) {
+                    disconnect(from, sourceCell.getFieldSymbol().getSymbolName(), to, receiverCell.getFieldSymbol().getSymbolName());
+                }
+            }
+        }
     }
 
     public void removeEdge(SEdge edge) {
