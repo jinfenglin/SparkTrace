@@ -2,6 +2,7 @@ package core.pipelineOptimizer;
 
 import core.GraphSymbol.Symbol;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +45,7 @@ public class PipelineOptimizer {
 
         if (targetToLCAPath.size() > 0) {
             //Add the targetCell as an input to all the SGraph in the targetToLCAPath
-            boolean isPenetratedVertex = true;
+            boolean isPenetratedVertex = true; //The first vertex we process is where penetrated filed reside.
             Vertex subGraph = targetCell.getParentTable().getContext();
             String addedInputFieldName = targetCell.getFieldSymbol().getSymbolName();
 
@@ -53,7 +54,7 @@ public class PipelineOptimizer {
                 Symbol newInputField = new Symbol(curGraph, addedInputFieldName);
                 curGraph.addInputField(newInputField);
                 if (isPenetratedVertex) {
-                    List<IOTableCell> linkedCells = targetCell.getOutputTarget();
+                    List<IOTableCell> linkedCells = new ArrayList<>(targetCell.getOutputTarget());
                     for (IOTableCell linkedCell : linkedCells) {
                         //Transfer the dependency of penetrated node to the sourceNode
                         Vertex fromVertex = targetCell.getParentTable().getContext();
@@ -73,6 +74,7 @@ public class PipelineOptimizer {
             //The targetCell belong to a SNode in LCA. Need to transfer the dependency to the source parent directly.
             targetTopParentNode = targetCell.getParentTable().getContext();
         }
+
         SGraph lcaNode = lcaResult.LCANode.getNodeContent();
         if (targetTopParentNode instanceof SGraph) {
             lcaNode.connect(sourceTopParentNode, sourceCell.getFieldSymbol().getSymbolName(), targetTopParentNode, targetCell.getFieldSymbol().getSymbolName());

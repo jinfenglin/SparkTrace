@@ -34,10 +34,7 @@ public class Symbol {
 
     @Override
     public String toString() {
-        return "Symbol{" +
-                "scope=" + scope.getVertexId() +
-                ", symbolName='" + symbolName + '\'' +
-                '}';
+        return scope.getVertexId() + "." + symbolName;
     }
 
     @Override

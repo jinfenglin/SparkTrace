@@ -47,7 +47,7 @@ public class SGraphTest extends TestBase {
         n3.addInputField("true_htf");
         n3.addOutputField("idf");
 
-        SNode n4 = new SNode(htf2, "dummyTokenizer");
+        SNode n4 = new SNode(htf2, "dummy_htf");
         n4.addInputField("tokens");
         n4.addOutputField("n4_htf");
 

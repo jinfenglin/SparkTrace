@@ -108,7 +108,7 @@ public class SGraph extends Vertex {
         Map<IOTableCell, Integer> demandTable = new HashMap<>();
         for (Vertex vertex : getNodes()) {
             for (IOTableCell cell : vertex.getOutputTable().getCells()) {
-                demandTable.put(cell, demandTable.getOrDefault(cell, 0) + 1);
+                demandTable.put(cell, demandTable.getOrDefault(cell, 0) + cell.getOutputTarget().size());
             }
         }
         return demandTable;
@@ -116,10 +116,10 @@ public class SGraph extends Vertex {
 
     public void removeNode(Vertex node) {
         this.nodes.remove(node.getVertexId());
-        for (Vertex fromNode : getInputVertices()) {
+        for (Vertex fromNode : node.getInputVertices()) {
             clearConnection(fromNode, node);
         }
-        for (Vertex toNode : getOutputVertices()) {
+        for (Vertex toNode : node.getOutputVertices()) {
             clearConnection(node, toNode);
         }
     }
@@ -170,19 +170,20 @@ public class SGraph extends Vertex {
         List<Vertex> topSortNodes = topologicalSort(this);
         Map<IOTableCell, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
-            for (IOTableCell targetCell : node.getInputTable().getCells()) {
-                for (IOTableCell sourceCell : targetCell.getOutputTarget()) {
-                    int remainDemand = demandTable.get(sourceCell) - 1;
-                    demandTable.put(sourceCell, remainDemand);
-                    if (remainDemand == 0) {
-                        SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
-                        removalStage.setInputCols(new String[]{sourceCell.getFieldSymbol().getSymbolValue()});
-                        stages.add(removalStage);
+            stages.add(node.toPipeline());
+            if (!node.equals(sinkNode)) {
+                for (IOTableCell targetCell : node.getInputTable().getCells()) {
+                    for (IOTableCell sourceCell : targetCell.getInputSource()) {
+                        int remainDemand = demandTable.get(sourceCell) - 1;
+                        demandTable.put(sourceCell, remainDemand);
+                        if (remainDemand == 0 && sourceCell.isRemovable()) {
+                            SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
+                            removalStage.setInputCols(new String[]{sourceCell.getFieldSymbol().getSymbolValue()});
+                            stages.add(removalStage);
+                        }
                     }
                 }
             }
-
-            stages.add(node.toPipeline());
         }
         pipeline.setStages(stages.toArray(new PipelineStage[0]));
         return pipeline;
@@ -292,10 +293,14 @@ public class SGraph extends Vertex {
      */
     private void clearConnection(Vertex from, Vertex to) {
         for (IOTableCell sourceCell : from.getOutputTable().getCells()) {
+            List<IOTableCell> toVertexReceiverCells = new ArrayList<>();
             for (IOTableCell receiverCell : sourceCell.getOutputTarget()) {
                 if (receiverCell.getParentTable().getContext().equals(to)) {
-                    disconnect(from, sourceCell.getFieldSymbol().getSymbolName(), to, receiverCell.getFieldSymbol().getSymbolName());
+                    toVertexReceiverCells.add(receiverCell);
                 }
+            }
+            for (IOTableCell receiverCell : toVertexReceiverCells) {
+                disconnect(from, sourceCell.getFieldSymbol().getSymbolName(), to, receiverCell.getFieldSymbol().getSymbolName());
             }
         }
     }

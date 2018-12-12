@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.StructType;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 
 
 /**
@@ -38,7 +39,8 @@ public class SGraphColumnRemovalStage extends Transformer implements HasInputCol
     public StructType transformSchema(StructType structType) {
         String[] cols = getInputCols();
         for (String colName : cols) {
-            assert structType.contains(colName);
+            //assert structType.contains(colName);
+            Logger.getLogger("column remover").info("removing column " + colName);
             structType.drop(structType.fieldIndex(colName));
         }
         return structType;
