@@ -75,7 +75,7 @@ public class SGraphTest extends TestBase {
     public void SGraphToPipelineTest() throws Exception {
         SGraph g1 = createGraph();
         Pipeline pipeline = g1.toPipeline();
-        Assert.assertEquals(pipeline.getStages().length, 5);
+        Assert.assertEquals(pipeline.getStages().length, 8);
     }
 
     @Test

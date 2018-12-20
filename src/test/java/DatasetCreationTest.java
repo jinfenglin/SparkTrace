@@ -18,7 +18,7 @@ public class DatasetCreationTest extends TestBase {
     private static String masterUrl = "local";
     private static int CREATION_NUM = 10;
     //The small dataset of maven
-    private static int MAVEN_COMMIT_NUM = 4803, MAVEN_IMPROVEMENT_NUM = 248, MAVEN_LINK_NUM = 159;
+    private static int MAVEN_COMMIT_NUM = 4803, MAVEN_IMPROVEMENT_NUM = 230, MAVEN_LINK_NUM = 159;
 
 
     public DatasetCreationTest() {
@@ -47,13 +47,6 @@ public class DatasetCreationTest extends TestBase {
 
         String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
         readCSVDataAndVerifyNum(linkPath, MAVEN_LINK_NUM, MavenLink.class);
-    }
-
-    @Test
-    public void verifyArtifactDatasetCreated() {
-        Dataset<BasicTraceArtifact> artifactDataset = getBasicTraceArtifacts(CREATION_NUM);
-        List<BasicTraceArtifact> artifactList = artifactDataset.collectAsList();
-        assertEquals(artifactList.size(), CREATION_NUM);
     }
 
     @Test
