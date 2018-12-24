@@ -1,19 +1,8 @@
 package core;
 
-import featurePipeline.*;
 import org.apache.spark.SparkConf;
-import org.apache.spark.ml.*;
-import org.apache.spark.ml.clustering.LDA;
-import org.apache.spark.ml.param.Param;
-import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.param.ParamValidators;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.types.StructType;
-import traceability.components.abstractComponents.TraceArtifact;
-import traceability.components.abstractComponents.TraceLink;
-import traceability.components.basic.BasicTraceLink;
 
-import java.util.List;
 
 public class SparkTraceJob {
     private static final long serialVersionUID = -5857405130938637355L;

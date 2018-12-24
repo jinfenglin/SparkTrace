@@ -1,12 +1,18 @@
 package core;
 
-import featurePipeline.TraceModelPipeline;
+import core.pipelineOptimizer.SGraph;
 import org.apache.spark.ml.*;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
+import org.apache.spark.ml.param.StringArrayParam;
+import org.apache.spark.ml.param.shared.HasInputCols;
+import org.apache.spark.ml.util.SchemaUtils;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
+import org.spark_project.dmg.pmml.DataType;
 import traceability.components.abstractComponents.TraceArtifact;
 import traceability.components.abstractComponents.TraceLink;
 
@@ -17,48 +23,74 @@ import traceability.components.abstractComponents.TraceLink;
  * the parent STT. If STT is generating same field as its parent, parent's field will be applied and the calculation will
  * be skipped. This feature can be configured through parameters
  */
-public class SparkTraceTask extends Predictor {
+public class SparkTraceTask extends SGraph {
     private static final long serialVersionUID = 7229590480653993971L;
     public final static String SOURCE_PREFIX = "source";
     public final static String TARGET_PREFIX = "target";
     public final static String ID_COL_NAME = "id";
+    public final static String LINK_SCORE_COL_NAME = "link_score";
 
-    private String sourceArtifactIdColName, targetArtifactIdColName;
-
-    private Pipeline sourceSDFPipeline, targetSDFPipeline;
-    private Pipeline ddfPipeline;
-    private Predictor predictor;
-
-    //Data fields
-//    private Dataset<? extends TraceArtifact> sourceArtifacts, targetArtifacts;
-//    Dataset<? extends TraceLink> goldenLinks;
+    private SGraph sourceSDFGraph, targetSDFGraph;
+    private SGraph DDFGraph;
+    private SGraph ModelGraph;
 
 
     //Task parameters
-    //final Param<String> sourceArtifactIdColName = new Param<String>(this, "sourceIdColName", "Name of the id column for source artifacts dataset");
-    //final Param<String> targetArtifactIdColName = new Param<String>(this, "targetIdColName", "Name of the id column for target artifacts dataset");
+    private Param<String> sourceArtifactIdColName;
+    private Param<String> targetArtifactIdColName;
+    private Param<String> linkScoreColName;
 
-    public SparkTraceTask(Dataset<? extends TraceArtifact> sourceArtifacts,
-                          Dataset<? extends TraceArtifact> targetArtifacts,
-                          Dataset<? extends TraceLink> goldenLinks) {
-//        this.sourceArtifacts = sourceArtifacts;
-//        this.targetArtifacts = targetArtifacts;
-//        this.goldenLinks = goldenLinks;
-
+    private void initParam() {
         //Init Param
         String defaultSourceIdColName = String.join("_", SOURCE_PREFIX, ID_COL_NAME);
         String defaultTargetIdColName = String.join("_", TARGET_PREFIX, ID_COL_NAME);
-        sourceArtifactIdColName = defaultSourceIdColName;
-        targetArtifactIdColName = defaultTargetIdColName;
+        String defaultLinkScoreColName = LINK_SCORE_COL_NAME;
+        sourceArtifactIdColName = new Param<>(this, "sourceIdColName", "Name of the id column for source artifacts dataset");
+        targetArtifactIdColName = new Param<>(this, "targetIdColName", "Name of the id column for target artifacts dataset");
+        linkScoreColName = new Param<>(this, "linkScoreColName", "Name of the link score column");
+        setDefault(sourceArtifactIdColName, defaultSourceIdColName);
+        setDefault(targetArtifactIdColName, defaultTargetIdColName);
+        setDefault(linkScoreColName, defaultLinkScoreColName);
     }
 
+//    public SparkTraceTask(Dataset<? extends TraceArtifact> sourceArtifacts,
+//                          Dataset<? extends TraceArtifact> targetArtifacts,
+//                          Dataset<? extends TraceLink> goldenLinks) {
+//        this.sourceArtifacts = sourceArtifacts;
+//        this.targetArtifacts = targetArtifacts;
+//        this.goldenLinks = goldenLinks;
+//        initParam();
+//    }
+
+    public SparkTraceTask() {
+        initParam();
+    }
+
+    /**
+     * Spark Task will merge the SDF,DDF and prediction model
+     *
+     * @param dataset
+     * @return
+     */
+    @Override
+    public SparkTraceTaskModel fit(Dataset<?> dataset) {
+
+        return null;
+    }
+
+    @Override
+    public StructType transformSchema(StructType structType) {
+        SchemaUtils.appendColumn(structType, getLinkScoreColName(), DataTypes.DoubleType, false);
+        SchemaUtils.checkColumnType(structType, getSourceArtifactColName(), DataTypes.StringType, null);
+        SchemaUtils.checkColumnType(structType, getTargetArtifactColName(), DataTypes.StringType, null);
+        return structType;
+    }
 
     @Override
     public Predictor copy(ParamMap paramMap) {
         return defaultCopy(paramMap);
     }
 
-    @Override
     public PredictionModel train(Dataset goldLinksWithFeatureVec) {
 
         //Process the document with SDF pipeline
@@ -95,21 +127,29 @@ public class SparkTraceTask extends Predictor {
     }
 
     public String getSourceArtifactColName() {
-        return sourceArtifactIdColName;
+        return getOrDefault(sourceArtifactIdColName);
     }
 
     public String getTargetArtifactColName() {
-        return targetArtifactIdColName;
+        return getOrDefault(targetArtifactIdColName);
+    }
+
+    public String getLinkScoreColName() {
+        return getOrDefault(linkScoreColName);
     }
 
     public SparkTraceTask setSourceArtifactIdColName(String idColName) {
-        sourceArtifactIdColName = idColName;
+        set(sourceArtifactIdColName, idColName);
         return this;
     }
 
     public SparkTraceTask setTargetArtifactColName(String idColName) {
-        targetArtifactIdColName = idColName;
+        set(targetArtifactIdColName, idColName);
         return this;
     }
 
+    public SparkTraceTask setLinkScoreColName(String scoreColName) {
+        set(linkScoreColName, scoreColName);
+        return this;
+    }
 }
