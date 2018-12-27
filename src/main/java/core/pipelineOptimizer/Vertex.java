@@ -5,6 +5,7 @@ import core.GraphSymbol.SymbolTable;
 import org.apache.spark.ml.Pipeline;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -69,6 +70,15 @@ abstract public class Vertex {
         }
         return this;
     }
+
+    public Vertex addInputFields(List<Symbol> symbols) throws Exception {
+        for (Symbol symbol : symbols) {
+            addInputField(symbol);
+        }
+        return this;
+    }
+
+
 
     public Vertex addInputField(Symbol symbol) throws Exception {
         IOTableCell cell = new IOTableCell(symbol);

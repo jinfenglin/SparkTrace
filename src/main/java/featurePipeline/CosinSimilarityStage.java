@@ -10,7 +10,6 @@ import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 
-//TODO implement the HasinputCols and HasoutputCol interface, even the parameters for Java is broken
 public class CosinSimilarityStage extends Transformer {
     private static final long serialVersionUID = 5667889784880518528L;
     private static final String COSIN_SIMILAIRY_UDF = "cosin_similarity";
@@ -22,7 +21,6 @@ public class CosinSimilarityStage extends Transformer {
         setInputCol1("vector1");
         setInputCol2("vector2");
         setOutputCol("cosin_similarity");
-
     }
 
     @Override

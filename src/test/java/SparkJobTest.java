@@ -1,13 +1,6 @@
-import core.SparkTraceJob;
 import examples.TestBase;
-import featurePipeline.CosinSimilarityStage;
-import featurePipeline.DDFPipeline;
-import featurePipeline.SDFPipeline;
-import featurePipeline.TraceModelPipeline;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
-import org.apache.spark.ml.feature.HashingTF;
-import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -36,8 +29,6 @@ public class SparkJobTest extends TestBase {
         Dataset<MavenCommit> commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         Dataset<MavenImprovement> improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
         Dataset<MavenLink> links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);
-
-
     }
 
     @Test
@@ -58,6 +49,15 @@ public class SparkJobTest extends TestBase {
         endTime = System.currentTimeMillis();
         long multiStageTime = endTime - startTime;
         System.out.println("multi stage time:" + multiStageTime);
+    }
+
+    @Test
+    public void singleSparkTaskTest() {
+
+    }
+
+    @Test
+    public void nestedSparkTaskTest() {
 
     }
 }

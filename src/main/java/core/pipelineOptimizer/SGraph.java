@@ -114,6 +114,11 @@ public class SGraph extends Vertex {
         return demandTable;
     }
 
+    /**
+     * remove node and its connections towards other nodes
+     *
+     * @param node
+     */
     public void removeNode(Vertex node) {
         this.nodes.remove(node.getVertexId());
         for (Vertex fromNode : node.getInputVertices()) {
@@ -168,6 +173,8 @@ public class SGraph extends Vertex {
         List<PipelineStage> stages = new ArrayList<>();
         removeRedundantVertices(this);
         List<Vertex> topSortNodes = topologicalSort(this);
+
+        //Add Stages and create column cleaning stages in fly
         Map<IOTableCell, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
             stages.add(node.toPipeline());

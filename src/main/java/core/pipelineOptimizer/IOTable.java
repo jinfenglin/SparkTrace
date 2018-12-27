@@ -11,7 +11,7 @@ import java.util.*;
  */
 public class IOTable {
     private Vertex context; //IOTable must reside within a vertex
-    private Map<Symbol, IOTableCell> cells; //A HahsMap for fast access to IOTableCell
+    private Map<Symbol, IOTableCell> cells; // A HashMap for fast access to IOTableCell
 
     public IOTable(Vertex context) {
         this.context = context;

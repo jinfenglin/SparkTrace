@@ -29,6 +29,10 @@ public class PipelineOptimizer {
         if (sourceToLCAPath.size() > 0) {
             //Add the sourceCell as an output to all the SGraph in the sourceToLCAPath
             Vertex subGraph = sourceCell.getParentTable().getContext();
+            // TODO: Use unique name here to avoid name conflict
+            // Since the outputField use name from sourceCell, it is possible that newOutField symbol conflict existing
+            // name. A unique symbol name solve the problem.Its value won't change since this symbol receive value from
+            // source cell and will not use its default symbol name as value.
             String addedOutputFieldName = sourceCell.getFieldSymbol().getSymbolName();
             for (GraphHierarchyTree treeNode : sourceToLCAPath) {
                 SGraph curGraph = treeNode.getNodeContent();
@@ -91,5 +95,17 @@ public class PipelineOptimizer {
                 lcaNode.connect(sourceTopParentNode, sourceCellFiledName, linkedVertex, linkedFieldName);
             }
         }
+    }
+
+    /**
+     * If the sourceNode is same as the targetNode, then this function can transfer the dependency of target node to source Node.
+     * Vertex level Penetration can be used in automated optimization to reduce the duplicated part of graph.
+     *
+     * @param sourceVertex
+     * @param targetVertex
+     * @param treeRoot
+     */
+    public static void penetrate(Vertex sourceVertex, Vertex targetVertex, GraphHierarchyTree treeRoot) {
+        return;
     }
 }

@@ -49,9 +49,19 @@ public final class SymbolTable {
         return symbolValueMap.get(symbol);
     }
 
+    public static void setInputSymbolValue(Symbol symbol, String value) {
+        Map<Symbol, String> symbolValueMap = getInputSymbolValueMap();
+        symbolValueMap.put(symbol, value);
+    }
+
     public static String getOutputSymbolValue(Symbol symbol) {
         Map<Symbol, String> symbolValueMap = getOutputSymbolValueMap();
         return symbolValueMap.get(symbol);
+    }
+
+    public static void setOutputSymbolValue(Symbol symbol, String value) {
+        Map<Symbol, String> symbolValueMap = getOutputSymbolValueMap();
+        symbolValueMap.put(symbol, value);
     }
 
     public static void registerInputSymbol(Symbol symbol) {
@@ -74,7 +84,8 @@ public final class SymbolTable {
 
     /**
      * Share the provider's symbol value to receiver. The boolean parameter determines search the provider and receiver
-     * symbols in which symbol set.
+     * symbols in which symbol set. If true, the value is passed from inputTable to outputtable,
+     * otherwise it is from output table to inputtable
      *
      * @param valueProvider
      * @param receiver

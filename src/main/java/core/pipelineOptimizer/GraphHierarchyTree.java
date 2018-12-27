@@ -60,16 +60,21 @@ public class GraphHierarchyTree {
 
     public GraphHierarchyTree findNode(IOTableCell cell) {
         Vertex vertex = cell.getParentTable().getContext();
+        return findNode(vertex);
+    }
+
+    public GraphHierarchyTree findNode(Vertex vertex) {
         if (nodeContent.containsNode(vertex))
             return this;
         for (GraphHierarchyTree subTree : subTrees) {
-            GraphHierarchyTree searchNode = subTree.findNode(cell);
+            GraphHierarchyTree searchNode = subTree.findNode(vertex);
             if (searchNode != null) {
                 return searchNode;
             }
         }
         return null;
     }
+
 
     /**
      * Find a path from node source to node target
