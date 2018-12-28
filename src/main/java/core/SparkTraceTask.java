@@ -33,10 +33,8 @@ public class SparkTraceTask extends SGraph {
     private SDFGraph sourceSDFGraph, targetSDFGraph;
     private SGraph DDFGraph;
 
-    private SGraph traceModelGraph;
-
     private PipelineModel sourceSDFModel, targetSDFModel;
-    private PipelineModel DDFModel, traceModel;
+    private PipelineModel DDFModel;
 
 
     public SparkTraceTask() {
@@ -180,11 +178,12 @@ public class SparkTraceTask extends SGraph {
         targetSDFModel = targetSDFGraph.toPipeline().fit(targetArtifacts);
         Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
-        Dataset<Row> goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
-        DDFModel = DDFGraph.toPipeline().fit(goldLinksWithFeatureVec);
-        Dataset<Row> fullFeatures = DDFModel.transform(goldLinksWithFeatureVec);
-        traceModel = traceModelGraph.toPipeline().fit(fullFeatures);
-        traceModel.transform(fullFeatures);
+        if (!(goldenLinks == null)) {
+            Dataset<Row> goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
+            DDFModel = DDFGraph.toPipeline().fit(goldLinksWithFeatureVec);
+            Dataset<Row> traceResult = DDFModel.transform(goldLinksWithFeatureVec);
+            traceResult.show();
+        }
     }
 
     public void trace(Dataset<? extends TraceArtifact> sourceArtifacts,
@@ -194,8 +193,7 @@ public class SparkTraceTask extends SGraph {
 
         Dataset<Row> candidateLinks = sourceArtifacts.crossJoin(targetArtifacts); //Cross join
         candidateLinks = appendFeaturesToLinks(candidateLinks, sourceFeatures, targetFeatures);
-        Dataset<Row> finalFeatures = DDFModel.transform(candidateLinks);
-        traceModel.transform(finalFeatures);
+        Dataset<Row> traceResult = DDFModel.transform(candidateLinks);
     }
 
 
@@ -220,7 +218,9 @@ public class SparkTraceTask extends SGraph {
     }
 
     public void setSourceSDFGraph(SDFGraph sourceSDFGraph) {
+        removeNode(getSourceSDFGraph());
         this.sourceSDFGraph = sourceSDFGraph;
+        addNode(sourceSDFGraph);
     }
 
     public SGraph getTargetSDFGraph() {
@@ -228,7 +228,9 @@ public class SparkTraceTask extends SGraph {
     }
 
     public void setTargetSDFGraph(SDFGraph targetSDFGraph) {
+        removeNode(getTargetSDFGraph());
         this.targetSDFGraph = targetSDFGraph;
+        addNode(targetSDFGraph);
     }
 
     public SGraph getDDFGraph() {
@@ -236,7 +238,9 @@ public class SparkTraceTask extends SGraph {
     }
 
     public void setDDFGraph(SGraph DDFGraph) {
+        removeNode(getDDFGraph());
         this.DDFGraph = DDFGraph;
+        addNode(getDDFGraph());
     }
 
     private Map<String, String> reverseMapKeyValue(Map<String, String> inputMap) {
@@ -245,13 +249,5 @@ public class SparkTraceTask extends SGraph {
             reversedHashMap.put(inputMap.get(key), key);
         }
         return reversedHashMap;
-    }
-
-    public SGraph getTraceModelGraph() {
-        return traceModelGraph;
-    }
-
-    public void setTraceModelGraph(SGraph traceModelGraph) {
-        this.traceModelGraph = traceModelGraph;
     }
 }

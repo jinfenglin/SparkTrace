@@ -120,12 +120,14 @@ public class SGraph extends Vertex {
      * @param node
      */
     public void removeNode(Vertex node) {
-        this.nodes.remove(node.getVertexId());
-        for (Vertex fromNode : node.getInputVertices()) {
-            clearConnection(fromNode, node);
-        }
-        for (Vertex toNode : node.getOutputVertices()) {
-            clearConnection(node, toNode);
+        if (this.nodes.containsKey(node)) {
+            this.nodes.remove(node.getVertexId());
+            for (Vertex fromNode : node.getInputVertices()) {
+                clearConnection(fromNode, node);
+            }
+            for (Vertex toNode : node.getOutputVertices()) {
+                clearConnection(node, toNode);
+            }
         }
     }
 

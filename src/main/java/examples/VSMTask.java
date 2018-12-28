@@ -4,6 +4,7 @@ import core.SparkTraceTask;
 import core.pipelineOptimizer.SDFGraph;
 import core.pipelineOptimizer.SGraph;
 import core.pipelineOptimizer.SNode;
+import featurePipeline.CosinSimilarityStage;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.Tokenizer;
@@ -17,7 +18,7 @@ public class VSMTask {
 
     }
 
-    private SDFGraph createSourceSDF() throws Exception {
+    private static SDFGraph createSourceSDF() throws Exception {
         SDFGraph sourceSDF = new SDFGraph("source_id");
         sourceSDF.setId("VSMTask_SourceSDF");
         sourceSDF.setArtifactIdColName("s_id");
@@ -51,7 +52,7 @@ public class VSMTask {
         return sourceSDF;
     }
 
-    private SDFGraph createTargetSDF() throws Exception {
+    private static SDFGraph createTargetSDF() throws Exception {
         SDFGraph targetSDF = new SDFGraph("target_id");
         targetSDF.setId("VSMTask_TargetSDF");
         targetSDF.setArtifactIdColName("t_id");
@@ -86,20 +87,35 @@ public class VSMTask {
         return targetSDF;
     }
 
-    private SGraph createDDFGraph() {
+    private static SGraph createDDFGraph() throws Exception {
         SGraph ddfGraph = new SGraph("VSM_DDFGraph");
-        
+        ddfGraph.addInputField("s_tf_idf");
+        ddfGraph.addInputField("t_tf_idf");
+        ddfGraph.addOutputField("vsm_cosin_sim_score");
 
-        return null;
+        CosinSimilarityStage cosinSimilarityStage = new CosinSimilarityStage();
+        SNode cosinNode = new SNode(cosinSimilarityStage);
+        cosinNode.addInputField("vec1");
+        cosinNode.addInputField("vec2");
+        cosinNode.addOutputField("cosin_score");
+
+        ddfGraph.addNode(cosinNode);
+
+        ddfGraph.connect(ddfGraph.sourceNode, "s_tf_idf", cosinNode, "vec1");
+        ddfGraph.connect(ddfGraph.sourceNode, "t_tf_idf", cosinNode, "vec2");
+        ddfGraph.connect(cosinNode, "cosin_score", ddfGraph.sinkNode, "vsm_cosin_sim_score");
+        return ddfGraph;
     }
 
-    private SGraph createTraceModel() {
-        return null;
-    }
 
     public static SparkTraceTask getSTT() throws Exception {
-
-
-        return null;
+        SparkTraceTask stt = new SparkTraceTask();
+        stt.setId("VSM_Task");
+        stt.setSourceSDFGraph(createSourceSDF());
+        stt.setTargetSDFGraph(createTargetSDF());
+        stt.setDDFGraph(createDDFGraph());
+        stt.connect(stt.getSourceSDFGraph(), "s_tf_idf", stt.getDDFGraph(), "s_tf_idf");
+        stt.connect(stt.getTargetSDFGraph(), "t_tf_idf", stt.getDDFGraph(), "t_tf_idf");
+        return stt;
     }
 }
