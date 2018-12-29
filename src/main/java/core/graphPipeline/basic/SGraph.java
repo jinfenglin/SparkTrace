@@ -375,7 +375,7 @@ public class SGraph extends Vertex {
         }
     }
 
-    boolean containsNode(Vertex vertex) {
+    public boolean containsNode(Vertex vertex) {
         return nodes.containsKey(vertex.getVertexId());
     }
 }
