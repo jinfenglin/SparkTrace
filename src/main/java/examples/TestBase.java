@@ -1,7 +1,6 @@
 package examples;
 
 
-import core.GraphSymbol.Symbol;
 import org.apache.spark.SparkConf;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
@@ -18,7 +17,6 @@ import traceability.components.basic.BasicTraceLink;
 import traceability.TraceDatasetFactory;
 
 
-import javax.xml.crypto.Data;
 import java.util.*;
 
 public class TestBase {

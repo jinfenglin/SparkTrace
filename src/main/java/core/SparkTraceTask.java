@@ -1,21 +1,23 @@
 package core;
 
-import core.GraphSymbol.Symbol;
+import core.graphPipeline.SDF.SDFGraph;
+import core.graphPipeline.basic.IOTableCell;
+import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.basic.Vertex;
+import core.graphPipeline.graphSymbol.Symbol;
 import core.pipelineOptimizer.*;
-import org.apache.commons.codec.binary.StringUtils;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.spark.ml.PipelineModel;
-import org.apache.spark.ml.util.SchemaUtils;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructType;
-import org.spark_project.dmg.pmml.OutputField;
+import scala.collection.JavaConverters;
+import scala.collection.Seq;
 import traceability.components.abstractComponents.TraceArtifact;
 import traceability.components.abstractComponents.TraceLink;
 
 import java.util.*;
+
+import static org.apache.spark.sql.functions.lit;
 
 
 /**
@@ -30,10 +32,10 @@ import java.util.*;
 public class SparkTraceTask extends SGraph {
     private boolean isInitialed = false; //record whether the task is init or not
 
-    private SDFGraph sourceSDFGraph, targetSDFGraph;
-    private SGraph DDFGraph;
+    private SDFGraph sdfGraph;
+    private SGraph ddfGraph;
 
-    private PipelineModel sourceSDFModel, targetSDFModel;
+    private PipelineModel SDFModel;
     private PipelineModel DDFModel;
 
 
@@ -100,12 +102,7 @@ public class SparkTraceTask extends SGraph {
                 SparkTraceTask innerTask = (SparkTraceTask) curGraph;
                 Map<String, String> reversedSDFSymbolMap = reverseMapKeyValue(SDFSymbolMap);
 
-                List<IOTableCell> subTaskSDFIOCells = null;
-                if (parentSDF.equals(sourceSDFGraph)) {
-                    subTaskSDFIOCells = innerTask.getSourceSDFGraph().getOutputTable().getCells();
-                } else {
-                    subTaskSDFIOCells = innerTask.getTargetSDFGraph().getOutputTable().getCells();
-                }
+                List<IOTableCell> subTaskSDFIOCells = innerTask.getSdfGraph().getOutputTable().getCells();
 
                 //The innerSDF keeps the connection to inner DDF, use this connection to connect innerSTT's sourceNode and innerDDF
                 for (IOTableCell cell : subTaskSDFIOCells) {
@@ -115,13 +112,13 @@ public class SparkTraceTask extends SGraph {
                     for (IOTableCell conCell : connectedCells) {
                         if (conCell.getParentTable().getContext().equals(parentSDF.sinkNode)) {
                             parentSDFOutputCell = conCell;
-                        } else if (conCell.getParentTable().getContext().equals(innerTask.getDDFGraph().sourceNode)) {
+                        } else if (conCell.getParentTable().getContext().equals(innerTask.getDdfGraph().sourceNode)) {
                             innerTaskDDFInputCell = conCell;
                         }
                     }
                     String innerSTTInputFiledSymbolName = reversedSDFSymbolMap.get(parentSDFOutputCell.getFieldSymbol().getSymbolName());
                     String innerDDFInputFiledSymbolName = innerTaskDDFInputCell.getFieldSymbol().getSymbolName();
-                    innerTask.connect(innerTask.sourceNode, innerSTTInputFiledSymbolName, innerTask.getDDFGraph(), innerDDFInputFiledSymbolName);
+                    innerTask.connect(innerTask.sourceNode, innerSTTInputFiledSymbolName, innerTask.getDdfGraph(), innerDDFInputFiledSymbolName);
                 }
             } else {
                 //Create input field for current graph, connect the input from parent graph to current graph
@@ -147,7 +144,7 @@ public class SparkTraceTask extends SGraph {
         GraphHierarchyTree ght = new GraphHierarchyTree(null, this);
         if (!isInitialed) {
             isInitialed = true;
-            List<Vertex> nodes = DDFGraph.getNodes();
+            List<Vertex> nodes = ddfGraph.getNodes();
             for (Vertex node : nodes) {
                 if (node instanceof SparkTraceTask) {
                     SparkTraceTask subTask = (SparkTraceTask) node;
@@ -156,17 +153,48 @@ public class SparkTraceTask extends SGraph {
 
                     //Find a path from parent STT's DDF graph to subTask in GHT, the first node in path is parent DDF
                     GraphHierarchyTree sparkTaskTreeNode = ght.findNode(subTask);
-                    GraphHierarchyTree DDFTreeNode = ght.findNode(DDFGraph);
+                    GraphHierarchyTree DDFTreeNode = ght.findNode(ddfGraph);
                     List<GraphHierarchyTree> path = new ArrayList<>();
                     ght.findPath(DDFTreeNode, sparkTaskTreeNode, path);
 
                     //Merge the childSTT to the parent STT
-                    mergeSDF(sourceSDFGraph, subTask.getSourceSDFGraph(), path);
-                    mergeSDF(targetSDFGraph, subTask.getTargetSDFGraph(), path);
+                    mergeSDF(sdfGraph, subTask.getSdfGraph(), path);
                 }
             }
         }
     }
+
+    /**
+     * Combine the schema of given dataset together, add null to the field which have no value; Run the SDFPipeline to
+     *
+     * @param sourceArtifacts
+     * @param targetArtifacts
+     * @return
+     */
+    private Dataset<Row> UnionSourceAndTarget(Dataset<? extends TraceArtifact> sourceArtifacts,
+                                              Dataset<? extends TraceArtifact> targetArtifacts) {
+        String[] sourceCols = sourceArtifacts.columns();
+        String[] targetCols = targetArtifacts.columns();
+        for (String sourceCol : sourceCols) {
+            targetArtifacts.withColumn(sourceCol, lit(null));
+        }
+        for (String targetCol : targetCols) {
+            sourceArtifacts.withColumn(targetCol, lit(null));
+        }
+        Dataset<Row> mixed = sourceArtifacts.toDF().union(targetArtifacts.toDF());
+        return mixed;
+    }
+
+    private Dataset<Row> getSourceSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
+        Seq<String> sourceFeatureCols = JavaConverters.asScalaIteratorConverter(sdfGraph.getSourceSDFOutputs().iterator()).asScala().toSeq();
+        return mixedSDFeatureVecs.selectExpr(sourceFeatureCols);
+    }
+
+    private Dataset<Row> getTargetSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
+        Seq<String> targetFeatureCols = JavaConverters.asScalaIteratorConverter(sdfGraph.getTargetSDFOutputs().iterator()).asScala().toSeq();
+        return mixedSDFeatureVecs.selectExpr(targetFeatureCols);
+    }
+
 
     /**
      * Execute this STT as a top level STT.
@@ -174,13 +202,16 @@ public class SparkTraceTask extends SGraph {
     public void train(Dataset<? extends TraceArtifact> sourceArtifacts,
                       Dataset<? extends TraceArtifact> targetArtifacts,
                       Dataset<? extends TraceLink> goldenLinks) throws Exception {
-        sourceSDFModel = sourceSDFGraph.toPipeline().fit(sourceArtifacts);
-        targetSDFModel = targetSDFGraph.toPipeline().fit(targetArtifacts);
-        Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
-        Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
+        Dataset<Row> combinedDataset = UnionSourceAndTarget(sourceArtifacts, targetArtifacts);
+        SDFModel = sdfGraph.toPipeline().fit(combinedDataset);
+
+        Dataset<Row> mixedSDFeatureVecs = SDFModel.transform(combinedDataset);
+        Dataset<Row> sourceSDFeatureVecs = getSourceSDFFeatureVecs(mixedSDFeatureVecs);
+        Dataset<Row> targetSDFeatureVecs = getTargetSDFFeatureVecs(mixedSDFeatureVecs);
+
         if (!(goldenLinks == null)) {
             Dataset<Row> goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
-            DDFModel = DDFGraph.toPipeline().fit(goldLinksWithFeatureVec);
+            DDFModel = ddfGraph.toPipeline().fit(goldLinksWithFeatureVec);
             Dataset<Row> traceResult = DDFModel.transform(goldLinksWithFeatureVec);
             traceResult.show();
         }
@@ -188,18 +219,20 @@ public class SparkTraceTask extends SGraph {
 
     public void trace(Dataset<? extends TraceArtifact> sourceArtifacts,
                       Dataset<? extends TraceArtifact> targetArtifacts) {
-        Dataset<Row> sourceFeatures = sourceSDFModel.transform(sourceArtifacts);
-        Dataset<Row> targetFeatures = targetSDFModel.transform(targetArtifacts);
+        Dataset<Row> combinedDataset = UnionSourceAndTarget(sourceArtifacts, targetArtifacts);
+        Dataset<Row> mixedSDFeatureVecs = SDFModel.transform(combinedDataset);
+        Dataset<Row> sourceSDFeatureVecs = getSourceSDFFeatureVecs(mixedSDFeatureVecs);
+        Dataset<Row> targetSDFeatureVecs = getTargetSDFFeatureVecs(mixedSDFeatureVecs);
 
         Dataset<Row> candidateLinks = sourceArtifacts.crossJoin(targetArtifacts); //Cross join
-        candidateLinks = appendFeaturesToLinks(candidateLinks, sourceFeatures, targetFeatures);
+        candidateLinks = appendFeaturesToLinks(candidateLinks, sourceSDFeatureVecs, targetSDFeatureVecs);
         Dataset<Row> traceResult = DDFModel.transform(candidateLinks);
     }
 
 
     private Dataset<Row> appendFeaturesToLinks(Dataset<Row> links, Dataset<Row> sourceFeatures, Dataset<Row> targetFeatures) {
-        String sourceIDColName = sourceSDFGraph.getArtifactIdColName();
-        String targetIDColName = targetSDFGraph.getArtifactIdColName();
+        String sourceIDColName = sdfGraph.getSourceIdCol();
+        String targetIDColName = sdfGraph.getTargetIdCol();
         Column sourceArtifactIdCol = sourceFeatures.col(sourceIDColName);
         Column targetArtifactIdCol = targetFeatures.col(targetIDColName);
 
@@ -212,35 +245,24 @@ public class SparkTraceTask extends SGraph {
         return linksWithFeatureVec;
     }
 
-
-    public SGraph getSourceSDFGraph() {
-        return sourceSDFGraph;
+    public SDFGraph getSdfGraph() {
+        return sdfGraph;
     }
 
-    public void setSourceSDFGraph(SDFGraph sourceSDFGraph) {
-        removeNode(getSourceSDFGraph());
-        this.sourceSDFGraph = sourceSDFGraph;
-        addNode(sourceSDFGraph);
+    public void setSdfGraph(SDFGraph sdfGraph) {
+        removeNode(getSdfGraph());
+        this.sdfGraph = sdfGraph;
+        addNode(sdfGraph);
     }
 
-    public SGraph getTargetSDFGraph() {
-        return targetSDFGraph;
+    public SGraph getDdfGraph() {
+        return ddfGraph;
     }
 
-    public void setTargetSDFGraph(SDFGraph targetSDFGraph) {
-        removeNode(getTargetSDFGraph());
-        this.targetSDFGraph = targetSDFGraph;
-        addNode(targetSDFGraph);
-    }
-
-    public SGraph getDDFGraph() {
-        return DDFGraph;
-    }
-
-    public void setDDFGraph(SGraph DDFGraph) {
-        removeNode(getDDFGraph());
-        this.DDFGraph = DDFGraph;
-        addNode(getDDFGraph());
+    public void setDdfGraph(SGraph ddfGraph) {
+        removeNode(getDdfGraph());
+        this.ddfGraph = ddfGraph;
+        addNode(getDdfGraph());
     }
 
     private Map<String, String> reverseMapKeyValue(Map<String, String> inputMap) {

@@ -1,6 +1,6 @@
-package core.GraphSymbol;
+package core.graphPipeline.graphSymbol;
 
-import core.pipelineOptimizer.Vertex;
+import core.graphPipeline.basic.Vertex;
 
 /**
  * A symbol used in the SGraph. A symbol name should be unique within a scope and a scope is a graph/node where

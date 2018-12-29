@@ -1,6 +1,4 @@
-package core.GraphSymbol;
-
-import core.pipelineOptimizer.Vertex;
+package core.graphPipeline.graphSymbol;
 
 import java.util.HashMap;
 import java.util.HashSet;

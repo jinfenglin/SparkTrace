@@ -1,7 +1,7 @@
-package core.pipelineOptimizer;
+package core.graphPipeline.basic;
 
-import core.GraphSymbol.Symbol;
-import core.GraphSymbol.SymbolTable;
+import core.graphPipeline.graphSymbol.Symbol;
+import core.graphPipeline.graphSymbol.SymbolTable;
 import org.apache.spark.ml.Pipeline;
 
 import java.util.HashSet;

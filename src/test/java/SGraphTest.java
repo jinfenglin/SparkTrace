@@ -1,3 +1,4 @@
+import core.graphPipeline.basic.*;
 import core.pipelineOptimizer.*;
 import examples.TestBase;
 import featurePipeline.SGraphColumnRemovalStage;

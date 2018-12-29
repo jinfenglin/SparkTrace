@@ -1,8 +1,4 @@
-package core.pipelineOptimizer;
-
-import core.GraphSymbol.Symbol;
-
-import java.util.Map;
+package core.graphPipeline.basic;
 
 /**
  *

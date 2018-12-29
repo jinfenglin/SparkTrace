@@ -1,9 +1,7 @@
 package featurePipeline;
 
-import core.GraphSymbol.Symbol;
-import core.pipelineOptimizer.IOTable;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import core.graphPipeline.graphSymbol.Symbol;
+import core.graphPipeline.basic.IOTable;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.StringArrayParam;

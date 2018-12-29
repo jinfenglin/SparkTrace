@@ -1,7 +1,6 @@
-package core.pipelineOptimizer;
+package core.graphPipeline.basic;
 
-import core.GraphSymbol.Symbol;
-import core.GraphSymbol.SymbolTable;
+import core.graphPipeline.graphSymbol.Symbol;
 
 import java.util.*;
 
