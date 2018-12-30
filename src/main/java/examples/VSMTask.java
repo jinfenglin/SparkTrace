@@ -6,6 +6,7 @@ import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
 import featurePipeline.CosinSimilarityStage;
+import featurePipeline.UnsupervisedStage.UnsupervisedStage;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.Tokenizer;
@@ -30,7 +31,7 @@ public class VSMTask {
     private static void createSourceSDF(SDFGraph sdfGraph) throws Exception {
         sdfGraph.addInputField("s_text");
         sdfGraph.addOutputField("s_tf_idf");
-        SDFNode.SDFNodeType type = SDFNode.SDFNodeType.SOURCE_ART_SDF;
+        SDFNode.SDFType type = SDFNode.SDFType.SOURCE_ART_SDF;
 
 
         Tokenizer sTk = new Tokenizer();
@@ -43,11 +44,12 @@ public class VSMTask {
         htfNode.addInputField("s_tokens");
         htfNode.addOutputField("s_htf");
 
-        //TODO make this as a shared node
+
         IDF idf = new IDF();
-        SDFNode idfNode = new SDFNode(idf, "shared_IDF", type);
+        UnsupervisedStage un_idf = new UnsupervisedStage(idf);
+        SDFNode idfNode = new SDFNode(un_idf, "shared_IDF", SDFNode.SDFType.SHARED_SDF);
         idfNode.addInputField("s_idf_in");
-        idfNode.addOutputField("s_idf_out");
+        idfNode.addOutputField("s_idf_out", type);
 
         sdfGraph.addNode(tkNode);
         sdfGraph.addNode(htfNode);
@@ -60,10 +62,9 @@ public class VSMTask {
     }
 
     private static void createTargetSDF(SDFGraph sdfGraph) throws Exception {
-        sdfGraph.addInputField("t_id");
         sdfGraph.addInputField("t_text");
         sdfGraph.addOutputField("t_tf_idf");
-        SDFNode.SDFNodeType type = SDFNode.SDFNodeType.TARGET_ART_SDF;
+        SDFNode.SDFType type = SDFNode.SDFType.TARGET_ART_SDF;
         Tokenizer sTk = new Tokenizer();
         SDFNode tkNode = new SDFNode(sTk, "target_tokenizer", type);
         tkNode.addInputField("t_text");
@@ -74,10 +75,10 @@ public class VSMTask {
         htfNode.addInputField("t_tokens");
         htfNode.addOutputField("t_htf");
 
-        IDF idf = new IDF();
-        SDFNode idfNode = new SDFNode(idf, "target_IDF", type);
+
+        SDFNode idfNode = (SDFNode) sdfGraph.getNode("shared_IDF");
         idfNode.addInputField("t_idf_in");
-        idfNode.addOutputField("t_idf_out");
+        idfNode.addOutputField("t_idf_out", type);
 
         sdfGraph.addNode(tkNode);
         sdfGraph.addNode(htfNode);

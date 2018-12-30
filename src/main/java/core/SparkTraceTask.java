@@ -165,7 +165,9 @@ public class SparkTraceTask extends SGraph {
     }
 
     /**
-     * Combine the schema of given dataset together, add null to the field which have no value; Run the SDFPipeline to
+     * Combine the schema of given dataset together, add null to the field which have no value;
+     * If source and target have columns with same name then the columns will be regarded as same column and union
+     * together.
      *
      * @param sourceArtifacts
      * @param targetArtifacts
@@ -173,15 +175,21 @@ public class SparkTraceTask extends SGraph {
      */
     private Dataset<Row> UnionSourceAndTarget(Dataset<? extends TraceArtifact> sourceArtifacts,
                                               Dataset<? extends TraceArtifact> targetArtifacts) {
-        String[] sourceCols = sourceArtifacts.columns();
-        String[] targetCols = targetArtifacts.columns();
-        for (String sourceCol : sourceCols) {
-            targetArtifacts.withColumn(sourceCol, lit(null));
+        List<String> sourceCols = Arrays.asList(sourceArtifacts.columns());
+        List<String> targetCols = Arrays.asList(targetArtifacts.columns());
+        Set<String> distSourceCols = new HashSet<>(sourceCols);
+        Set<String> distTargetCols = new HashSet<>(targetCols);
+        distSourceCols.removeAll(targetCols);
+        distTargetCols.removeAll(sourceCols);
+        Dataset<Row> sourceDF = sourceArtifacts.toDF();
+        Dataset<Row> targetDF = targetArtifacts.toDF();
+        for (String sourceCol : distSourceCols) {
+            targetDF = targetDF.withColumn(sourceCol, lit(null));
         }
-        for (String targetCol : targetCols) {
-            sourceArtifacts.withColumn(targetCol, lit(null));
+        for (String targetCol : distTargetCols) {
+            sourceDF = sourceDF.withColumn(targetCol, lit(null));
         }
-        Dataset<Row> mixed = sourceArtifacts.toDF().union(targetArtifacts.toDF());
+        Dataset<Row> mixed = sourceDF.union(targetDF);
         return mixed;
     }
 

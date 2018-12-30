@@ -14,7 +14,9 @@ import traceability.components.maven.MavenImprovement;
 import traceability.components.maven.MavenLink;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class SparkJobTest extends TestBase {
@@ -33,9 +35,9 @@ public class SparkJobTest extends TestBase {
         String commitPath = "src/main/resources/maven_sample/commits.csv";
         String improvementPath = "src/main/resources/maven_sample/improvement.csv";
         String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
-        Dataset<MavenCommit> commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
-        Dataset<MavenImprovement> improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
-        Dataset<MavenLink> links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);
+        commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
+        improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
+        links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);
     }
 
     @Test
@@ -62,8 +64,14 @@ public class SparkJobTest extends TestBase {
     public void singleSparkTaskTest() throws Exception {
         SparkTraceTask vsmTask = VSMTask.getSTT();
         vsmTask.initSTT();
+        Map<String, String> vsmTaskInputConfig = new HashMap<>();
+        vsmTaskInputConfig.put("s_text", "content");
+        vsmTaskInputConfig.put("t_text", "content");
+        vsmTaskInputConfig.put("s_id", "commit_id");
+        vsmTaskInputConfig.put("t_id", "issue_id");
+        vsmTask.getSdfGraph().configSDF(vsmTaskInputConfig);
         vsmTask.train(commits, improvements, null);
-
+        vsmTask.trace(commits, improvements);
     }
 
     @Test

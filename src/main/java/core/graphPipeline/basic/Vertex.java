@@ -71,15 +71,6 @@ abstract public class Vertex {
         return this;
     }
 
-    public Vertex addInputFields(List<Symbol> symbols) throws Exception {
-        for (Symbol symbol : symbols) {
-            addInputField(symbol);
-        }
-        return this;
-    }
-
-
-
     public Vertex addInputField(Symbol symbol) throws Exception {
         IOTableCell cell = new IOTableCell(symbol);
         inputTable.addCell(cell);
@@ -97,21 +88,14 @@ abstract public class Vertex {
         return getInputTable().getCellBySymbol(symbol);
     }
 
-    public Vertex addOutputFields(Symbol[] symbols) throws Exception {
-        for (Symbol symbol : symbols) {
-            addOutputField(symbol);
-        }
-        return this;
+    public IOTableCell getOutputField(String symbolName) {
+        Symbol symbol = new Symbol(this, symbolName);
+        return getOutputTable().getCellBySymbol(symbol);
     }
 
     public Vertex addOutputField(String symbolName) throws Exception {
         Symbol symbol = new Symbol(this, symbolName);
         return addOutputField(symbol);
-    }
-
-    public IOTableCell getOutputField(String symbolName) {
-        Symbol symbol = new Symbol(this, symbolName);
-        return getOutputTable().getCellBySymbol(symbol);
     }
 
     public Vertex addOutputField(Symbol symbol) throws Exception {
