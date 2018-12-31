@@ -3,7 +3,7 @@ package traceability.components.maven;
 import traceability.components.abstractComponents.TraceArtifact;
 
 public class MavenCommit extends TraceArtifact {
-    private String commit_id,commit_date,content,author,type;
+    private String commit_id,commit_date, commit_content, commit_author, commit_type;
 
     public String getCommit_id() {
         return commit_id;
@@ -21,27 +21,27 @@ public class MavenCommit extends TraceArtifact {
         this.commit_date = commit_date;
     }
 
-    public String getContent() {
-        return content;
+    public String getCommit_content() {
+        return commit_content;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setCommit_content(String commit_content) {
+        this.commit_content = commit_content;
     }
 
-    public String getAuthor() {
-        return author;
+    public String getCommit_author() {
+        return commit_author;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setCommit_author(String commit_author) {
+        this.commit_author = commit_author;
     }
 
-    public String getType() {
-        return type;
+    public String getCommit_type() {
+        return commit_type;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setCommit_type(String commit_type) {
+        this.commit_type = commit_type;
     }
 }

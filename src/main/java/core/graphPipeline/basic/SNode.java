@@ -32,7 +32,7 @@ public class SNode extends Vertex {
     @Override
     public Pipeline toPipeline() {
         String mismatchedInputColNumMessage = "In node %s pipeline stage expected 1 %s while %s exists";
-        Pipeline pipeline = new Pipeline();
+        Pipeline pipeline = new Pipeline(getVertexId());
         List<IOTableCell> inputCells = getInputTable().getCells();
         List<IOTableCell> outputCells = getOutputTable().getCells();
         //Connect the symbol values with the input and output columns in pipeline

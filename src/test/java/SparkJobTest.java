@@ -65,8 +65,8 @@ public class SparkJobTest extends TestBase {
         SparkTraceTask vsmTask = VSMTask.getSTT();
         vsmTask.initSTT();
         Map<String, String> vsmTaskInputConfig = new HashMap<>();
-        vsmTaskInputConfig.put("s_text", "content");
-        vsmTaskInputConfig.put("t_text", "content");
+        vsmTaskInputConfig.put("s_text", "commit_content");
+        vsmTaskInputConfig.put("t_text", "issue_content");
         vsmTaskInputConfig.put("s_id", "commit_id");
         vsmTaskInputConfig.put("t_id", "issue_id");
         vsmTask.getSdfGraph().configSDF(vsmTaskInputConfig);

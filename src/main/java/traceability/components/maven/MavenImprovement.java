@@ -3,24 +3,24 @@ package traceability.components.maven;
 import traceability.components.abstractComponents.TraceArtifact;
 
 public class MavenImprovement extends TraceArtifact {
-    private String issue_id, resolution, content, priority, assignee, assignee_username, summary, status, type;
-    private String resolved_date, created_date;
+    private String issue_id, issue_resolution, issue_content, issue_priority, issue_assignee, issue_assignee_username, issue_summary, issue_status, issue_type;
+    private String issue_resolved_date, issue_created_date;
 
 
-    public String getResolved_date() {
-        return resolved_date;
+    public String getIssue_resolved_date() {
+        return issue_resolved_date;
     }
 
-    public void setResolved_date(String resolved_date) {
-        this.resolved_date = resolved_date;
+    public void setIssue_resolved_date(String issue_resolved_date) {
+        this.issue_resolved_date = issue_resolved_date;
     }
 
-    public String getCreated_date() {
-        return created_date;
+    public String getIssue_created_date() {
+        return issue_created_date;
     }
 
-    public void setCreated_date(String created_date) {
-        this.created_date = created_date;
+    public void setIssue_created_date(String issue_created_date) {
+        this.issue_created_date = issue_created_date;
     }
 
     public String getCommit_id() {
@@ -31,68 +31,68 @@ public class MavenImprovement extends TraceArtifact {
         this.issue_id = issue_id;
     }
 
-    public String getResolution() {
-        return resolution;
+    public String getIssue_resolution() {
+        return issue_resolution;
     }
 
-    public void setResolution(String resolution) {
-        this.resolution = resolution;
+    public void setIssue_resolution(String issue_resolution) {
+        this.issue_resolution = issue_resolution;
     }
 
-    public String getContent() {
-        return content;
+    public String getIssue_content() {
+        return issue_content;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setIssue_content(String issue_content) {
+        this.issue_content = issue_content;
     }
 
-    public String getPriority() {
-        return priority;
+    public String getIssue_priority() {
+        return issue_priority;
     }
 
-    public void setPriority(String priority) {
-        this.priority = priority;
+    public void setIssue_priority(String issue_priority) {
+        this.issue_priority = issue_priority;
     }
 
-    public String getAssignee() {
-        return assignee;
+    public String getIssue_assignee() {
+        return issue_assignee;
     }
 
-    public void setAssignee(String assignee) {
-        this.assignee = assignee;
+    public void setIssue_assignee(String issue_assignee) {
+        this.issue_assignee = issue_assignee;
     }
 
-    public String getAssignee_username() {
-        return assignee_username;
+    public String getIssue_assignee_username() {
+        return issue_assignee_username;
     }
 
-    public void setAssignee_username(String assignee_username) {
-        this.assignee_username = assignee_username;
+    public void setIssue_assignee_username(String issue_assignee_username) {
+        this.issue_assignee_username = issue_assignee_username;
     }
 
-    public String getSummary() {
-        return summary;
+    public String getIssue_summary() {
+        return issue_summary;
     }
 
-    public void setSummary(String summary) {
-        this.summary = summary;
+    public void setIssue_summary(String issue_summary) {
+        this.issue_summary = issue_summary;
     }
 
-    public String getStatus() {
-        return status;
+    public String getIssue_status() {
+        return issue_status;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setIssue_status(String issue_status) {
+        this.issue_status = issue_status;
     }
 
-    public String getType() {
-        return type;
+    public String getIssue_type() {
+        return issue_type;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setIssue_type(String issue_type) {
+        this.issue_type = issue_type;
     }
 
 }

@@ -4,20 +4,17 @@ package examples;
 import org.apache.spark.SparkConf;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.*;
+import org.apache.spark.sql.types.*;
 import traceability.components.basic.BasicTraceArtifact;
 import traceability.components.basic.BasicTraceLink;
 import traceability.TraceDatasetFactory;
 
 
+import javax.xml.crypto.Data;
 import java.util.*;
+
+import static org.apache.spark.sql.functions.lit;
 
 public class TestBase {
     protected SparkSession sparkSession;
@@ -66,8 +63,8 @@ public class TestBase {
         );
 
         StructType schema = new StructType(new StructField[]{
-                new StructField("label", DataTypes.DoubleType, false, Metadata.empty()),
-                new StructField("sentence", DataTypes.StringType, false, Metadata.empty())
+                new StructField("label", DataTypes.DoubleType, true, Metadata.empty()),
+                new StructField("sentence", DataTypes.StringType, true, Metadata.empty())
         });
 
         // import data with the schema
@@ -88,4 +85,24 @@ public class TestBase {
             }
         }
     }
+
+    public Dataset<Row> createNullDataset() {
+        List<Row> data = Arrays.asList(
+                RowFactory.create(null, null),
+                RowFactory.create(null, null),
+                RowFactory.create(null, null)
+        );
+        StructType schema = new StructType(new StructField[]{
+                new StructField("label", DataTypes.DoubleType, true, Metadata.empty()),
+                new StructField("sentence", DataTypes.StringType, true, Metadata.empty())
+        });
+        return sparkSession.createDataFrame(data, schema);
+    }
+
+    public Dataset<Row> createDatasetWithNull() {
+        Dataset<Row> data = getSentenceDataset();
+        Dataset<Row> nulls = createNullDataset();
+        return data.union(nulls);
+    }
+
 }

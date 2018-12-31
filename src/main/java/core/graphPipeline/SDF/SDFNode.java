@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SDFNode extends SNode {
-
     private Set<String> sourceOutputCols, targetOutputCols;
 
     /**

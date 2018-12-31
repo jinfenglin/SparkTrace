@@ -171,7 +171,7 @@ public class SGraph extends Vertex {
         outStage.setOutputCols(outputTable);
 
         syncSymbolValues(this);
-        Pipeline pipeline = new Pipeline();
+        Pipeline pipeline = new Pipeline(getVertexId());
         List<PipelineStage> stages = new ArrayList<>();
         removeRedundantVertices(this);
         List<Vertex> topSortNodes = topologicalSort(this);

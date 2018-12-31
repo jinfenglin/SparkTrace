@@ -70,7 +70,7 @@ public class SDFGraph extends SGraph {
         if (v2.equals(this.sinkNode)) {
             if (v1 instanceof SDFNode) {
                 SDFNode sdfNode = (SDFNode) v1;
-                if (sdfNode.getType().equals(SDFNode.SDFType.SOURCE_ART_SDF)) {
+                if (sdfNode.getType().equals(SDFNode.SDFType.SOURCE_ART_SDF)) { //TODO fix the way of getting the SDFtype use the getOutputSymbolType() methods instead
                     sourceSDFOutputs.add(symbolName2);
                 } else if (sdfNode.getType().equals(SDFNode.SDFType.TARGET_ART_SDF)) {
                     targetSDFOutputs.add(symbolName2);

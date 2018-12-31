@@ -7,9 +7,8 @@ import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.StringArrayParam;
-import org.apache.spark.ml.param.shared.HasInputCols;
-import org.apache.spark.ml.param.shared.HasOutputCols;
-import org.apache.spark.ml.util.SchemaUtils;
+import org.apache.spark.ml.param.shared.HasInputCol;
+import org.apache.spark.ml.param.shared.HasOutputCol;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -18,6 +17,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.col;
@@ -43,6 +43,12 @@ public class UnsupervisedStage extends Estimator<UnsupervisedStageModel> impleme
     }
 
 
+    /**
+     * Ensure the input columns have same dataType.
+     *
+     * @param structType
+     * @return
+     */
     @Override
     public StructType transformSchema(StructType structType) {
         Set<String> inputCols = new HashSet<>();
@@ -51,7 +57,7 @@ public class UnsupervisedStage extends Estimator<UnsupervisedStageModel> impleme
         List<StructField> columnFields = Arrays.stream(fields).filter(x -> inputCols.contains(x.name())).collect(Collectors.toList());
         columnDataType = columnFields.get(0).dataType();
         for (StructField field : columnFields) {
-            field.dataType().equals(columnDataType);
+            assert field.dataType().equals(columnDataType);
         }
         return structType;
     }
@@ -60,6 +66,7 @@ public class UnsupervisedStage extends Estimator<UnsupervisedStageModel> impleme
     public UnsupervisedStageModel fit(Dataset<?> dataset) {
         //Create an empty temporal dataframe which have one column
         String mixedInputCol = "mixedInputCol";
+        String mixedOutputCol = "mixedOutputCol";
         StructField field = DataTypes.createStructField(mixedInputCol, columnDataType, false);
         StructType st = new StructType(new StructField[]{field});
         Dataset<Row> trainingData = dataset.sparkSession().createDataFrame(new ArrayList<>(), st);
@@ -68,11 +75,21 @@ public class UnsupervisedStage extends Estimator<UnsupervisedStageModel> impleme
             Dataset<Row> columnData = dataset.select(colName).filter(Row::anyNull);
             trainingData = trainingData.union(columnData);
         }
-        Transformer innerTransformer = innerEstimator.fit(trainingData);
-        UnsupervisedStageModel model = new UnsupervisedStageModel(innerTransformer);
-        model.setInputCols(getInputCols());
-        model.setOutputCols(getOutputCols());
-        return model;
+
+        if (innerEstimator instanceof HasInputCol && innerEstimator instanceof HasOutputCol) {
+            HasInputCol hasInput = (HasInputCol) innerEstimator;
+            hasInput.set(hasInput.inputCol(), mixedInputCol);
+            HasOutputCol hasOutput = (HasOutputCol) innerEstimator;
+            hasOutput.set(hasOutput.outputCol(), mixedOutputCol);
+            Transformer innerTransformer = innerEstimator.fit(trainingData);
+            UnsupervisedStageModel model = new UnsupervisedStageModel(innerTransformer).setParent(this);
+            model.setInputCols(getInputCols());
+            model.setOutputCols(getOutputCols());
+            return model;
+        } else {
+            Logger.getLogger(this.getClass().getName()).warning("Inner Transformer for Unsupervised Stage not implementing HasInputCol or HasOutputCol");
+            return null;
+        }
     }
 
     @Override

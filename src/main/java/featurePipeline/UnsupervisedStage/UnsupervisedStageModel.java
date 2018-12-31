@@ -1,13 +1,13 @@
 package featurePipeline.UnsupervisedStage;
 
 
+import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Model;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.StringArrayParam;
 import org.apache.spark.ml.param.shared.HasInputCol;
 import org.apache.spark.ml.param.shared.HasOutputCol;
-import org.apache.spark.ml.util.SchemaUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
@@ -73,7 +73,7 @@ public class UnsupervisedStageModel extends Model<UnsupervisedStageModel> implem
 
     @Override
     public UnsupervisedStageModel copy(ParamMap paramMap) {
-        return defaultCopy(paramMap);
+        return new UnsupervisedStageModel(innerTransformer).setParent(parent());
     }
 
     @Override

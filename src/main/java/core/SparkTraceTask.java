@@ -177,16 +177,19 @@ public class SparkTraceTask extends SGraph {
                                               Dataset<? extends TraceArtifact> targetArtifacts) {
         List<String> sourceCols = Arrays.asList(sourceArtifacts.columns());
         List<String> targetCols = Arrays.asList(targetArtifacts.columns());
-        Set<String> distSourceCols = new HashSet<>(sourceCols);
-        Set<String> distTargetCols = new HashSet<>(targetCols);
-        distSourceCols.removeAll(targetCols);
-        distTargetCols.removeAll(sourceCols);
+
+        //ensure no duplicated column name in input
+        Set<String> intersect1 = new HashSet<>(sourceCols);
+        Set<String> intersect2 = new HashSet<>(targetCols);
+        intersect1.retainAll(intersect2);
+        assert intersect1.size() == 0;
+
         Dataset<Row> sourceDF = sourceArtifacts.toDF();
         Dataset<Row> targetDF = targetArtifacts.toDF();
-        for (String sourceCol : distSourceCols) {
+        for (String sourceCol : sourceCols) {
             targetDF = targetDF.withColumn(sourceCol, lit(null));
         }
-        for (String targetCol : distTargetCols) {
+        for (String targetCol : targetCols) {
             sourceDF = sourceDF.withColumn(targetCol, lit(null));
         }
         Dataset<Row> mixed = sourceDF.union(targetDF);
