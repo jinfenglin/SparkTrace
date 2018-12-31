@@ -1,6 +1,7 @@
 package featurePipeline.UnsupervisedStage;
 
 
+import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Model;
 import org.apache.spark.ml.Transformer;
@@ -30,6 +31,7 @@ public class UnsupervisedStageModel extends Model<UnsupervisedStageModel> implem
 
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
+        transformSchema(dataset.schema());
         int length = getInputCols().length;
         for (int i = 0; i < length; i++) {
             String inputColName = getInputCols()[i];
@@ -39,12 +41,12 @@ public class UnsupervisedStageModel extends Model<UnsupervisedStageModel> implem
                 hasInput.set(hasInput.inputCol(), inputColName);
                 HasOutputCol hasOutput = (HasOutputCol) innerTransformer;
                 hasOutput.set(hasOutput.outputCol(), outputColName);
-                dataset = innerTransformer.transform(dataset);
+                dataset = new NullRemoverModelSingleIO(innerTransformer).transform(dataset);
             } else {
                 Logger.getLogger(this.getClass().getName()).warning("Inner Transformer for Unsupervised Stage not implementing HasInputCol or HasOutputCol");
             }
         }
-        return innerTransformer.transform(dataset);
+        return dataset.toDF();
     }
 
     @Override

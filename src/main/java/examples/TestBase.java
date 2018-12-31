@@ -72,6 +72,25 @@ public class TestBase {
         return sentenceData;
     }
 
+    public Dataset<Row> getMultiSentenceRowData() {
+        List<Row> data = Arrays.asList(
+                RowFactory.create(null, "Welcome to TutorialKart."),
+                RowFactory.create(null, "Learn Spark at TutorialKart."),
+                RowFactory.create(null, "Spark Mllib has TF-IDF."),
+                RowFactory.create("Spark SQL and DataFrames - Spark 1.6.0 Documentation", null),
+                RowFactory.create("How to print unique values of a column of DataFrame in Spark", null)
+        );
+
+        StructType schema = new StructType(new StructField[]{
+                new StructField("text1", DataTypes.StringType, true, Metadata.empty()),
+                new StructField("text2", DataTypes.StringType, true, Metadata.empty())
+        });
+
+        // import data with the schema
+        Dataset<Row> sentenceData = sparkSession.createDataFrame(data, schema);
+        return sentenceData;
+    }
+
     public void printPipeline(Pipeline pipeline) {
         PipelineStage[] stages = pipeline.getStages();
         for (PipelineStage stage : stages) {

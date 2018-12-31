@@ -31,6 +31,7 @@ public class SDFNode extends SNode {
 
     public SDFNode(PipelineStage pipelineStage, String nodeId, SDFType type) {
         super(pipelineStage, nodeId);
+
         this.type = type;
         sourceOutputCols = new HashSet<>();
         targetOutputCols = new HashSet<>();

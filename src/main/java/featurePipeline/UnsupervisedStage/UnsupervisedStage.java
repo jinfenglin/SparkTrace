@@ -65,6 +65,7 @@ public class UnsupervisedStage extends Estimator<UnsupervisedStageModel> impleme
     @Override
     public UnsupervisedStageModel fit(Dataset<?> dataset) {
         //Create an empty temporal dataframe which have one column
+        transformSchema(dataset.schema());
         String mixedInputCol = "mixedInputCol";
         String mixedOutputCol = "mixedOutputCol";
         StructField field = DataTypes.createStructField(mixedInputCol, columnDataType, false);
@@ -72,7 +73,7 @@ public class UnsupervisedStage extends Estimator<UnsupervisedStageModel> impleme
         Dataset<Row> trainingData = dataset.sparkSession().createDataFrame(new ArrayList<>(), st);
 
         for (String colName : getInputCols()) {
-            Dataset<Row> columnData = dataset.select(colName).filter(Row::anyNull);
+            Dataset<Row> columnData = dataset.select(colName).where(col(colName).isNotNull());
             trainingData = trainingData.union(columnData);
         }
 
