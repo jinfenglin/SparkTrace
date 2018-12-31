@@ -104,7 +104,7 @@ public class SGraphTest extends TestBase {
      */
     @Test
     public void idfCreationTest() throws Exception {
-        Dataset<Row> dataset = getSentenceDataset();
+        Dataset<Row> dataset = getSentenceLabelDataset();
         Pipeline pipeline = createGraph().toPipeline();
         printPipeline(pipeline);
         PipelineModel model = pipeline.fit(dataset);
@@ -139,7 +139,7 @@ public class SGraphTest extends TestBase {
         GraphHierarchyTree ght = new GraphHierarchyTree(null, globalGraph);
         PipelineOptimizer.penetrate(n1.getOutputField("tokens"), subGraph.getNode("tokenizer").getOutputField("tokens"), ght);
 
-        Dataset<Row> dataset = getSentenceDataset();
+        Dataset<Row> dataset = getSentenceLabelDataset();
         PipelineModel model = globalGraph.toPipeline().fit(dataset);
         Dataset<Row> processedData = model.transform(dataset);
         processedData.show();
@@ -147,7 +147,7 @@ public class SGraphTest extends TestBase {
 
     @Test
     public void columnRemovalStageTest() {
-        Dataset<Row> dataset = getSentenceDataset();
+        Dataset<Row> dataset = getSentenceLabelDataset();
         SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
         removalStage.setInputCols(new String[]{"sentence", "label"});
         dataset = removalStage.transform(dataset);

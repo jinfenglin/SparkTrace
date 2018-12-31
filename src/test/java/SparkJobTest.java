@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class SparkJobTest extends TestBase {
     private static String masterUrl = "local";
@@ -42,7 +41,7 @@ public class SparkJobTest extends TestBase {
 
     @Test
     public void multiDuplicatedStagePerformanceTest() {
-        Dataset<Row> dataset = getSentenceDataset();
+        Dataset<Row> dataset = getSentenceLabelDataset();
         Pipeline pipelineMulti = new Pipeline();
         List<PipelineStage> stageList = new ArrayList<>();
         long endTime = 0;

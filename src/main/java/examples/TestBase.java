@@ -11,10 +11,7 @@ import traceability.components.basic.BasicTraceLink;
 import traceability.TraceDatasetFactory;
 
 
-import javax.xml.crypto.Data;
 import java.util.*;
-
-import static org.apache.spark.sql.functions.lit;
 
 public class TestBase {
     protected SparkSession sparkSession;
@@ -55,7 +52,7 @@ public class TestBase {
         return TraceDatasetFactory.createLinks(sparkSession, basicTraceLinks, BasicTraceLink.class);
     }
 
-    public Dataset<Row> getSentenceDataset() {
+    public Dataset<Row> getSentenceLabelDataset() {
         List<Row> data = Arrays.asList(
                 RowFactory.create(0.0, "Welcome to TutorialKart."),
                 RowFactory.create(0.0, "Learn Spark at TutorialKart."),
@@ -68,6 +65,16 @@ public class TestBase {
         });
 
         // import data with the schema
+        Dataset<Row> sentenceData = sparkSession.createDataFrame(data, schema);
+        return sentenceData;
+    }
+
+    public Dataset<Row> getSentenceDataset(List<String> sentence) {
+        List<Row> data = new ArrayList<>();
+        sentence.forEach(s -> data.add(RowFactory.create(s)));
+        StructType schema = new StructType(new StructField[]{
+                new StructField("text", DataTypes.StringType, true, Metadata.empty())
+        });
         Dataset<Row> sentenceData = sparkSession.createDataFrame(data, schema);
         return sentenceData;
     }
@@ -119,7 +126,7 @@ public class TestBase {
     }
 
     public Dataset<Row> createDatasetWithNull() {
-        Dataset<Row> data = getSentenceDataset();
+        Dataset<Row> data = getSentenceLabelDataset();
         Dataset<Row> nulls = createNullDataset();
         return data.union(nulls);
     }
