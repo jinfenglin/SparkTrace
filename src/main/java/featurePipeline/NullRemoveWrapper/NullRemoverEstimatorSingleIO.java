@@ -1,6 +1,7 @@
 package featurePipeline.NullRemoveWrapper;
 
 import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
@@ -9,6 +10,9 @@ import org.apache.spark.ml.param.shared.HasOutputCol;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
+
+import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 
 import static org.apache.spark.sql.functions.col;
 
@@ -22,9 +26,9 @@ public class NullRemoverEstimatorSingleIO extends Estimator<NullRemoverModelSing
     private Param<String> inputCol, outputCol;
 
     public NullRemoverEstimatorSingleIO(Estimator innerEstimator) {
-        this.innerEstimator = innerEstimator;
         inputCol = initInputCol();
         outputCol = initOutputCol();
+        setInnerEstimator(innerEstimator);
     }
 
     @Override
@@ -36,6 +40,22 @@ public class NullRemoverEstimatorSingleIO extends Estimator<NullRemoverModelSing
         model.setInputCol(getInputCol());
         model.setOutputCol(getOutputCol());
         return model;
+    }
+
+    private Estimator getInnerEstimator() {
+        return innerEstimator.copy(org$apache$spark$ml$param$Params$$paramMap());
+    }
+
+    private void setInnerEstimator(Estimator estimator) {
+        setInnerStage(estimator);
+        try {
+            setInputCol(getInnerInputCol());
+            setOutputCol(getInnerOutputCol());
+        } catch (NoSuchElementException e) {
+            setInputCol(null);
+            setOutputCol(null);
+            Logger.getLogger(this.getClass().getName()).warning(String.format("No default value for stage %s, its NullRemover's IO params are set to null", getInnerStage().uid()));
+        }
     }
 
     @Override
@@ -53,31 +73,9 @@ public class NullRemoverEstimatorSingleIO extends Estimator<NullRemoverModelSing
         return String.valueOf(serialVersionUID);
     }
 
-    public Estimator getInnerEstimator() {
-        return innerEstimator;
-    }
-
-    public void setInnerEstimator(Estimator innerEstimator) {
-        this.innerEstimator = innerEstimator;
-    }
-
-    @Override
-    public void org$apache$spark$ml$param$shared$HasInputCol$_setter_$inputCol_$eq(Param param) {
-    }
-
     @Override
     public Param<String> inputCol() {
         return inputCol;
-    }
-
-    @Override
-    public String getInputCol() {
-        return getOrDefault(inputCol());
-    }
-
-    @Override
-    public void org$apache$spark$ml$param$shared$HasOutputCol$_setter_$outputCol_$eq(Param param) {
-
     }
 
     @Override
@@ -86,19 +84,12 @@ public class NullRemoverEstimatorSingleIO extends Estimator<NullRemoverModelSing
     }
 
     @Override
-    public String getOutputCol() {
-        return getOrDefault(outputCol());
+    public PipelineStage getInnerStage() {
+        return getInnerEstimator();
     }
 
     @Override
-    public NullRemoverEstimatorSingleIO setInputCol(String colName) {
-        set(inputCol(), colName);
-        return this;
-    }
-
-    @Override
-    public NullRemoverEstimatorSingleIO setOutputCol(String colName) {
-        set(outputCol(), colName);
-        return this;
+    public void setInnerStage(PipelineStage stage) {
+        this.innerEstimator = (Estimator) stage;
     }
 }

@@ -5,17 +5,21 @@ import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.ml.param.shared.HasInputCol;
-import org.apache.spark.ml.param.shared.HasOutputCol;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
+
+import java.util.NoSuchElementException;
+import java.util.logging.Logger;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.lit;
 
 /**
- *
+ * A wrapper for normal estimators which will filter the null value from the input for inner stages.
+ * Modification on outside class's IO params will be reflected into the inner stage.
+ * If user wanna change other param of the inner stage should use the setInnerStage() method which will reset every
+ * param including the IO params.
  */
 public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> implements InnerStageImplementHasInputCol, InnerStageImplementHasOutputCol {
     private static final long serialVersionUID = -68163027255309458L;
@@ -23,9 +27,9 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
     private Transformer innerTransformer;
 
     public NullRemoverModelSingleIO(Transformer innerTransformer) {
-        this.innerTransformer = innerTransformer;
         inputCol = initInputCol();
         outputCol = initOutputCol();
+        setInnerTransformer(innerTransformer);
     }
 
     @Override
@@ -36,7 +40,6 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
         inputHasNull = inputHasNull.withColumn(getOutputCol(), lit(null));
         Dataset<Row> result = innerTransformer.transform(inputNoNull);
         result = result.union(inputHasNull);
-        result.show();
         return result;
     }
 
@@ -44,7 +47,6 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
     public StructType transformSchema(StructType structType) {
         return innerTransformer.transformSchema(structType);
     }
-
 
     @Override
     public String uid() {
@@ -56,42 +58,24 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
         return new NullRemoverModelSingleIO(getInnerTransformer()).setParent(parent());
     }
 
-
-    public Transformer getInnerTransformer() {
-        return innerTransformer;
+    /**
+     * Return a copy of inner transformer, modifications will not be reflected in the real one.
+     *
+     * @return
+     */
+    private Transformer getInnerTransformer() {
+        return innerTransformer.copy(org$apache$spark$ml$param$Params$$paramMap());
     }
 
+    /**
+     * Set a innerTransformer for this wrapper. The wrapper's inputCol and outputCol will be updated as well;
+     *
+     * @param innerTransformer
+     */
     public void setInnerTransformer(Transformer innerTransformer) {
-        this.innerTransformer = innerTransformer;
-    }
-
-    @Override
-    public NullRemoverModelSingleIO setInputCol(String colName) {
-        set(inputCol(), colName);
-        setInnerInputCol(colName);
-        return this;
-    }
-
-    private void setInnerInputCol(String colName) {
-        HasInputCol hasInputCol = (HasInputCol) getInnerTransformer();
-        hasInputCol.set(hasInputCol.inputCol(), colName);
-    }
-
-    @Override
-    public PipelineStage setOutputCol(String colName) {
-        set(outputCol(), colName);
-        setInnerOutputCol(colName);
-        return this;
-    }
-
-    private void setInnerOutputCol(String colName) {
-        HasOutputCol hasOutputCol = (HasOutputCol) getInnerTransformer();
-        hasOutputCol.set(hasOutputCol.outputCol(), colName);
-    }
-
-    @Override
-    public void org$apache$spark$ml$param$shared$HasInputCol$_setter_$inputCol_$eq(Param param) {
-
+        setInnerStage(innerTransformer);
+        syncInputCol();
+        syncOutputCol();
     }
 
     @Override
@@ -100,32 +84,17 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
     }
 
     @Override
-    public String getInputCol() {
-        return getOrDefault(inputCol());
-    }
-
-    private String getInnerInputCol() {
-        HasInputCol hasInputCol = (HasInputCol) getInnerTransformer();
-        return hasInputCol.getInputCol();
-    }
-
-    @Override
-    public void org$apache$spark$ml$param$shared$HasOutputCol$_setter_$outputCol_$eq(Param param) {
-
-    }
-
-    @Override
     public Param<String> outputCol() {
         return this.outputCol;
     }
 
-    private String getInnerOutputCol() {
-        HasOutputCol hasOutputCol = (HasOutputCol) getInnerTransformer();
-        return hasOutputCol.getOutputCol();
+    @Override
+    public PipelineStage getInnerStage() {
+        return getInnerTransformer();
     }
 
     @Override
-    public String getOutputCol() {
-        return getOrDefault(outputCol());
+    public void setInnerStage(PipelineStage stage) {
+        this.innerTransformer = (Transformer) stage;
     }
 }
