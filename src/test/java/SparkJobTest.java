@@ -75,6 +75,5 @@ public class SparkJobTest extends TestBase {
 
     @Test
     public void nestedSparkTaskTest() {
-
     }
 }

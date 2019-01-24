@@ -6,6 +6,7 @@ import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
 import featurePipeline.CosinSimilarityStage;
+import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
 import featurePipeline.UnsupervisedStage.UnsupervisedStage;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
@@ -31,25 +32,28 @@ public class VSMTask {
     private static void createSourceSDF(SDFGraph sdfGraph) throws Exception {
         sdfGraph.addInputField("s_text");
         sdfGraph.addOutputField("s_tf_idf");
-        SDFNode.SDFType type = SDFNode.SDFType.SOURCE_ART_SDF;
+        SDFNode.SDFType type = SDFNode.SDFType.SOURCE_SDF;
 
 
         Tokenizer sTk = new Tokenizer();
-        SDFNode tkNode = new SDFNode(sTk, "source_tokenizer", type);
+        SDFNode tkNode = new SDFNode(new NullRemoverModelSingleIO(sTk), "source_tokenizer");
         tkNode.addInputField("s_text");
         tkNode.addOutputField("s_tokens");
+        tkNode.assignTypeToOutputField("s_tokens", type);
 
         HashingTF htf = new HashingTF();
-        SDFNode htfNode = new SDFNode(htf, "source_hashingTF", type);
+        SDFNode htfNode = new SDFNode(new NullRemoverModelSingleIO(htf), "source_hashingTF");
         htfNode.addInputField("s_tokens");
         htfNode.addOutputField("s_htf");
+        htfNode.assignTypeToOutputField("s_htf", type);
 
 
         IDF idf = new IDF();
         UnsupervisedStage un_idf = new UnsupervisedStage(idf);
-        SDFNode idfNode = new SDFNode(un_idf, "shared_IDF", SDFNode.SDFType.SHARED_SDF);
+        SDFNode idfNode = new SDFNode(un_idf, "shared_IDF");
         idfNode.addInputField("s_idf_in");
-        idfNode.addOutputField("s_idf_out", type);
+        idfNode.addOutputField("s_idf_out");
+        idfNode.assignTypeToOutputField("s_idf_out", type);
 
         sdfGraph.addNode(tkNode);
         sdfGraph.addNode(htfNode);
@@ -64,21 +68,24 @@ public class VSMTask {
     private static void createTargetSDF(SDFGraph sdfGraph) throws Exception {
         sdfGraph.addInputField("t_text");
         sdfGraph.addOutputField("t_tf_idf");
-        SDFNode.SDFType type = SDFNode.SDFType.TARGET_ART_SDF;
+        SDFNode.SDFType type = SDFNode.SDFType.TARGET_SDF;
         Tokenizer sTk = new Tokenizer();
-        SDFNode tkNode = new SDFNode(sTk, "target_tokenizer", type);
+        SDFNode tkNode = new SDFNode(new NullRemoverModelSingleIO(sTk), "target_tokenizer");
         tkNode.addInputField("t_text");
         tkNode.addOutputField("t_tokens");
+        tkNode.assignTypeToOutputField("t_tokens", type);
 
         HashingTF htf = new HashingTF();
-        SDFNode htfNode = new SDFNode(htf, "target_hashingTF", type);
+        SDFNode htfNode = new SDFNode(new NullRemoverModelSingleIO(htf), "target_hashingTF");
         htfNode.addInputField("t_tokens");
         htfNode.addOutputField("t_htf");
+        htfNode.assignTypeToOutputField("t_htf", type);
 
 
         SDFNode idfNode = (SDFNode) sdfGraph.getNode("shared_IDF");
         idfNode.addInputField("t_idf_in");
-        idfNode.addOutputField("t_idf_out", type);
+        idfNode.addOutputField("t_idf_out");
+        idfNode.assignTypeToOutputField("t_idf_out", type);
 
         sdfGraph.addNode(tkNode);
         sdfGraph.addNode(htfNode);

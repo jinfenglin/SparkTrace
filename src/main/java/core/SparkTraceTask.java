@@ -197,7 +197,7 @@ public class SparkTraceTask extends SGraph {
     }
 
     private Dataset<Row> getSourceSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
-        Seq<String> sourceFeatureCols = JavaConverters.asScalaIteratorConverter(sdfGraph.getSourceSDFOutputs().iterator()).asScala().toSeq();
+        Seq<String> sourceFeatureCols = JavaConverters.asScalaIteratorConverter(sdfGraph.getSourceSDFOutput().iterator()).asScala().toSeq();
         return mixedSDFeatureVecs.selectExpr(sourceFeatureCols);
     }
 

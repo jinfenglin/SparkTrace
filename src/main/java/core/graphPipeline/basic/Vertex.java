@@ -99,6 +99,7 @@ abstract public class Vertex {
     }
 
     public Vertex addOutputField(Symbol symbol) throws Exception {
+        assert symbol.getScope().equals(this);
         IOTableCell cell = new IOTableCell(symbol);
         outputTable.addCell(cell);
         SymbolTable.registerOutputSymbol(symbol);
