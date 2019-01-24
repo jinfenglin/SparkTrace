@@ -5,6 +5,8 @@ import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
+import org.apache.spark.ml.param.shared.HasInputCol;
+import org.apache.spark.ml.param.shared.HasOutputCol;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
@@ -29,6 +31,8 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
     public NullRemoverModelSingleIO(Transformer innerTransformer) {
         inputCol = initInputCol();
         outputCol = initOutputCol();
+        assert innerTransformer instanceof HasInputCol;
+        assert innerTransformer instanceof HasOutputCol;
         setInnerTransformer(innerTransformer);
     }
 

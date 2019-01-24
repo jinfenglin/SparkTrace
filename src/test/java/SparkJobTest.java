@@ -61,7 +61,7 @@ public class SparkJobTest extends TestBase {
 
     @Test
     public void singleSparkTaskTest() throws Exception {
-        SparkTraceTask vsmTask = VSMTask.getSTT();
+        SparkTraceTask vsmTask = VSMTask.getSTT(sparkSession);
         vsmTask.initSTT();
         Map<String, String> vsmTaskInputConfig = new HashMap<>();
         vsmTaskInputConfig.put("s_text", "commit_content");
@@ -75,6 +75,5 @@ public class SparkJobTest extends TestBase {
 
     @Test
     public void nestedSparkTaskTest() {
-
     }
 }

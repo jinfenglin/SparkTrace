@@ -1,5 +1,8 @@
 package core.graphPipeline.basic;
 
+import featurePipeline.NullRemoveWrapper.HasInnerStage;
+import featurePipeline.NullRemoveWrapper.InnerStageImplementHasInputCol;
+import featurePipeline.NullRemoveWrapper.InnerStageImplementHasOutputCol;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.param.shared.HasInputCol;
@@ -41,11 +44,17 @@ public class SNode extends Vertex {
                 Logger.getLogger(this.getClass().getName()).warning(String.format(mismatchedInputColNumMessage, getVertexId(), "inputColumn", inputCells.size()));
             }
             HasInputCol hasInputColStage = (HasInputCol) sparkPipelineStage;
-            hasInputColStage.set(hasInputColStage.inputCol(), inputCells.get(0).getFieldSymbol().getSymbolValue());
+            String inputColName = inputCells.get(0).getFieldSymbol().getSymbolValue();
+            if (hasInputColStage instanceof InnerStageImplementHasInputCol) {
+                ((InnerStageImplementHasInputCol) hasInputColStage).setInputCol(inputColName);
+            } else {
+                hasInputColStage.set(hasInputColStage.inputCol(), inputColName);
+            }
         } else if (sparkPipelineStage instanceof HasInputCols) {
             HasInputCols hasInputCols = (HasInputCols) sparkPipelineStage;
             List<String> inputColNames = new ArrayList<>();
             inputCells.forEach(cell -> inputColNames.add(cell.getFieldSymbol().getSymbolValue()));
+            //TODO add if (hasInputCols instanceof InnerStageImplementHasInputCols)
             hasInputCols.set(hasInputCols.inputCols(), inputColNames.toArray(new String[0]));
         }
 
@@ -54,11 +63,18 @@ public class SNode extends Vertex {
                 Logger.getLogger(this.getClass().getName()).warning(String.format(mismatchedInputColNumMessage, getVertexId(), "outputColumn", outputCells.size()));
             }
             HasOutputCol hasOutputCol = (HasOutputCol) sparkPipelineStage;
-            hasOutputCol.set(hasOutputCol.outputCol(), outputCells.get(0).getFieldSymbol().getSymbolValue());
+            String outputColName = outputCells.get(0).getFieldSymbol().getSymbolValue();
+            if (hasOutputCol instanceof InnerStageImplementHasOutputCol) {
+                ((InnerStageImplementHasOutputCol) hasOutputCol).setOutputCol(outputColName);
+            } else {
+                hasOutputCol.set(hasOutputCol.outputCol(), outputColName);
+            }
+
         } else if (sparkPipelineStage instanceof HasOutputCols) {
             HasOutputCols hasOutputCols = (HasOutputCols) sparkPipelineStage;
             List<String> outputColNames = new ArrayList<>();
             outputCells.stream().forEach(cell -> outputColNames.add(cell.getFieldSymbol().getSymbolValue()));
+            //TODO add if (hasInputCols instanceof InnerStageImplementHasOutputCols)
             hasOutputCols.set(hasOutputCols.outputCols(), outputColNames.toArray(new String[0]));
         }
         pipeline.setStages(new PipelineStage[]{sparkPipelineStage});

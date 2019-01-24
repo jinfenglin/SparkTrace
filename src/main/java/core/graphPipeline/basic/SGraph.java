@@ -81,12 +81,6 @@ public class SGraph extends Vertex {
             SymbolTable.shareSymbolValue(graphProviderSymbol, sourceNodeReceiverSymbol, false);
         }
 
-        for (IOTableCell graphOutputCell : graph.getOutputTable().getCells()) {
-            Symbol graphReceiverSymbol = graphOutputCell.getFieldSymbol();
-            Symbol sinkNodeProviderSymbol = graph.sinkNode.getInputTable().getSymbolByVarName(graphReceiverSymbol.getSymbolName());
-            SymbolTable.shareSymbolValue(sinkNodeProviderSymbol, graphReceiverSymbol, false);
-        }
-
         for (Vertex node : graph.getNodes()) {
             for (IOTableCell providerCell : node.outputTable.getCells()) {
                 Symbol providerSymbol = providerCell.getFieldSymbol();
@@ -98,6 +92,12 @@ public class SGraph extends Vertex {
             if (node instanceof SGraph) {
                 syncSymbolValues((SGraph) node);
             }
+        }
+
+        for (IOTableCell graphOutputCell : graph.getOutputTable().getCells()) {
+            Symbol graphReceiverSymbol = graphOutputCell.getFieldSymbol();
+            Symbol sinkNodeProviderSymbol = graph.sinkNode.getInputTable().getSymbolByVarName(graphReceiverSymbol.getSymbolName());
+            SymbolTable.shareSymbolValue(sinkNodeProviderSymbol, graphReceiverSymbol, false);
         }
     }
 

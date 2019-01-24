@@ -5,11 +5,17 @@ import core.graphPipeline.basic.IOTableCell;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
+import core.graphPipeline.graphSymbol.SymbolTable;
 import core.pipelineOptimizer.*;
+import org.apache.spark.SparkContext;
 import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.util.SchemaUtils;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 import traceability.components.abstractComponents.TraceArtifact;
@@ -31,7 +37,7 @@ import static org.apache.spark.sql.functions.lit;
  */
 public class SparkTraceTask extends SGraph {
     private boolean isInitialed = false; //record whether the task is init or not
-
+    private SparkSession sparkSession;
     private SDFGraph sdfGraph;
     private SGraph ddfGraph;
 
@@ -39,8 +45,9 @@ public class SparkTraceTask extends SGraph {
     private PipelineModel DDFModel;
 
 
-    public SparkTraceTask() {
+    public SparkTraceTask(SparkSession sparkSession) {
         super();
+        this.sparkSession = sparkSession;
     }
 
     /**
@@ -197,12 +204,16 @@ public class SparkTraceTask extends SGraph {
     }
 
     private Dataset<Row> getSourceSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
-        Seq<String> sourceFeatureCols = JavaConverters.asScalaIteratorConverter(sdfGraph.getSourceSDFOutputs().iterator()).asScala().toSeq();
+        Set<String> sourceSDFCols = sdfGraph.getSourceSDFOutput();
+        sourceSDFCols.add(sdfGraph.getSourceIdCol());
+        Seq<String> sourceFeatureCols = JavaConverters.asScalaIteratorConverter(sourceSDFCols.iterator()).asScala().toSeq();
         return mixedSDFeatureVecs.selectExpr(sourceFeatureCols);
     }
 
     private Dataset<Row> getTargetSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
-        Seq<String> targetFeatureCols = JavaConverters.asScalaIteratorConverter(sdfGraph.getTargetSDFOutputs().iterator()).asScala().toSeq();
+        Set<String> targetSDFCols = sdfGraph.getTargetSDFOutputs();
+        targetSDFCols.add(sdfGraph.getTargetIdCol());
+        Seq<String> targetFeatureCols = JavaConverters.asScalaIteratorConverter(targetSDFCols.iterator()).asScala().toSeq();
         return mixedSDFeatureVecs.selectExpr(targetFeatureCols);
     }
 
@@ -216,16 +227,33 @@ public class SparkTraceTask extends SGraph {
         Dataset<Row> combinedDataset = UnionSourceAndTarget(sourceArtifacts, targetArtifacts);
         SDFModel = sdfGraph.toPipeline().fit(combinedDataset);
 
+        // Synchronize the symbol value for SDFGraph and DDFGraph. SDFGraph output -> DDFGraph inputs
+        for (IOTableCell providerCell : sdfGraph.getOutputTable().getCells()) {
+            Symbol providerSymbol = providerCell.getFieldSymbol();
+            for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
+                Symbol receiverSymbol = receiverCell.getFieldSymbol();
+                SymbolTable.shareSymbolValue(providerSymbol, receiverSymbol, true);
+            }
+        }
+
         Dataset<Row> mixedSDFeatureVecs = SDFModel.transform(combinedDataset);
         Dataset<Row> sourceSDFeatureVecs = getSourceSDFFeatureVecs(mixedSDFeatureVecs);
         Dataset<Row> targetSDFeatureVecs = getTargetSDFFeatureVecs(mixedSDFeatureVecs);
-
-        if (!(goldenLinks == null)) {
-            Dataset<Row> goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
-            DDFModel = ddfGraph.toPipeline().fit(goldLinksWithFeatureVec);
-            Dataset<Row> traceResult = DDFModel.transform(goldLinksWithFeatureVec);
-            traceResult.show();
+        Dataset<Row> goldLinksWithFeatureVec = null;
+        if (goldenLinks == null) {
+            List<StructField> fields = new ArrayList<>();
+            for (StructField sourceField : sourceSDFeatureVecs.schema().fields()) {
+                fields.add(sourceField);
+            }
+            for (StructField targetField : targetSDFeatureVecs.schema().fields()) {
+                fields.add(targetField);
+            }
+            StructType emptyDFSchema = new StructType(fields.toArray(new StructField[0]));
+            goldLinksWithFeatureVec = sparkSession.createDataFrame(new ArrayList<>(), emptyDFSchema);
+        } else {
+            goldLinksWithFeatureVec = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
         }
+        DDFModel = ddfGraph.toPipeline().fit(goldLinksWithFeatureVec);
     }
 
     public void trace(Dataset<? extends TraceArtifact> sourceArtifacts,
@@ -235,8 +263,8 @@ public class SparkTraceTask extends SGraph {
         Dataset<Row> sourceSDFeatureVecs = getSourceSDFFeatureVecs(mixedSDFeatureVecs);
         Dataset<Row> targetSDFeatureVecs = getTargetSDFFeatureVecs(mixedSDFeatureVecs);
 
-        Dataset<Row> candidateLinks = sourceArtifacts.crossJoin(targetArtifacts); //Cross join
-        candidateLinks = appendFeaturesToLinks(candidateLinks, sourceSDFeatureVecs, targetSDFeatureVecs);
+        Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
+        //candidateLinks = appendFeaturesToLinks(candidateLinks, sourceSDFeatureVecs, targetSDFeatureVecs);
         Dataset<Row> traceResult = DDFModel.transform(candidateLinks);
     }
 
