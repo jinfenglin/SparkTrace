@@ -267,9 +267,8 @@ public class SparkTraceTask extends SGraph {
         Dataset<Row> targetSDFeatureVecs = getTargetSDFFeatureVecs(mixedSDFeatureVecs);
 
         Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
-        candidateLinks.show();
-        //candidateLinks = appendFeaturesToLinks(candidateLinks, sourceSDFeatureVecs, targetSDFeatureVecs);
         Dataset<Row> traceResult = DDFModel.transform(candidateLinks);
+        traceResult.show();
     }
 
 

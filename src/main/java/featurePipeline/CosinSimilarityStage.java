@@ -19,6 +19,8 @@ import org.apache.spark.sql.types.StructType;
 
 import java.io.Serializable;
 
+import static org.apache.spark.sql.functions.callUDF;
+
 public class CosinSimilarityStage extends Transformer implements HasInputCols, HasOutputCol {
     private static final long serialVersionUID = 5667889784880518528L;
     private static final String COSIN_SIMILAIRY_UDF = "cosin_similarity_UDF";
@@ -67,7 +69,6 @@ public class CosinSimilarityStage extends Transformer implements HasInputCols, H
                 }
 
                 while (v2IndexCursor < v2Length && (v1IndexCursor >= v1Length || sv1Indices[v1IndexCursor] > sv2Indices[v2IndexCursor])) {
-
                     v2SquSum += sv2Value[v2IndexCursor] * sv2Value[v2IndexCursor];
                     v2IndexCursor += 1;
                 }
@@ -83,10 +84,12 @@ public class CosinSimilarityStage extends Transformer implements HasInputCols, H
             return productScore / (Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum));
         }, DataTypes.DoubleType);
         String[] inputColumns = getInputCols();
-        Column col1 = dataset.col(inputColumns[0]);
-        Column col2 = dataset.col(inputColumns[1]);
-        Column outputColumn = functions.callUDF(COSIN_SIMILAIRY_UDF, col1, col2);
-        return dataset.withColumn(getOutputCol(), outputColumn);
+
+        Dataset<Row> tmp = dataset.select("*"); //Create a copy, unknown error happen when the operation is applied on origin dataset
+        Column col1 = tmp.col(inputColumns[0]);
+        Column col2 = tmp.col(inputColumns[1]);
+        Column outputColumn = callUDF(COSIN_SIMILAIRY_UDF, col1, col2);
+        return tmp.withColumn(getOutputCol(), outputColumn);
     }
 
     @Override
