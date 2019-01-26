@@ -14,7 +14,7 @@ public class IOTable {
 
     public IOTable(Vertex context) {
         this.context = context;
-        cells = new HashMap<>();
+        cells = new LinkedHashMap<>();
     }
 
     /**

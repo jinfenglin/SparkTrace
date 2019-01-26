@@ -2,29 +2,52 @@ package featurePipeline;
 
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.linalg.SparseVector;
+import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
+import org.apache.spark.ml.param.StringArrayParam;
+import org.apache.spark.ml.param.shared.HasInputCols;
+import org.apache.spark.ml.param.shared.HasOutputCol;
+import org.apache.spark.ml.util.SchemaUtils;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
-public class CosinSimilarityStage extends Transformer {
+import java.io.Serializable;
+
+public class CosinSimilarityStage extends Transformer implements HasInputCols, HasOutputCol {
     private static final long serialVersionUID = 5667889784880518528L;
-    private static final String COSIN_SIMILAIRY_UDF = "cosin_similarity";
-    private String outputCol;
-    private String inputCol1, inputCol2;
+    private static final String COSIN_SIMILAIRY_UDF = "cosin_similarity_UDF";
+    private static final String[] DEFAULT_INPUT_COLS = new String[]{"vector1", "vector2"};
+    private static final String DEFAULT_OUTPUT_COL = "cosin_similarity";
+    Param<String> outputCol;
+    StringArrayParam inputCols;
 
     public CosinSimilarityStage() {
         super();
-        setInputCol1("vector1");
-        setInputCol2("vector2");
-        setOutputCol("cosin_similarity");
+        inputCols = initInputCols();
+        outputCol = initOutputCol();
+    }
+
+    private StringArrayParam initInputCols() {
+        StringArrayParam inputCols = new StringArrayParam(this, "inputCols", "Input columns which contain sparse vectros ");
+        setDefault(inputCols, DEFAULT_INPUT_COLS);
+        return inputCols;
+    }
+
+    private Param<String> initOutputCol() {
+        Param<String> outputCol = new Param<String>(this, "outputCol", "output column for cosin similarity of two vectors");
+        setDefault(outputCol, DEFAULT_OUTPUT_COL);
+        return outputCol;
     }
 
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
+        transformSchema(dataset.schema());
         dataset.sqlContext().udf().register(COSIN_SIMILAIRY_UDF, (SparseVector v1, SparseVector v2) -> {
             int[] sv1Indices = v1.indices();
             double[] sv1Value = v1.values();
@@ -59,16 +82,17 @@ public class CosinSimilarityStage extends Transformer {
             }
             return productScore / (Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum));
         }, DataTypes.DoubleType);
-        Column col1 = dataset.col(this.inputCol1);
-        Column col2 = dataset.col(this.inputCol2);
+        String[] inputColumns = getInputCols();
+        Column col1 = dataset.col(inputColumns[0]);
+        Column col2 = dataset.col(inputColumns[1]);
         Column outputColumn = functions.callUDF(COSIN_SIMILAIRY_UDF, col1, col2);
         return dataset.withColumn(getOutputCol(), outputColumn);
     }
 
     @Override
     public StructType transformSchema(StructType structType) {
-        structType = structType.add(outputCol, DataTypes.DoubleType, false);
-        return structType;
+        StructField similarityField = new StructField(getOutputCol(), DataTypes.DoubleType, false, null);
+        return structType.add(similarityField);
     }
 
     @Override
@@ -77,34 +101,45 @@ public class CosinSimilarityStage extends Transformer {
     }
 
     @Override
-    public String uid() {
-        return this.getClass().getName() + serialVersionUID;
+    public void org$apache$spark$ml$param$shared$HasInputCols$_setter_$inputCols_$eq(StringArrayParam stringArrayParam) {
+
     }
 
-    public String getOutputCol() {
+    @Override
+    public StringArrayParam inputCols() {
+        return inputCols;
+    }
+
+    @Override
+    public String[] getInputCols() {
+        return getOrDefault(inputCols());
+    }
+
+    @Override
+    public void org$apache$spark$ml$param$shared$HasOutputCol$_setter_$outputCol_$eq(Param param) {
+
+    }
+
+    @Override
+    public Param<String> outputCol() {
         return outputCol;
     }
 
-    public CosinSimilarityStage setOutputCol(String outputCol) {
-        this.outputCol = outputCol;
-        return this;
+    @Override
+    public String getOutputCol() {
+        return getOrDefault(outputCol());
     }
 
-    public String getInputCol1() {
-        return inputCol1;
+    @Override
+    public String uid() {
+        return String.valueOf(serialVersionUID);
     }
 
-    public CosinSimilarityStage setInputCol1(String inputCol1) {
-        this.inputCol1 = inputCol1;
-        return this;
+    public void setInputCols(String vec1, String vec2) {
+        set(inputCols(), new String[]{vec1, vec2});
     }
 
-    public String getInputCol2() {
-        return inputCol2;
-    }
-
-    public CosinSimilarityStage setInputCol2(String inputCol2) {
-        this.inputCol2 = inputCol2;
-        return this;
+    public void setOutputCol(String colName) {
+        set(outputCol(), colName);
     }
 }

@@ -21,6 +21,9 @@ import java.util.logging.Logger;
  */
 public class SNode extends Vertex {
     private PipelineStage sparkPipelineStage;
+    private static String stageMoIOInterfaceErrorMsg = "The inner Spark %s is not implementing" +
+            "%s interface, thus the input column value can be not " +
+            "be passed to this stage";
 
     public SNode(PipelineStage pipelineStage) {
         super();
@@ -33,7 +36,7 @@ public class SNode extends Vertex {
     }
 
     @Override
-    public Pipeline toPipeline() {
+    public Pipeline toPipeline() throws Exception {
         String mismatchedInputColNumMessage = "In node %s pipeline stage expected 1 %s while %s exists";
         Pipeline pipeline = new Pipeline(getVertexId());
         List<IOTableCell> inputCells = getInputTable().getCells();
@@ -56,6 +59,8 @@ public class SNode extends Vertex {
             inputCells.forEach(cell -> inputColNames.add(cell.getFieldSymbol().getSymbolValue()));
             //TODO add if (hasInputCols instanceof InnerStageImplementHasInputCols)
             hasInputCols.set(hasInputCols.inputCols(), inputColNames.toArray(new String[0]));
+        } else {
+            throw new Exception(stageMoIOInterfaceErrorMsg.format(sparkPipelineStage.toString(), "HasInputCol/HasInputCols"));
         }
 
         if (sparkPipelineStage instanceof HasOutputCol) {
@@ -76,6 +81,8 @@ public class SNode extends Vertex {
             outputCells.stream().forEach(cell -> outputColNames.add(cell.getFieldSymbol().getSymbolValue()));
             //TODO add if (hasInputCols instanceof InnerStageImplementHasOutputCols)
             hasOutputCols.set(hasOutputCols.outputCols(), outputColNames.toArray(new String[0]));
+        } else {
+            throw new Exception(stageMoIOInterfaceErrorMsg.format(sparkPipelineStage.toString(), "HasOutputCol/HasOutputCols"));
         }
         pipeline.setStages(new PipelineStage[]{sparkPipelineStage});
         return pipeline;

@@ -31,9 +31,9 @@ public class SparkJobTest extends TestBase {
 
     @Before
     public void runSparkTestWithMavenData() {
-        String commitPath = "src/main/resources/maven_sample/commits.csv";
-        String improvementPath = "src/main/resources/maven_sample/improvement.csv";
-        String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
+        String commitPath = "src/main/resources/maven_mini/commits.csv";
+        String improvementPath = "src/main/resources/maven_mini/improvement.csv";
+        String linkPath = "src/main/resources/maven_mini/improvementCommitLinks.csv";
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
         links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);

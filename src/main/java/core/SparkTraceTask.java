@@ -23,6 +23,7 @@ import traceability.components.abstractComponents.TraceLink;
 
 import java.util.*;
 
+import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.lit;
 
 
@@ -199,22 +200,24 @@ public class SparkTraceTask extends SGraph {
         for (String targetCol : targetCols) {
             sourceDF = sourceDF.withColumn(targetCol, lit(null));
         }
-        Dataset<Row> mixed = sourceDF.union(targetDF);
+        Dataset<Row> mixed = sourceDF.unionByName(targetDF);
         return mixed;
     }
 
     private Dataset<Row> getSourceSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
         Set<String> sourceSDFCols = sdfGraph.getSourceSDFOutput();
-        sourceSDFCols.add(sdfGraph.getSourceIdCol());
+        String sourceIdColName = sdfGraph.getSourceIdCol();
+        sourceSDFCols.add(sourceIdColName);
         Seq<String> sourceFeatureCols = JavaConverters.asScalaIteratorConverter(sourceSDFCols.iterator()).asScala().toSeq();
-        return mixedSDFeatureVecs.selectExpr(sourceFeatureCols);
+        return mixedSDFeatureVecs.selectExpr(sourceFeatureCols).where(col(sourceIdColName).isNotNull());
     }
 
     private Dataset<Row> getTargetSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
         Set<String> targetSDFCols = sdfGraph.getTargetSDFOutputs();
-        targetSDFCols.add(sdfGraph.getTargetIdCol());
+        String targetIdColName = sdfGraph.getTargetIdCol();
+        targetSDFCols.add(targetIdColName);
         Seq<String> targetFeatureCols = JavaConverters.asScalaIteratorConverter(targetSDFCols.iterator()).asScala().toSeq();
-        return mixedSDFeatureVecs.selectExpr(targetFeatureCols);
+        return mixedSDFeatureVecs.selectExpr(targetFeatureCols).where(col(targetIdColName).isNotNull());
     }
 
 
@@ -264,6 +267,7 @@ public class SparkTraceTask extends SGraph {
         Dataset<Row> targetSDFeatureVecs = getTargetSDFFeatureVecs(mixedSDFeatureVecs);
 
         Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
+        candidateLinks.show();
         //candidateLinks = appendFeaturesToLinks(candidateLinks, sourceSDFeatureVecs, targetSDFeatureVecs);
         Dataset<Row> traceResult = DDFModel.transform(candidateLinks);
     }

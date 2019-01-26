@@ -135,8 +135,7 @@ public class CustomizedStagesTest extends TestBase {
         Dataset<Row> dPair = d1.crossJoin(d2);
 
         CosinSimilarityStage cosin = new CosinSimilarityStage();
-        cosin.setInputCol1("vec1");
-        cosin.setInputCol2("vec2");
+        cosin.setInputCols("vec1", "vec2");
         cosin.setOutputCol("score");
         cosin.transform(dPair).show(false);
 
