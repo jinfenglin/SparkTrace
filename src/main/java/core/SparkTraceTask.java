@@ -259,8 +259,8 @@ public class SparkTraceTask extends SGraph {
         DDFModel = ddfGraph.toPipeline().fit(goldLinksWithFeatureVec);
     }
 
-    public void trace(Dataset<? extends TraceArtifact> sourceArtifacts,
-                      Dataset<? extends TraceArtifact> targetArtifacts) {
+    public Dataset<Row> trace(Dataset<? extends TraceArtifact> sourceArtifacts,
+                              Dataset<? extends TraceArtifact> targetArtifacts) {
         Dataset<Row> combinedDataset = UnionSourceAndTarget(sourceArtifacts, targetArtifacts);
         Dataset<Row> mixedSDFeatureVecs = SDFModel.transform(combinedDataset);
         Dataset<Row> sourceSDFeatureVecs = getSourceSDFFeatureVecs(mixedSDFeatureVecs);
@@ -268,7 +268,7 @@ public class SparkTraceTask extends SGraph {
 
         Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
         Dataset<Row> traceResult = DDFModel.transform(candidateLinks);
-        traceResult.show();
+        return traceResult;
     }
 
 

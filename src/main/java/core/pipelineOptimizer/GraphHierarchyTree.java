@@ -61,6 +61,16 @@ public class GraphHierarchyTree {
         return result;
     }
 
+    /**
+     * Lowest Common Ancestor for a group of nodes
+     *
+     * @param nodes
+     * @return
+     */
+    public GraphHierarchyTree LCA(GraphHierarchyTree... nodes) {
+        return null;
+    }
+
     public GraphHierarchyTree findNode(IOTableCell cell) {
         Vertex vertex = cell.getParentTable().getContext();
         return findNode(vertex);
@@ -101,6 +111,29 @@ public class GraphHierarchyTree {
             }
         }
         return false;
+    }
+
+    /**
+     * In the given tree node find the parent vertex that a child vertex reside in .
+     *
+     * @param treeNode
+     * @param childVertex
+     * @return
+     */
+    public Vertex findParentVertexInTreeNode(GraphHierarchyTree treeNode, Vertex childVertex) {
+        GraphHierarchyTree curTreeNode = treeNode.findNode(childVertex);
+        GraphHierarchyTree lastTreeNode = null; //When childVertexTreeNode equals treeNode, the lastFoundTreeNode record the subgraph childvertex resides in
+        while (curTreeNode != treeNode) {
+            lastTreeNode = curTreeNode;
+            curTreeNode = curTreeNode.parentTree;
+        }
+        if (lastTreeNode == null) {
+            //childVertex is a node in treeNode
+            return childVertex;
+        } else {
+            //return the subGraph which contains
+            return lastTreeNode.nodeContent;
+        }
     }
 
     public SGraph getNodeContent() {

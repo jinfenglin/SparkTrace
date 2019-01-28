@@ -10,6 +10,9 @@ import org.apache.spark.ml.PipelineStage;
 import java.util.*;
 import java.util.logging.Logger;
 
+import static core.pipelineOptimizer.PipelineOptimizer.removeDuplicatedNodes;
+import static core.pipelineOptimizer.PipelineOptimizer.removeRedundantVertices;
+
 /**
  * A DAG which will be applied to optimize the pipeline structure.
  * To create a graph:
@@ -89,9 +92,9 @@ public class SGraph extends Vertex {
                     SymbolTable.shareSymbolValue(providerSymbol, receiverSymbol, true);
                 }
             }
-            if (node instanceof SGraph) {
-                syncSymbolValues((SGraph) node);
-            }
+//            if (node instanceof SGraph) {
+//                syncSymbolValues((SGraph) node);
+//            }
         }
 
         for (IOTableCell graphOutputCell : graph.getOutputTable().getCells()) {
@@ -131,35 +134,16 @@ public class SGraph extends Vertex {
         }
     }
 
-    /**
-     * Remove the graph which have no out-degree
-     *
-     * @param graph
-     */
-    private static void removeRedundantVertices(SGraph graph) {
-        List<Vertex> vertices = graph.getNodes();
-        vertices.remove(graph.sourceNode);
-        vertices.remove(graph.sinkNode);
-        Queue<Vertex> deletionQueue = new LinkedList<>();
-        for (Vertex node : vertices) {
-            if (node.getOutputVertices().size() == 0) {
-                deletionQueue.add(node);
-            }
-        }
-        while (deletionQueue.size() > 0) {
-            Vertex curNode = deletionQueue.poll();
-            graph.removeNode(curNode);
-            Set<Vertex> inputVertices = curNode.getInputVertices();
-            inputVertices.forEach(vertex -> {
-                if (vertex.getOutputVertices().size() == 0) {
-                    deletionQueue.add(vertex);
-                }
-            });
-        }
+
+    public void optimize(SGraph graph) throws Exception {
+        removeDuplicatedNodes(graph);
+        removeRedundantVertices(graph);
     }
 
     @Override
     public Pipeline toPipeline() throws Exception {
+        syncSymbolValues(this);
+
         //Config the SGraphIOStage to parse the InputTable which translate the Symbols to real column names
         SGraphIOStage initStage = (SGraphIOStage) sourceNode.getSparkPipelineStage();
         initStage.setInputCols(inputTable);
@@ -170,13 +154,10 @@ public class SGraph extends Vertex {
         outStage.setInputCols(outputTable);
         outStage.setOutputCols(outputTable);
 
-        syncSymbolValues(this);
+        //Add Stages and create column cleaning stages in fly
+        List<Vertex> topSortNodes = topologicalSort(this);
         Pipeline pipeline = new Pipeline(getVertexId());
         List<PipelineStage> stages = new ArrayList<>();
-        removeRedundantVertices(this);
-        List<Vertex> topSortNodes = topologicalSort(this);
-
-        //Add Stages and create column cleaning stages in fly
         Map<IOTableCell, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
             stages.add(node.toPipeline());
@@ -243,7 +224,7 @@ public class SGraph extends Vertex {
         return inDegreeMap;
     }
 
-    private static List<Vertex> topologicalSort(SGraph graph) throws Exception {
+    public static List<Vertex> topologicalSort(SGraph graph) throws Exception {
         List<Vertex> nodes = new ArrayList<>(graph.getNodes());
         Map<Vertex, List<Vertex>> edgeIndex = buildEdgeIndex(graph, true);
         Map<Vertex, Integer> inDegrees = inDegreeMap(graph);

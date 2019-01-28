@@ -12,7 +12,10 @@ import org.apache.spark.ml.param.shared.HasOutputCols;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
+
+import static core.pipelineOptimizer.PipelineOptimizer.*;
 
 
 /**
@@ -94,5 +97,19 @@ public class SNode extends Vertex {
 
     public void setSparkPipelineStage(PipelineStage sparkPipelineStage) {
         this.sparkPipelineStage = sparkPipelineStage;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SNode node = (SNode) o;
+        return sameStageType(getSparkPipelineStage(), node.getSparkPipelineStage()) && sameConfig(getSparkPipelineStage(), node.getSparkPipelineStage());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sparkPipelineStage.getClass(), getNonIOParamsValue(sparkPipelineStage));
     }
 }

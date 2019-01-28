@@ -1,12 +1,22 @@
 package core.pipelineOptimizer;
 
+
 import core.graphPipeline.basic.IOTableCell;
 import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.basic.SNode;
 import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
+import featurePipeline.NullRemoveWrapper.HasInnerStage;
+import javafx.util.Pair;
+import org.apache.spark.ml.PipelineStage;
+import org.apache.spark.ml.param.StringArrayParam;
+import org.apache.spark.ml.param.shared.HasInputCol;
+import org.apache.spark.ml.param.shared.HasInputCols;
+import org.apache.spark.ml.param.shared.HasOutputCol;
+import org.apache.spark.ml.param.Param;
+import org.apache.spark.ml.param.shared.HasOutputCols;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  *
@@ -111,4 +121,200 @@ public class PipelineOptimizer {
     public static void penetrate(Vertex sourceVertex, Vertex targetVertex, GraphHierarchyTree treeRoot) {
         return;
     }
+
+    /**
+     * Remove the duplicated node from the graph without recursion
+     *
+     * @param graph
+     */
+    public static void removeDuplicatedNodes(SGraph graph) {
+        //Put all nodes in the search list as init
+        // while search list not empty
+        // Partition the node in list into buckets then in each buckets
+        //       partition the buckets by the inputs. Eliminate the input-bucket partition with penetration, add the impacted nodes into search list
+        Map<SGraph, List<Vertex>> topoOrderMap = buildTopologicalOrderMap();
+        GraphHierarchyTree ght = new GraphHierarchyTree(null, graph);
+        List<SNode> searchPool = getAllSNodesRecursively(graph);
+        while (searchPool.size() > 0) {
+            List<List<SNode>> snodeFamilies = groupByNode(searchPool);
+            List<List<SNode>> duplicatedSNodeGroups = groupByInputs(snodeFamilies);
+            searchPool = resolveDuplication(duplicatedSNodeGroups, topoOrderMap, ght);
+        }
+    }
+
+    private static void
+
+    /**
+     * Eliminate a list of duplicated graph nodes.
+     *
+     * @param identicalNodeGroups A list of nodes which are identified as exactly same.
+     * @param topoOrderMap        A hashMap for topological sort
+     * @param treeRoot            GraphHierarchyTree whose root is current graph
+     * @return
+     */
+    public static List<SNode> resolveDuplication(List<List<SNode>> identicalNodeGroups, Map<SGraph, List<Vertex>> topoOrderMap, GraphHierarchyTree treeRoot) {
+        List<SNode> impactedNode = new ArrayList<>(); //Record nodes whose input has been changed
+        for (List<SNode> nodeGroup : identicalNodeGroups) {
+            if (nodeGroup.size() > 1) {
+                SNode master = selectMaster(nodeGroup, treeRoot, topoOrderMap); //Select the node whose topological index is lower as master
+                for (SNode node : nodeGroup) {
+                    if (node != master) {
+                        penetrate(master, node, treeRoot);
+                    }
+                }
+            }
+        }
+        return impactedNode;
+    }
+
+    private static SNode selectMaster(List<SNode> nodes, GraphHierarchyTree ght, Map<SGraph, List<Vertex>> topoOrderMap) {
+        List<GraphHierarchyTree> treeNodes = new ArrayList<>();
+        for (SNode node : nodes) {
+            GraphHierarchyTree treeNode = ght.findNode(node);
+            treeNodes.add(treeNode);
+        }
+        GraphHierarchyTree lcaTreeNode = ght.LCA(treeNodes.toArray(new GraphHierarchyTree[0]));
+        List<Pair<Vertex, SNode>> parentVertices = new ArrayList<>();
+        for (SNode node : nodes) {
+            Vertex parentVertex = ght.findParentVertexInTreeNode(lcaTreeNode, node);
+            parentVertices.add(new Pair<>(parentVertex, node));
+        }
+        //Sort the parentVertices base on their topological order index, from low to high
+        List<Vertex> topoOrder = topoOrderMap.get(lcaTreeNode.getNodeContent());
+        Collections.sort(parentVertices, new Comparator<Pair<Vertex, SNode>>() {
+            @Override
+            public int compare(Pair<Vertex, SNode> o1, Pair<Vertex, SNode> o2) {
+                return topoOrder.indexOf(o2.getKey()) - topoOrder.indexOf(o1.getKey());
+            }
+        });
+        return parentVertices.get(0).getValue();
+    }
+
+    public static List<List<SNode>> groupByNode(List<SNode> snodeList) {
+        Map<SNode, List<SNode>> nodeGroups = new HashMap<>();
+        for (SNode node : snodeList) {
+            List<SNode> nodeGroup = nodeGroups.getOrDefault(node, new ArrayList<>());
+            nodeGroup.add(node);
+            nodeGroups.put(node, nodeGroup);
+        }
+        return new ArrayList<>(nodeGroups.values());
+    }
+
+    public static List<List<SNode>> groupByInputs(List<List<SNode>> snodeList) {
+        List<List<SNode>> equalNodeGroups = new ArrayList<>(); //each list within this list contains identical nodes that should be merged
+        for (List<SNode> nodeGroup : snodeList) {
+            Map<SNode, List<SNode>> sameInputGroups = new HashMap<>(); //For each bucket that node have same stages, group the bucket by their input fields
+            for (SNode node : nodeGroup) {
+                InputSourceSet inputSource = new InputSourceSet(node); //represent the input source as string
+                List<SNode> identicalNodeGroup = sameInputGroups.getOrDefault(inputSource, new ArrayList<>());
+                identicalNodeGroup.add(node);
+                sameInputGroups.put(node, identicalNodeGroup);
+            }
+            equalNodeGroups.addAll(sameInputGroups.values());
+        }
+        return equalNodeGroups;
+    }
+
+    /**
+     * Get all SNode from a graph. The SNode within the root graph will be collected recursively.
+     *
+     * @param graph
+     * @return
+     */
+    public static List<SNode> getAllSNodesRecursively(SGraph graph) {
+        List<SNode> nodes = new ArrayList<>();
+        List<Vertex> vertices = graph.getNodes();
+        for (Vertex vertex : vertices) {
+            if (vertex instanceof SGraph) {
+                List<SNode> subGraphNodes = getAllSNodesRecursively((SGraph) vertex);
+                nodes.addAll(subGraphNodes);
+            } else {
+                nodes.add((SNode) vertex);
+            }
+        }
+        return nodes;
+    }
+
+    public static List<String> getNonIOParamsValue(PipelineStage stage) {
+        List<Param> params = new ArrayList<>(Arrays.asList(stage.params()));
+        List<String> paramValues = new ArrayList<>();
+        if (stage instanceof HasInputCols) {
+            params.remove(((HasInputCols) stage).inputCols());
+        } else if (stage instanceof HasInputCol) {
+            params.remove(((HasInputCol) stage).inputCol());
+        }
+        if (stage instanceof HasOutputCol) {
+            params.remove(((HasOutputCol) stage).outputCol());
+        } else if (stage instanceof HasOutputCols) {
+            params.remove(((HasOutputCols) stage).outputCols());
+        }
+        for (Param param : params) {
+            paramValues.add(stage.get(param).toString());
+        }
+        return paramValues;
+    }
+
+    public static boolean sameStageType(PipelineStage stage1, PipelineStage stage2) {
+        if (stage1.getClass() != stage2.getClass()) {
+            return false;
+        }
+        if (stage1 instanceof HasInnerStage) {
+            PipelineStage innerStage1 = ((HasInnerStage) stage1).getInnerStage();
+            PipelineStage innerStage2 = ((HasInnerStage) stage1).getInnerStage();
+            return sameStageType(innerStage1, innerStage2);
+        } else {
+            return true;
+        }
+    }
+
+    public static boolean sameConfig(PipelineStage stage1, PipelineStage stage2) {
+        List<String> nonIOParams1 = getNonIOParamsValue(stage1);
+        List<String> nonIOParams2 = getNonIOParamsValue(stage2);
+        if (!nonIOParams1.equals(nonIOParams2))
+            return false;
+        if (stage1 instanceof HasInnerStage && stage2 instanceof HasInnerStage) {
+            PipelineStage innerStage1 = ((HasInnerStage) stage1).getInnerStage();
+            PipelineStage innerStage2 = ((HasInnerStage) stage1).getInnerStage();
+            return sameConfig(innerStage1, innerStage2);
+        } else if (!(stage1 instanceof HasInnerStage) && !(stage2 instanceof HasInnerStage)) {
+            return true;
+        } else {
+            //If stage1 and stage2 inconsistent
+            return false;
+        }
+
+    }
+
+    /**
+     * Remove the graph which have no out-degree
+     *
+     * @param graph
+     */
+    public static void removeRedundantVertices(SGraph graph) {
+        List<Vertex> vertices = graph.getNodes();
+        vertices.remove(graph.sourceNode);
+        vertices.remove(graph.sinkNode);
+        Queue<Vertex> deletionQueue = new LinkedList<>();
+        for (Vertex node : vertices) {
+            if (node.getOutputVertices().size() == 0) {
+                deletionQueue.add(node);
+            }
+        }
+        while (deletionQueue.size() > 0) {
+            Vertex curNode = deletionQueue.poll();
+            graph.removeNode(curNode);
+            Set<Vertex> inputVertices = curNode.getInputVertices();
+            inputVertices.forEach(vertex -> {
+                if (vertex.getOutputVertices().size() == 0) {
+                    deletionQueue.add(vertex);
+                }
+            });
+        }
+        for (Vertex node : vertices) {
+            if (node instanceof SGraph) {
+                removeDuplicatedNodes((SGraph) node);
+            }
+        }
+    }
+
 }
