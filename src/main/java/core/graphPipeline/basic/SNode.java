@@ -5,12 +5,14 @@ import featurePipeline.NullRemoveWrapper.InnerStageImplementHasInputCol;
 import featurePipeline.NullRemoveWrapper.InnerStageImplementHasOutputCol;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
+import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.shared.HasInputCol;
 import org.apache.spark.ml.param.shared.HasInputCols;
 import org.apache.spark.ml.param.shared.HasOutputCol;
 import org.apache.spark.ml.param.shared.HasOutputCols;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
@@ -99,17 +101,42 @@ public class SNode extends Vertex {
         this.sparkPipelineStage = sparkPipelineStage;
     }
 
-
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SNode node = (SNode) o;
-        return sameStageType(getSparkPipelineStage(), node.getSparkPipelineStage()) && sameConfig(getSparkPipelineStage(), node.getSparkPipelineStage());
+    public String toString() {
+        String snodeStr = String.format("%s|%s", getStageIds(getSparkPipelineStage()), getNonIOParamsValue(getSparkPipelineStage()));
+        return snodeStr;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(sparkPipelineStage.getClass(), getNonIOParamsValue(sparkPipelineStage));
+    private List<String> getNonIOParamsValue(PipelineStage stage) {
+        List<Param> params = new ArrayList<>(Arrays.asList(stage.params()));
+        List<String> paramValues = new ArrayList<>();
+        if (stage instanceof HasInputCols) {
+            params.remove(((HasInputCols) stage).inputCols());
+        } else if (stage instanceof HasInputCol) {
+            params.remove(((HasInputCol) stage).inputCol());
+        }
+        if (stage instanceof HasOutputCol) {
+            params.remove(((HasOutputCol) stage).outputCol());
+        } else if (stage instanceof HasOutputCols) {
+            params.remove(((HasOutputCols) stage).outputCols());
+        }
+        for (Param param : params) {
+            paramValues.add(stage.get(param).toString());
+        }
+        if (stage instanceof HasInnerStage) {
+            List<String> innerParamValues = getNonIOParamsValue(((HasInnerStage) stage).getInnerStage());
+            paramValues.addAll(innerParamValues);
+        }
+        return paramValues;
+    }
+
+    private List<String> getStageIds(PipelineStage stage) {
+        List<String> stageIds = new ArrayList<>();
+        stageIds.add(stage.uid());
+        if (stage instanceof HasInnerStage) {
+            List<String> innerIds = getStageIds(stage);
+            stageIds.addAll(innerIds);
+        }
+        return stageIds;
     }
 }

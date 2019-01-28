@@ -1,0 +1,53 @@
+import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.basic.SNode;
+import examples.TestBase;
+import org.apache.spark.ml.feature.Tokenizer;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.junit.Test;
+
+/**
+ *
+ */
+public class OptimizationTest extends TestBase {
+    private static String masterUrl = "local";
+
+    public OptimizationTest() {
+        super(masterUrl);
+    }
+
+    @Test
+    public void multiTaskOptimizationTest() {
+        //TOOD add test where 2 VSMTask is created in parallel
+    }
+
+    @Test
+    public void NoSubGraphOptimizationTest() throws Exception {
+        Dataset<Row> dataset = getSentenceLabelDataset();
+        SGraph graph = new SGraph("NoSubGraphOptimization");
+        graph.addInputField("sentence");
+        graph.addOutputField("token1");
+        graph.addOutputField("token2");
+
+        Tokenizer tk1 = new Tokenizer();
+        SNode tkNode1 = new SNode(tk1, "tokenizer1");
+        tkNode1.addInputField("text");
+        tkNode1.addOutputField("tokens1");
+
+        Tokenizer tk2 = new Tokenizer();
+        SNode tkNode2 = new SNode(tk2, "tokenizer2");
+        tkNode2.addInputField("text");
+        tkNode2.addOutputField("tokens2");
+
+        graph.addNode(tkNode1);
+        graph.addNode(tkNode2);
+        graph.connect(graph.sourceNode, "sentence", tkNode1, "text");
+        graph.connect(tkNode1, "tokens1", graph.sinkNode, "token1");
+        graph.connect(graph.sourceNode, "sentence", tkNode2, "text");
+        graph.connect(tkNode2, "tokens2", graph.sinkNode, "token2");
+
+        Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
+        result.show();
+    }
+
+}

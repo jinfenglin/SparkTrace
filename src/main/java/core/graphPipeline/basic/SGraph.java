@@ -34,6 +34,8 @@ public class SGraph extends Vertex {
         edges = new HashSet<>();
         sourceNode = new SNode(new SGraphIOStage());
         sinkNode = new SNode(new SGraphIOStage());
+        sourceNode.setId(String.format("%s-%s", "SourceNode", sourceNode.vertexId));
+        sinkNode.setId(String.format("%s-%s", "SinkNode", sinkNode.vertexId));
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
     }
@@ -44,6 +46,8 @@ public class SGraph extends Vertex {
         edges = new HashSet<>();
         sourceNode = new SNode(new SGraphIOStage());
         sinkNode = new SNode(new SGraphIOStage());
+        sourceNode.setId(String.format("%s-%s", "SourceNode", sourceNode.vertexId));
+        sinkNode.setId(String.format("%s-%s", "SinkNode", sinkNode.vertexId));
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
     }

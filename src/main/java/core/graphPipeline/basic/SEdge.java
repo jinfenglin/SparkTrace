@@ -26,22 +26,4 @@ public class SEdge {
     public void setTo(Vertex to) {
         this.to = to;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        SEdge sEdge = (SEdge) o;
-
-        if (from != null ? !from.equals(sEdge.from) : sEdge.from != null) return false;
-        return to != null ? to.equals(sEdge.to) : sEdge.to == null;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = from != null ? from.hashCode() : 0;
-        result = 31 * result + (to != null ? to.hashCode() : 0);
-        return result;
-    }
 }

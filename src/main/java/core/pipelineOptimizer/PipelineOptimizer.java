@@ -18,6 +18,8 @@ import org.apache.spark.ml.param.shared.HasOutputCols;
 
 import java.util.*;
 
+import static core.graphPipeline.basic.SGraph.topologicalSort;
+
 /**
  *
  */
@@ -118,8 +120,15 @@ public class PipelineOptimizer {
      * @param targetVertex
      * @param treeRoot
      */
-    public static void penetrate(Vertex sourceVertex, Vertex targetVertex, GraphHierarchyTree treeRoot) {
-        return;
+    public static void penetrate(Vertex sourceVertex, Vertex targetVertex, GraphHierarchyTree treeRoot) throws Exception {
+        int sourceOutputLen = sourceVertex.getOutputTable().getCells().size();
+        int targetOutputLen = targetVertex.getOutputTable().getCells().size();
+        assert sourceOutputLen == targetOutputLen;
+        for (int i = 0; i < sourceOutputLen; i++) {
+            IOTableCell sourceCell = sourceVertex.getOutputTable().getCells().get(i);
+            IOTableCell targetCell = targetVertex.getOutputTable().getCells().get(i);
+            penetrate(sourceCell, targetCell, treeRoot);
+        }
     }
 
     /**
@@ -127,12 +136,12 @@ public class PipelineOptimizer {
      *
      * @param graph
      */
-    public static void removeDuplicatedNodes(SGraph graph) {
+    public static void removeDuplicatedNodes(SGraph graph) throws Exception {
         //Put all nodes in the search list as init
         // while search list not empty
         // Partition the node in list into buckets then in each buckets
         //       partition the buckets by the inputs. Eliminate the input-bucket partition with penetration, add the impacted nodes into search list
-        Map<SGraph, List<Vertex>> topoOrderMap = buildTopologicalOrderMap();
+        Map<SGraph, List<Vertex>> topoOrderMap = buildTopologicalOrderMap(graph);
         GraphHierarchyTree ght = new GraphHierarchyTree(null, graph);
         List<SNode> searchPool = getAllSNodesRecursively(graph);
         while (searchPool.size() > 0) {
@@ -142,7 +151,17 @@ public class PipelineOptimizer {
         }
     }
 
-    private static void
+    private static Map<SGraph, List<Vertex>> buildTopologicalOrderMap(SGraph graph) throws Exception {
+        Map<SGraph, List<Vertex>> tpOrderMap = new HashMap<>();
+        tpOrderMap.put(graph, topologicalSort(graph));
+        for (Vertex vertex : graph.getNodes()) {
+            if (vertex instanceof SGraph) {
+                Map<SGraph, List<Vertex>> subMap = buildTopologicalOrderMap((SGraph) vertex);
+                tpOrderMap.putAll(subMap);
+            }
+        }
+        return tpOrderMap;
+    }
 
     /**
      * Eliminate a list of duplicated graph nodes.
@@ -152,7 +171,7 @@ public class PipelineOptimizer {
      * @param treeRoot            GraphHierarchyTree whose root is current graph
      * @return
      */
-    public static List<SNode> resolveDuplication(List<List<SNode>> identicalNodeGroups, Map<SGraph, List<Vertex>> topoOrderMap, GraphHierarchyTree treeRoot) {
+    public static List<SNode> resolveDuplication(List<List<SNode>> identicalNodeGroups, Map<SGraph, List<Vertex>> topoOrderMap, GraphHierarchyTree treeRoot) throws Exception {
         List<SNode> impactedNode = new ArrayList<>(); //Record nodes whose input has been changed
         for (List<SNode> nodeGroup : identicalNodeGroups) {
             if (nodeGroup.size() > 1) {
@@ -191,11 +210,11 @@ public class PipelineOptimizer {
     }
 
     public static List<List<SNode>> groupByNode(List<SNode> snodeList) {
-        Map<SNode, List<SNode>> nodeGroups = new HashMap<>();
+        Map<String, List<SNode>> nodeGroups = new HashMap<>();
         for (SNode node : snodeList) {
             List<SNode> nodeGroup = nodeGroups.getOrDefault(node, new ArrayList<>());
             nodeGroup.add(node);
-            nodeGroups.put(node, nodeGroup);
+            nodeGroups.put(node.toString(), nodeGroup);
         }
         return new ArrayList<>(nodeGroups.values());
     }
@@ -203,12 +222,12 @@ public class PipelineOptimizer {
     public static List<List<SNode>> groupByInputs(List<List<SNode>> snodeList) {
         List<List<SNode>> equalNodeGroups = new ArrayList<>(); //each list within this list contains identical nodes that should be merged
         for (List<SNode> nodeGroup : snodeList) {
-            Map<SNode, List<SNode>> sameInputGroups = new HashMap<>(); //For each bucket that node have same stages, group the bucket by their input fields
+            Map<String, List<SNode>> sameInputGroups = new HashMap<>(); //For each bucket that node have same stages, group the bucket by their input fields
             for (SNode node : nodeGroup) {
                 InputSourceSet inputSource = new InputSourceSet(node); //represent the input source as string
                 List<SNode> identicalNodeGroup = sameInputGroups.getOrDefault(inputSource, new ArrayList<>());
                 identicalNodeGroup.add(node);
-                sameInputGroups.put(node, identicalNodeGroup);
+                sameInputGroups.put(node.toString(), identicalNodeGroup);
             }
             equalNodeGroups.addAll(sameInputGroups.values());
         }
@@ -235,62 +254,13 @@ public class PipelineOptimizer {
         return nodes;
     }
 
-    public static List<String> getNonIOParamsValue(PipelineStage stage) {
-        List<Param> params = new ArrayList<>(Arrays.asList(stage.params()));
-        List<String> paramValues = new ArrayList<>();
-        if (stage instanceof HasInputCols) {
-            params.remove(((HasInputCols) stage).inputCols());
-        } else if (stage instanceof HasInputCol) {
-            params.remove(((HasInputCol) stage).inputCol());
-        }
-        if (stage instanceof HasOutputCol) {
-            params.remove(((HasOutputCol) stage).outputCol());
-        } else if (stage instanceof HasOutputCols) {
-            params.remove(((HasOutputCols) stage).outputCols());
-        }
-        for (Param param : params) {
-            paramValues.add(stage.get(param).toString());
-        }
-        return paramValues;
-    }
-
-    public static boolean sameStageType(PipelineStage stage1, PipelineStage stage2) {
-        if (stage1.getClass() != stage2.getClass()) {
-            return false;
-        }
-        if (stage1 instanceof HasInnerStage) {
-            PipelineStage innerStage1 = ((HasInnerStage) stage1).getInnerStage();
-            PipelineStage innerStage2 = ((HasInnerStage) stage1).getInnerStage();
-            return sameStageType(innerStage1, innerStage2);
-        } else {
-            return true;
-        }
-    }
-
-    public static boolean sameConfig(PipelineStage stage1, PipelineStage stage2) {
-        List<String> nonIOParams1 = getNonIOParamsValue(stage1);
-        List<String> nonIOParams2 = getNonIOParamsValue(stage2);
-        if (!nonIOParams1.equals(nonIOParams2))
-            return false;
-        if (stage1 instanceof HasInnerStage && stage2 instanceof HasInnerStage) {
-            PipelineStage innerStage1 = ((HasInnerStage) stage1).getInnerStage();
-            PipelineStage innerStage2 = ((HasInnerStage) stage1).getInnerStage();
-            return sameConfig(innerStage1, innerStage2);
-        } else if (!(stage1 instanceof HasInnerStage) && !(stage2 instanceof HasInnerStage)) {
-            return true;
-        } else {
-            //If stage1 and stage2 inconsistent
-            return false;
-        }
-
-    }
 
     /**
      * Remove the graph which have no out-degree
      *
      * @param graph
      */
-    public static void removeRedundantVertices(SGraph graph) {
+    public static void removeRedundantVertices(SGraph graph) throws Exception {
         List<Vertex> vertices = graph.getNodes();
         vertices.remove(graph.sourceNode);
         vertices.remove(graph.sinkNode);
@@ -316,5 +286,4 @@ public class PipelineOptimizer {
             }
         }
     }
-
 }

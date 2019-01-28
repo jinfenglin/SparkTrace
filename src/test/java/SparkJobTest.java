@@ -78,15 +78,6 @@ public class SparkJobTest extends TestBase {
 
     @Test
     public void nestedSparkTaskTest() {
-        CosinSimilarityStage stage = new CosinSimilarityStage();
-        List<Param> params = new ArrayList<>(Arrays.asList(stage.params()));
-        if (stage instanceof HasInputCols) {
-            Param inputcols = ((HasInputCols) stage).inputCols();
-            params.remove(inputcols);
-        }
-        if (stage instanceof HasOutputCol) {
-            params.remove(((HasOutputCol) stage).outputCol());
-        }
-        System.out.print(stage.explainParams());
+
     }
 }
