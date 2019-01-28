@@ -50,4 +50,13 @@ public class OptimizationTest extends TestBase {
         result.show();
     }
 
+    /**
+     * Create two tokenizer nodes, one has a dummy preceding node (ensure the other tokenizer have lower topo index),
+     * and a consumer which utilize the token. Verify the optimization function work properly.
+     */
+    @Test
+    public void RemoveNodeHasDependency() {
+
+    }
+
 }

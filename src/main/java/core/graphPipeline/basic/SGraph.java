@@ -127,7 +127,7 @@ public class SGraph extends Vertex {
      * @param node
      */
     public void removeNode(Vertex node) {
-        if (this.nodes.containsKey(node)) {
+        if (this.nodes.containsKey(node.getVertexId())) {
             this.nodes.remove(node.getVertexId());
             for (Vertex fromNode : node.getInputVertices()) {
                 clearConnection(fromNode, node);
@@ -135,6 +135,8 @@ public class SGraph extends Vertex {
             for (Vertex toNode : node.getOutputVertices()) {
                 clearConnection(node, toNode);
             }
+        } else {
+            Logger.getLogger(this.getClass().getName()).warning(String.format("%s is not contained in the graph nodes", node.getVertexId()));
         }
     }
 

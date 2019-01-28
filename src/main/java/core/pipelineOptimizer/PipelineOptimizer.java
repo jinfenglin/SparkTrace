@@ -92,7 +92,7 @@ public class PipelineOptimizer {
             lcaNode.connect(sourceTopParentNode, sourceCell.getFieldSymbol().getSymbolName(), targetTopParentNode, targetCell.getFieldSymbol().getSymbolName());
         } else {
             List<IOTableCell> linkedCells = targetCell.getOutputTarget();
-            for (IOTableCell linkedCell : linkedCells) {
+            for (IOTableCell linkedCell : new ArrayList<>(linkedCells)) {
                 //Transfer the dependency of penetrated field to the sourceField
                 Vertex linkedVertex = linkedCell.getParentTable().getContext();
                 String linkedFieldName = linkedCell.getFieldSymbol().getSymbolName();
@@ -195,7 +195,7 @@ public class PipelineOptimizer {
         Collections.sort(parentVertices, new Comparator<Pair<Vertex, SNode>>() {
             @Override
             public int compare(Pair<Vertex, SNode> o1, Pair<Vertex, SNode> o2) {
-                return topoOrder.indexOf(o2.getKey()) - topoOrder.indexOf(o1.getKey());
+                return topoOrder.indexOf(o1.getKey()) - topoOrder.indexOf(o2.getKey());
             }
         });
         return parentVertices.get(0).getValue();

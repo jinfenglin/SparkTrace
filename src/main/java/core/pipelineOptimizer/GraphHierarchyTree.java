@@ -68,7 +68,11 @@ public class GraphHierarchyTree {
      * @return
      */
     public GraphHierarchyTree LCA(GraphHierarchyTree... nodes) {
-        return null;
+        GraphHierarchyTree lcaNode = LCA(nodes[0], nodes[1]).LCANode;
+        for (int i = 2; i < nodes.length; i++) {
+            lcaNode = LCA(lcaNode, nodes[i]).LCANode;
+        }
+        return lcaNode;
     }
 
     public GraphHierarchyTree findNode(IOTableCell cell) {
