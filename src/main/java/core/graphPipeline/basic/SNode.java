@@ -101,9 +101,8 @@ public class SNode extends Vertex {
         this.sparkPipelineStage = sparkPipelineStage;
     }
 
-    @Override
-    public String toString() {
-        String snodeStr = String.format("%s|%s", getStageIds(getSparkPipelineStage()), getNonIOParamsValue(getSparkPipelineStage()));
+    public String nodeContentInfo() {
+        String snodeStr = String.format("%s|%s", getStageTypes(getSparkPipelineStage()), getNonIOParamsValue(getSparkPipelineStage()));
         return snodeStr;
     }
 
@@ -130,11 +129,11 @@ public class SNode extends Vertex {
         return paramValues;
     }
 
-    private List<String> getStageIds(PipelineStage stage) {
+    private List<String> getStageTypes(PipelineStage stage) {
         List<String> stageIds = new ArrayList<>();
-        stageIds.add(stage.uid());
+        stageIds.add(stage.getClass().getSimpleName());
         if (stage instanceof HasInnerStage) {
-            List<String> innerIds = getStageIds(stage);
+            List<String> innerIds = getStageTypes(stage);
             stageIds.addAll(innerIds);
         }
         return stageIds;

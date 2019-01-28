@@ -34,10 +34,10 @@ public class InputSourceSet {
             boolean isRootGraph = providerVertex.getInputVertices().size() == 0;
             if (isNonIOSNode || isRootGraph) {
                 // node from a snode that do computation or no further parent can trace to (indicating this is the root graph)
-                inputSources.add(inputCell);
+                inputSources.add(inputSourceCell);
             } else {
-                // if the source is not from a non-IO SNode, the keep tracing
-                traceToSource(inputSourceCell);
+                // if the source is not from a non-IO SNode, then keep tracing
+                traceToSource(inputCell);
             }
         }
     }

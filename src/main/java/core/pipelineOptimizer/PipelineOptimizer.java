@@ -6,15 +6,7 @@ import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
 import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
-import featurePipeline.NullRemoveWrapper.HasInnerStage;
 import javafx.util.Pair;
-import org.apache.spark.ml.PipelineStage;
-import org.apache.spark.ml.param.StringArrayParam;
-import org.apache.spark.ml.param.shared.HasInputCol;
-import org.apache.spark.ml.param.shared.HasInputCols;
-import org.apache.spark.ml.param.shared.HasOutputCol;
-import org.apache.spark.ml.param.Param;
-import org.apache.spark.ml.param.shared.HasOutputCols;
 
 import java.util.*;
 
@@ -212,9 +204,9 @@ public class PipelineOptimizer {
     public static List<List<SNode>> groupByNode(List<SNode> snodeList) {
         Map<String, List<SNode>> nodeGroups = new HashMap<>();
         for (SNode node : snodeList) {
-            List<SNode> nodeGroup = nodeGroups.getOrDefault(node, new ArrayList<>());
+            List<SNode> nodeGroup = nodeGroups.getOrDefault(node.nodeContentInfo(), new ArrayList<>());
             nodeGroup.add(node);
-            nodeGroups.put(node.toString(), nodeGroup);
+            nodeGroups.put(node.nodeContentInfo(), nodeGroup);
         }
         return new ArrayList<>(nodeGroups.values());
     }
@@ -222,12 +214,12 @@ public class PipelineOptimizer {
     public static List<List<SNode>> groupByInputs(List<List<SNode>> snodeList) {
         List<List<SNode>> equalNodeGroups = new ArrayList<>(); //each list within this list contains identical nodes that should be merged
         for (List<SNode> nodeGroup : snodeList) {
-            Map<String, List<SNode>> sameInputGroups = new HashMap<>(); //For each bucket that node have same stages, group the bucket by their input fields
+            Map<InputSourceSet, List<SNode>> sameInputGroups = new HashMap<>(); //For each bucket that node have same stages, group the bucket by their input fields
             for (SNode node : nodeGroup) {
                 InputSourceSet inputSource = new InputSourceSet(node); //represent the input source as string
                 List<SNode> identicalNodeGroup = sameInputGroups.getOrDefault(inputSource, new ArrayList<>());
                 identicalNodeGroup.add(node);
-                sameInputGroups.put(node.toString(), identicalNodeGroup);
+                sameInputGroups.put(inputSource, identicalNodeGroup);
             }
             equalNodeGroups.addAll(sameInputGroups.values());
         }

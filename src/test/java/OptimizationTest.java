@@ -45,7 +45,7 @@ public class OptimizationTest extends TestBase {
         graph.connect(tkNode1, "tokens1", graph.sinkNode, "token1");
         graph.connect(graph.sourceNode, "sentence", tkNode2, "text");
         graph.connect(tkNode2, "tokens2", graph.sinkNode, "token2");
-
+        graph.optimize(graph);
         Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
         result.show();
     }
