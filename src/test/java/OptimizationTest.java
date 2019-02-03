@@ -3,11 +3,20 @@ import core.graphPipeline.basic.SNode;
 import examples.TestBase;
 import featurePipeline.DummyStage;
 import featurePipeline.SGraphIOStage;
+import guru.nidi.graphviz.engine.Format;
+import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.model.MutableGraph;
+import guru.nidi.graphviz.model.MutableNode;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+
+import static guru.nidi.graphviz.model.Factory.*;
 
 /**
  *
@@ -147,6 +156,35 @@ public class OptimizationTest extends TestBase {
         Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
         graph.showGraph("subGraphOptimization_after_optimize");
         result.show();
+    }
+
+    @Test
+    public void graphvizTest() throws IOException {
+//        MutableGraph subGraph = mutGraph("subgraph");
+//        MutableNode subSource = mutNode("source");
+//        MutableNode subSink = mutNode("sink1");
+//        subGraph.add(subSource.addLink(subSink));
+//        subGraph.setCluster(true);
+//
+//        MutableGraph g = mutGraph("partentGraph");
+//        MutableNode sourceNode = mutNode("sourceNode").addLink("tokenizer").addLink("source");
+//        MutableNode tokenizer = mutNode("tokenizer").addLink("sink2");
+//        g.add(subSink.addLink("sink2"));
+//        g.add(sourceNode, tokenizer);
+//        g.add(subGraph);
+
+        MutableGraph sub = mutGraph("sub").add(
+                node("source").link("sink1"),
+                node("sink1").link("sink2"));
+        sub.rootNodes().remove(node("sink1"));
+        sub.rootNodes().remove(node("sink2"));
+        MutableGraph g = mutGraph().add(
+                node("sourceNode").link("tokenizer").link("source"),
+                node("tokenizer").link("sink2")
+        );
+        g.add(sub.setCluster(true));
+        Graphviz.fromGraph(g).render(Format.PNG).toFile(new File(String.format("figures/%s.png", "test")));
+
     }
 
 }

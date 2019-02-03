@@ -388,8 +388,7 @@ public class SGraph extends Vertex {
     }
 
     public MutableGraph getVizGraph() {
-        MutableGraph g = mutGraph(getVertexId()).setDirected(true);
-        Map<Vertex, LinkSource> nodeMap = new HashMap<>();
+        MutableGraph g = mutGraph(getVertexId()).setDirected(true).setCluster(true);
         for (Vertex vertex : this.getNodes()) {
             if (vertex instanceof SNode) {
                 SNode v = (SNode) vertex;
@@ -401,40 +400,29 @@ public class SGraph extends Vertex {
                     nodeTitle = "SinkNode";
                 }
                 MutableNode vNode = mutNode(v.getVertexId()).add(Label.of(nodeTitle));
-                nodeMap.put(v, vNode);
+                for (Vertex outputNode : v.getOutputVertices()) { //note: sink node have no outputVertices, parent graph hold this information
+                    if (outputNode instanceof SNode) {
+                        vNode = vNode.addLink(outputNode.getVertexId());
+                    } else {
+                        SGraph subGraph = (SGraph) outputNode;
+                        SNode innerSource = subGraph.sourceNode;
+                        MutableGraph innerGraph = subGraph.getVizGraph();// create inner graph, this graph is implicitly added to the parent
+                        vNode = vNode.addLink(innerSource.getVertexId());
+                    }
+                }
+                g.add(vNode);
+
             } else {
                 SGraph v = (SGraph) vertex;
                 MutableGraph subGraph = v.getVizGraph();
-                nodeMap.put(v, subGraph);
+                Vertex sinkNode = v.sinkNode;
+                MutableNode innerSink = mutNode(sinkNode.getVertexId());
+                for (Vertex outputNode : vertex.getOutputVertices()) {
+                    innerSink = innerSink.addLink(outputNode.getVertexId());
+                }
+                g.add(innerSink, subGraph);
             }
         }
-        for (Vertex sourceVertex : nodeMap.keySet()) {
-            LinkSource from = nodeMap.get(sourceVertex);
-            String linkLabel = createLinkLabel(sourceVertex);
-            if (from instanceof MutableNode) {
-                MutableNode fromNode = (MutableNode) from;
-                for (Vertex targetVertex : sourceVertex.getOutputVertices()) {
-                    LinkTarget toTarget;
-                    if (targetVertex instanceof SGraph) {
-                        Vertex subGrpahSourceNode = ((SGraph) targetVertex).sourceNode;
-                        toTarget = mutNode(subGrpahSourceNode.getVertexId());
-                    } else {
-                        toTarget = nodeMap.get(targetVertex).asLinkTarget();
-                    }
-                    fromNode.links().add(fromNode.linkTo(toTarget).with(Label.of(linkLabel)));
-                }
-            } else {
-                MutableGraph fromSubGraph = (MutableGraph) from;
-                fromSubGraph = fromSubGraph.setCluster(true);
-                Vertex fromSubGraphSinkNode = ((SGraph) sourceVertex).sinkNode;
-                LinkSource sinkNode = fromSubGraph.nodes().stream().filter(x -> x.name().value().equals(fromSubGraphSinkNode.getVertexId())).findFirst().get();
-                for (Vertex targetVertex : sourceVertex.getOutputVertices()) {
-                    LinkTarget toTarget = nodeMap.get(targetVertex).asLinkTarget();
-                    sinkNode.links().add(sinkNode.linkTo(toTarget).with(Label.of(linkLabel)));
-                }
-            }
-        }
-        g = g.add(nodeMap.values().toArray(new LinkSource[0]));
         return g;
     }
 
