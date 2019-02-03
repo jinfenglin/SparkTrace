@@ -1,9 +1,6 @@
 package core.pipelineOptimizer;
 
-import core.graphPipeline.basic.IOTable;
-import core.graphPipeline.basic.IOTableCell;
-import core.graphPipeline.basic.SNode;
-import core.graphPipeline.basic.Vertex;
+import core.graphPipeline.basic.*;
 import featurePipeline.SGraphIOStage;
 import org.apache.parquet.io.InputFile;
 
@@ -31,13 +28,16 @@ public class InputSourceSet {
         Vertex providerVertex = inputSourceCell.getParentTable().getContext();
         if (providerVertex instanceof SNode) {
             boolean isNonIOSNode = !(((SNode) providerVertex).getSparkPipelineStage() instanceof SGraphIOStage);
-            boolean isRootGraph = providerVertex.getInputVertices().size() == 0;
-            if (isNonIOSNode || isRootGraph) {
-                // node from a snode that do computation or no further parent can trace to (indicating this is the root graph)
+            if (isNonIOSNode) {
                 inputSources.add(inputSourceCell);
             } else {
-                // if the source is not from a non-IO SNode, then keep tracing
-                traceToSource(inputCell);
+                SGraph contextGraph = (SGraph) providerVertex.getContext();
+                IOTableCell graphInputField = contextGraph.getInputField(inputCell.getFieldSymbol().getSymbolName());
+                if (graphInputField == null) {
+                    inputSources.add(inputSourceCell);
+                } else {
+                    traceToSource(graphInputField);
+                }
             }
         }
     }

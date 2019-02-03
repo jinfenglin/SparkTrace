@@ -6,9 +6,11 @@ import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
 import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
+import featurePipeline.SGraphIOStage;
 import javafx.util.Pair;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static core.graphPipeline.basic.SGraph.topologicalSort;
 
@@ -139,6 +141,10 @@ public class PipelineOptimizer {
         while (searchPool.size() > 0) {
             List<List<SNode>> snodeFamilies = groupByNode(searchPool);
             List<List<SNode>> duplicatedSNodeGroups = groupByInputs(snodeFamilies);
+            // exclude the IOStage groups
+            duplicatedSNodeGroups = duplicatedSNodeGroups.stream().filter(
+                    group -> !(group.get(0).getSparkPipelineStage() instanceof SGraphIOStage)
+            ).collect(Collectors.toList());
             searchPool = resolveDuplication(duplicatedSNodeGroups, topoOrderMap, ght);
         }
     }
@@ -274,7 +280,7 @@ public class PipelineOptimizer {
         }
         for (Vertex node : vertices) {
             if (node instanceof SGraph) {
-                removeDuplicatedNodes((SGraph) node);
+                removeRedundantVertices((SGraph) node);
             }
         }
     }

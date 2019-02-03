@@ -15,7 +15,7 @@ import java.util.UUID;
 abstract public class Vertex {
     protected String vertexId;
     protected IOTable inputTable, outputTable;
-
+    protected Vertex context; //If a vertex is included in another vertex, then the second vertex is the context
 
     private void init() {
         vertexId = UUID.randomUUID().toString();
@@ -141,4 +141,14 @@ abstract public class Vertex {
     public void setId(String id) {
         vertexId = id;
     }
+
+    public Vertex getContext() {
+        return context;
+    }
+
+    public void setContext(Vertex context) {
+        this.context = context;
+    }
+
+
 }

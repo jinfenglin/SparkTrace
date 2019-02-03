@@ -42,6 +42,8 @@ public class SGraph extends Vertex {
         sinkNode = new SNode(new SGraphIOStage());
         sourceNode.setId(String.format("%s-%s", "SourceNode", sourceNode.vertexId));
         sinkNode.setId(String.format("%s-%s", "SinkNode", sinkNode.vertexId));
+        sourceNode.setContext(this);
+        sinkNode.setContext(this);
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
     }
@@ -54,6 +56,8 @@ public class SGraph extends Vertex {
         sinkNode = new SNode(new SGraphIOStage());
         sourceNode.setId(String.format("%s-%s", "SourceNode", sourceNode.vertexId));
         sinkNode.setId(String.format("%s-%s", "SinkNode", sinkNode.vertexId));
+        sourceNode.setContext(this);
+        sinkNode.setContext(this);
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
     }
@@ -135,6 +139,7 @@ public class SGraph extends Vertex {
     public void removeNode(Vertex node) {
         if (this.nodes.containsKey(node.getVertexId())) {
             this.nodes.remove(node.getVertexId());
+            node.setContext(null);
             for (Vertex fromNode : node.getInputVertices()) {
                 clearConnection(fromNode, node);
             }
@@ -281,6 +286,7 @@ public class SGraph extends Vertex {
 
     public void addNode(Vertex node) {
         nodes.put(node.getVertexId(), node);
+        node.setContext(this);
     }
 
     public void addEdge(SEdge edge) {
@@ -421,12 +427,10 @@ public class SGraph extends Vertex {
                 MutableGraph fromSubGraph = (MutableGraph) from;
                 fromSubGraph = fromSubGraph.setCluster(true);
                 Vertex fromSubGraphSinkNode = ((SGraph) sourceVertex).sinkNode;
-                //LinkSource sinkNode = fromSubGraph.nodes().stream().filter(x -> x.name().value().equals(fromSubGraphSinkNode.getVertexId())).findFirst().get();
-                Node sinkNode = node(fromSubGraphSinkNode.getVertexId());
+                LinkSource sinkNode = fromSubGraph.nodes().stream().filter(x -> x.name().value().equals(fromSubGraphSinkNode.getVertexId())).findFirst().get();
                 for (Vertex targetVertex : sourceVertex.getOutputVertices()) {
                     LinkTarget toTarget = nodeMap.get(targetVertex).asLinkTarget();
-                    //sinkNode.links().add(sinkNode.linkTo(toTarget).with(Label.of(linkLabel)));
-                    fromSubGraph.add(sinkNode.link(toTarget));
+                    sinkNode.links().add(sinkNode.linkTo(toTarget).with(Label.of(linkLabel)));
                 }
             }
         }

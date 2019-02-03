@@ -4,6 +4,7 @@ import core.graphPipeline.graphSymbol.Symbol;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.StringJoiner;
 
 /**
@@ -111,5 +112,22 @@ public class IOTableCell {
 
     public void setRemovable(boolean removable) {
         this.removable = removable;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IOTableCell cell = (IOTableCell) o;
+        return
+                Objects.equals(inputSource, cell.inputSource) &&
+                        Objects.equals(outputTarget, cell.outputTarget) &&
+                        Objects.equals(fieldSymbol, cell.fieldSymbol) &&
+                        Objects.equals(parentTable, cell.parentTable);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(fieldSymbol, parentTable);
     }
 }
