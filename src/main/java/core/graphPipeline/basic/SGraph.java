@@ -4,14 +4,21 @@ import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import featurePipeline.SGraphColumnRemovalStage;
 import featurePipeline.SGraphIOStage;
+import guru.nidi.graphviz.attribute.Label;
+import guru.nidi.graphviz.engine.Format;
+import guru.nidi.graphviz.engine.Graphviz;
+import guru.nidi.graphviz.model.*;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 
 import static core.pipelineOptimizer.PipelineOptimizer.removeDuplicatedNodes;
 import static core.pipelineOptimizer.PipelineOptimizer.removeRedundantVertices;
+import static guru.nidi.graphviz.model.Factory.*;
 
 /**
  * A DAG which will be applied to optimize the pipeline structure.
@@ -25,7 +32,6 @@ import static core.pipelineOptimizer.PipelineOptimizer.removeRedundantVertices;
 public class SGraph extends Vertex {
     private Map<String, Vertex> nodes;
     private Set<SEdge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
-
     public SNode sourceNode, sinkNode;
 
     public SGraph() {
@@ -364,5 +370,69 @@ public class SGraph extends Vertex {
 
     public boolean containsNode(Vertex vertex) {
         return nodes.containsKey(vertex.getVertexId());
+    }
+
+    private String createLinkLabel(Vertex vertex) {
+        List<IOTableCell> outputCells = vertex.getOutputTable().getCells();
+        StringJoiner joiner = new StringJoiner(",");
+        for (IOTableCell cell : outputCells) {
+            joiner.add(cell.getFieldSymbol().getSymbolName());
+        }
+        return joiner.toString();
+    }
+
+    public MutableGraph getVizGraph() {
+        MutableGraph g = mutGraph(getVertexId()).setDirected(true);
+        Map<Vertex, LinkSource> nodeMap = new HashMap<>();
+        for (Vertex vertex : this.getNodes()) {
+            if (vertex instanceof SNode) {
+                SNode v = (SNode) vertex;
+                String nodeTitle = v.getVertexId();
+                //Simplify the node name
+                if (nodeTitle.startsWith("SourceNode")) {
+                    nodeTitle = "SourceNode";
+                } else if (nodeTitle.startsWith("SinkNode")) {
+                    nodeTitle = "SinkNode";
+                }
+                MutableNode vNode = mutNode(v.getVertexId()).add(Label.of(nodeTitle));
+                nodeMap.put(v, vNode);
+            } else {
+                SGraph v = (SGraph) vertex;
+                MutableGraph subGraph = v.getVizGraph();
+                nodeMap.put(v, subGraph);
+            }
+        }
+        for (Vertex sourceVertex : nodeMap.keySet()) {
+            LinkSource from = nodeMap.get(sourceVertex);
+            String linkLabel = createLinkLabel(sourceVertex);
+            if (from instanceof MutableNode) {
+                MutableNode fromNode = (MutableNode) from;
+                for (Vertex targetVertex : sourceVertex.getOutputVertices()) {
+                    LinkTarget toTarget;
+                    if (targetVertex instanceof SGraph) {
+                        Vertex subGrpahSourceNode = ((SGraph) targetVertex).sourceNode;
+                        toTarget = mutNode(subGrpahSourceNode.getVertexId());
+                    } else {
+                        toTarget = nodeMap.get(targetVertex).asLinkTarget();
+                    }
+                    fromNode.links().add(fromNode.linkTo(toTarget).with(Label.of(linkLabel)));
+                }
+            } else {
+                MutableGraph fromSubGraph = (MutableGraph) from;
+                fromSubGraph = fromSubGraph.setCluster(true);
+                Vertex fromSubGraphSinkNode = ((SGraph) sourceVertex).sinkNode;
+                LinkSource sinkNode = mutNode(fromSubGraphSinkNode.getVertexId()).asLinkSource();
+                for (Vertex targetVertex : sourceVertex.getOutputVertices()) {
+                    LinkTarget toTarget = nodeMap.get(targetVertex).asLinkTarget();
+                    sinkNode.links().add(sinkNode.linkTo(toTarget).with(Label.of(linkLabel)));
+                }
+            }
+        }
+        g = g.add(nodeMap.values().toArray(new LinkSource[0]));
+        return g;
+    }
+
+    public void showGraph(String figName) throws IOException {
+        Graphviz.fromGraph(getVizGraph()).render(Format.PNG).toFile(new File(String.format("figures/%s.png", figName)));
     }
 }

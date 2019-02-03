@@ -1,6 +1,9 @@
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
 import examples.TestBase;
+import featurePipeline.DummyStage;
+import featurePipeline.SGraphIOStage;
+import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -55,8 +58,95 @@ public class OptimizationTest extends TestBase {
      * and a consumer which utilize the token. Verify the optimization function work properly.
      */
     @Test
-    public void RemoveNodeHasDependency() {
+    public void RemoveNodeHasDependency() throws Exception {
+        Dataset<Row> dataset = getSentenceLabelDataset();
+        SGraph graph = new SGraph("NoSubGraphOptimization");
+        graph.addInputField("sentence");
+        graph.addOutputField("token");
+        graph.addOutputField("hashTF");
 
+        Tokenizer tk1 = new Tokenizer();
+        SNode tkNode1 = new SNode(tk1, "tokenizer1");
+        tkNode1.addInputField("text");
+        tkNode1.addOutputField("tokens1");
+
+
+        Tokenizer tk2 = new Tokenizer();
+        SNode tkNode2 = new SNode(tk2, "tokenizer2");
+        tkNode2.addInputField("text");
+        tkNode2.addOutputField("tokens2");
+
+        HashingTF hashingTF = new HashingTF();
+        SNode hashTFNode = new SNode(hashingTF, "hashTF");
+        hashTFNode.addInputField("tokenInput");
+        hashTFNode.addOutputField("TF");
+
+        graph.addNode(tkNode1);
+        graph.addNode(tkNode2);
+        graph.addNode(hashTFNode);
+
+        graph.connect(graph.sourceNode, "sentence", tkNode1, "text");
+        graph.connect(tkNode1, "tokens1", graph.sinkNode, "token");
+
+        graph.connect(graph.sourceNode, "sentence", tkNode2, "text");
+        graph.connect(tkNode2, "tokens2", hashTFNode, "tokenInput");
+        graph.connect(hashTFNode, "TF", graph.sinkNode, "hashTF");
+        graph.showGraph("RemoveNodeHasDependency_before_optimize");
+        graph.optimize(graph);
+        Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
+        graph.showGraph("RemoveNodeHasDependency_after_optimize");
+        result.show();
+    }
+
+    @Test
+    public void subGraphOptimization() throws Exception {
+        Dataset<Row> dataset = getSentenceLabelDataset();
+
+        SGraph subGraph = new SGraph("subGraph");
+        subGraph.addInputField("text");
+        subGraph.addOutputField("TF");
+
+        Tokenizer tk2 = new Tokenizer();
+        SNode tkNode2 = new SNode(tk2, "tokenizer2");
+        tkNode2.addInputField("text");
+        tkNode2.addOutputField("tokens2");
+
+        HashingTF hashingTF = new HashingTF();
+        SNode hashTFNode = new SNode(hashingTF, "hashTF");
+        hashTFNode.addInputField("tokenInput");
+        hashTFNode.addOutputField("TF");
+
+        subGraph.addNode(tkNode2);
+        subGraph.addNode(hashTFNode);
+
+        subGraph.connect(subGraph.sourceNode, "text", tkNode2, "text");
+        subGraph.connect(tkNode2, "tokens2", hashTFNode, "tokenInput");
+        subGraph.connect(hashTFNode, "TF", subGraph.sinkNode, "TF");
+
+        SGraph graph = new SGraph("SubGraphOptimization");
+        graph.addInputField("sentence");
+        graph.addOutputField("token");
+        graph.addOutputField("hashTF");
+
+        Tokenizer tk1 = new Tokenizer();
+        SNode tkNode1 = new SNode(tk1, "tokenizer1");
+        tkNode1.addInputField("text");
+        tkNode1.addOutputField("tokens1");
+
+        graph.addNode(tkNode1);
+        graph.addNode(subGraph);
+
+        graph.connect(graph.sourceNode, "sentence", tkNode1, "text");
+        graph.connect(tkNode1, "tokens1", graph.sinkNode, "token");
+
+        graph.connect(graph.sourceNode, "sentence", subGraph, "text");
+        graph.connect(subGraph, "TF", graph.sinkNode, "hashTF");
+
+        graph.showGraph("subGraphOptimization_before_optimize");
+        graph.optimize(graph);
+        Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
+        graph.showGraph("subGraphOptimization_after_optimize");
+        result.show();
     }
 
 }
