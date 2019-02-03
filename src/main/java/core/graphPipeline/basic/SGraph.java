@@ -421,10 +421,12 @@ public class SGraph extends Vertex {
                 MutableGraph fromSubGraph = (MutableGraph) from;
                 fromSubGraph = fromSubGraph.setCluster(true);
                 Vertex fromSubGraphSinkNode = ((SGraph) sourceVertex).sinkNode;
-                LinkSource sinkNode = mutNode(fromSubGraphSinkNode.getVertexId()).asLinkSource();
+                //LinkSource sinkNode = fromSubGraph.nodes().stream().filter(x -> x.name().value().equals(fromSubGraphSinkNode.getVertexId())).findFirst().get();
+                Node sinkNode = node(fromSubGraphSinkNode.getVertexId());
                 for (Vertex targetVertex : sourceVertex.getOutputVertices()) {
                     LinkTarget toTarget = nodeMap.get(targetVertex).asLinkTarget();
-                    sinkNode.links().add(sinkNode.linkTo(toTarget).with(Label.of(linkLabel)));
+                    //sinkNode.links().add(sinkNode.linkTo(toTarget).with(Label.of(linkLabel)));
+                    fromSubGraph.add(sinkNode.link(toTarget));
                 }
             }
         }
