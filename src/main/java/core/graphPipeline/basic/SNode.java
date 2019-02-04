@@ -5,6 +5,7 @@ import featurePipeline.NullRemoveWrapper.InnerStageImplementHasInputCol;
 import featurePipeline.NullRemoveWrapper.InnerStageImplementHasOutputCol;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
+import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.shared.HasInputCol;
 import org.apache.spark.ml.param.shared.HasInputCols;

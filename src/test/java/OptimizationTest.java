@@ -1,13 +1,17 @@
+import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
 import examples.TestBase;
+import examples.VSMTask;
 import featurePipeline.DummyStage;
 import featurePipeline.SGraphIOStage;
+import featurePipeline.UnsupervisedStage.UnsupervisedStage;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
 import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.model.MutableNode;
 import org.apache.spark.ml.feature.HashingTF;
+import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -159,32 +163,77 @@ public class OptimizationTest extends TestBase {
     }
 
     @Test
-    public void graphvizTest() throws IOException {
-//        MutableGraph subGraph = mutGraph("subgraph");
-//        MutableNode subSource = mutNode("source");
-//        MutableNode subSink = mutNode("sink1");
-//        subGraph.add(subSource.addLink(subSink));
-//        subGraph.setCluster(true);
-//
-//        MutableGraph g = mutGraph("partentGraph");
-//        MutableNode sourceNode = mutNode("sourceNode").addLink("tokenizer").addLink("source");
-//        MutableNode tokenizer = mutNode("tokenizer").addLink("sink2");
-//        g.add(subSink.addLink("sink2"));
-//        g.add(sourceNode, tokenizer);
-//        g.add(subGraph);
+    public void dualSubGraphTest() throws Exception {
+        Dataset<Row> dataset = getSentenceLabelDataset();
 
-        MutableGraph sub = mutGraph("sub").add(
-                node("source").link("sink1"),
-                node("sink1").link("sink2"));
-        sub.rootNodes().remove(node("sink1"));
-        sub.rootNodes().remove(node("sink2"));
-        MutableGraph g = mutGraph().add(
-                node("sourceNode").link("tokenizer").link("source"),
-                node("tokenizer").link("sink2")
-        );
-        g.add(sub.setCluster(true));
-        Graphviz.fromGraph(g).render(Format.PNG).toFile(new File(String.format("figures/%s.png", "test")));
+        SGraph subGraph1 = new SGraph("VSMGraph");
+        subGraph1.addInputField("text");
+        subGraph1.addOutputField("TF-IDF");
 
+        Tokenizer tk1 = new Tokenizer();
+        SNode tkNode1 = new SNode(tk1, "tokenizer1");
+        tkNode1.addInputField("text");
+        tkNode1.addOutputField("tokens1");
+
+        HashingTF hashingTF1 = new HashingTF();
+        SNode hashTFNode1 = new SNode(hashingTF1, "hashTF1");
+        hashTFNode1.addInputField("tokenInput");
+        hashTFNode1.addOutputField("TF");
+
+        IDF idf1 = new IDF();
+        SNode idfNode = new SDFNode(idf1, "idf1");
+        idfNode.addInputField("s_idf_in");
+        idfNode.addOutputField("s_idf_out");
+
+        subGraph1.addNode(tkNode1);
+        subGraph1.addNode(hashTFNode1);
+        subGraph1.addNode(idfNode);
+
+        subGraph1.connect(subGraph1.sourceNode, "text", tkNode1, "text");
+        subGraph1.connect(tkNode1, "tokens1", hashTFNode1, "tokenInput");
+        subGraph1.connect(hashTFNode1, "TF", idfNode, "s_idf_in");
+        subGraph1.connect(idfNode, "s_idf_out", subGraph1.sinkNode, "TF-IDF");
+
+
+        SGraph subGraph2 = new SGraph("HashTFGraph");
+        subGraph2.addInputField("text");
+        subGraph2.addOutputField("TF");
+
+        Tokenizer tk2 = new Tokenizer();
+        SNode tkNode2 = new SNode(tk2, "tokenizer2");
+        tkNode2.addInputField("text");
+        tkNode2.addOutputField("tokens2");
+
+        HashingTF hashingTF2 = new HashingTF();
+        SNode hashTFNode2 = new SNode(hashingTF2, "hashTF2");
+        hashTFNode2.addInputField("tokenInput");
+        hashTFNode2.addOutputField("TF");
+
+        subGraph2.addNode(tkNode2);
+        subGraph2.addNode(hashTFNode2);
+
+        subGraph2.connect(subGraph2.sourceNode, "text", tkNode2, "text");
+        subGraph2.connect(tkNode2, "tokens2", hashTFNode2, "tokenInput");
+        subGraph2.connect(hashTFNode2, "TF", subGraph2.sinkNode, "TF");
+
+        SGraph graph = new SGraph("dualSubGraphTest");
+        graph.addInputField("sentence");
+        graph.addOutputField("TF");
+        graph.addOutputField("TF-IDF");
+
+        graph.addNode(subGraph1);
+        graph.addNode(subGraph2);
+
+        graph.connect(graph.sourceNode, "sentence", subGraph1, "text");
+        graph.connect(graph.sourceNode, "sentence", subGraph2, "text");
+        graph.connect(subGraph1, "TF-IDF", graph.sinkNode, "TF-IDF");
+        graph.connect(subGraph2, "TF", graph.sinkNode, "TF");
+
+        graph.showGraph("dual_subGraph_before_optimize");
+        graph.optimize(graph);
+        graph.showGraph("dual_subGraph__after_optimize");
+        Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
+        result.show();
     }
 
 }

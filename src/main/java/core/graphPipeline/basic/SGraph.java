@@ -99,6 +99,9 @@ public class SGraph extends Vertex {
         }
 
         for (Vertex node : graph.getNodes()) {
+            if (node instanceof SGraph) {
+                syncSymbolValues((SGraph) node);
+            }
             for (IOTableCell providerCell : node.outputTable.getCells()) {
                 Symbol providerSymbol = providerCell.getFieldSymbol();
                 for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
@@ -106,9 +109,6 @@ public class SGraph extends Vertex {
                     SymbolTable.shareSymbolValue(providerSymbol, receiverSymbol, true);
                 }
             }
-//            if (node instanceof SGraph) {
-//                syncSymbolValues((SGraph) node);
-//            }
         }
 
         for (IOTableCell graphOutputCell : graph.getOutputTable().getCells()) {
@@ -160,7 +160,6 @@ public class SGraph extends Vertex {
     @Override
     public Pipeline toPipeline() throws Exception {
         syncSymbolValues(this);
-
         //Config the SGraphIOStage to parse the InputTable which translate the Symbols to real column names
         SGraphIOStage initStage = (SGraphIOStage) sourceNode.getSparkPipelineStage();
         initStage.setInputCols(inputTable);
@@ -389,6 +388,7 @@ public class SGraph extends Vertex {
 
     public MutableGraph getVizGraph() {
         MutableGraph g = mutGraph(getVertexId()).setDirected(true).setCluster(true);
+        g.graphAttrs().add(Label.of(getVertexId()));
         for (Vertex vertex : this.getNodes()) {
             if (vertex instanceof SNode) {
                 SNode v = (SNode) vertex;
@@ -401,14 +401,7 @@ public class SGraph extends Vertex {
                 }
                 MutableNode vNode = mutNode(v.getVertexId()).add(Label.of(nodeTitle));
                 for (Vertex outputNode : v.getOutputVertices()) { //note: sink node have no outputVertices, parent graph hold this information
-                    if (outputNode instanceof SNode) {
-                        vNode = vNode.addLink(outputNode.getVertexId());
-                    } else {
-                        SGraph subGraph = (SGraph) outputNode;
-                        SNode innerSource = subGraph.sourceNode;
-                        MutableGraph innerGraph = subGraph.getVizGraph();// create inner graph, this graph is implicitly added to the parent
-                        vNode = vNode.addLink(innerSource.getVertexId());
-                    }
+                    vNode = createVizEdge(vNode, outputNode);
                 }
                 g.add(vNode);
 
@@ -418,12 +411,24 @@ public class SGraph extends Vertex {
                 Vertex sinkNode = v.sinkNode;
                 MutableNode innerSink = mutNode(sinkNode.getVertexId());
                 for (Vertex outputNode : vertex.getOutputVertices()) {
-                    innerSink = innerSink.addLink(outputNode.getVertexId());
+                    innerSink = createVizEdge(innerSink, outputNode);
                 }
-                g.add(innerSink, subGraph);
+                g.add(innerSink,subGraph);
             }
         }
         return g;
+    }
+
+    private MutableNode createVizEdge(MutableNode vizFromNode, Vertex outputNode) {
+        if (outputNode instanceof SNode) {
+            vizFromNode = vizFromNode.addLink(outputNode.getVertexId());
+        } else {
+            SGraph subGraph = (SGraph) outputNode;
+            SNode innerSource = subGraph.sourceNode;
+            MutableGraph innerGraph = subGraph.getVizGraph();// create inner graph, this graph is implicitly added to the parent
+            vizFromNode = vizFromNode.addLink(innerSource.getVertexId());
+        }
+        return vizFromNode;
     }
 
     public void showGraph(String figName) throws IOException {

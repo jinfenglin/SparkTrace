@@ -50,9 +50,9 @@ public class GraphHierarchyTree {
                     break;
                 }
             }
-            GraphHierarchyTree lcaNode = node1Path.get(node1Path.size() - lcaIndex);
-            List<GraphHierarchyTree> node1ToLCAPath = node1Path.subList(0, node1Path.size() - lcaIndex);
-            List<GraphHierarchyTree> node2ToLCAPath = node2Path.subList(0, node2Path.size() - lcaIndex);
+            GraphHierarchyTree lcaNode = node1Path.get(node1Path.size() - lcaIndex + 1);
+            List<GraphHierarchyTree> node1ToLCAPath = node1Path.subList(0, node1Path.size() - lcaIndex + 1);
+            List<GraphHierarchyTree> node2ToLCAPath = node2Path.subList(0, node2Path.size() - lcaIndex + 1);
 
             result.LCANode = lcaNode;
             result.node1ToLCAPath = node1ToLCAPath;
