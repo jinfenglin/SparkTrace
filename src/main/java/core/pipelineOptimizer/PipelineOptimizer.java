@@ -1,10 +1,7 @@
 package core.pipelineOptimizer;
 
 
-import core.graphPipeline.basic.IOTableCell;
-import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
-import core.graphPipeline.basic.Vertex;
+import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
 import featurePipeline.SGraphIOStage;
 import javafx.util.Pair;
@@ -174,14 +171,43 @@ public class PipelineOptimizer {
         for (List<SNode> nodeGroup : identicalNodeGroups) {
             if (nodeGroup.size() > 1) {
                 SNode master = selectMaster(nodeGroup, treeRoot, topoOrderMap); //Select the node whose topological index is lower as master
+                impactedNode.addAll(traceImpactedNodes(master));
                 for (SNode node : nodeGroup) {
                     if (node != master) {
+                        impactedNode.addAll(traceImpactedNodes(node));
                         penetrate(master, node, treeRoot);
                     }
                 }
             }
         }
         return impactedNode;
+    }
+
+    /**
+     * Collect the nodes which receive the output from the given node. If any of the nodes are IONode,
+     * then keep searching the nodes which consume the output of that IONode
+     */
+    private static List<SNode> traceImpactedNodes(SNode node) {
+        List<SNode> impNodes = new ArrayList<>();
+        for (Vertex vertex : node.getOutputVertices()) {
+            if (vertex instanceof SNode) {
+                SNode impactNode = (SNode) vertex;
+                if (impactNode.getSparkPipelineStage() instanceof SGraphIOStage) {
+                    for (Vertex sinkRelatedVertex : impactNode.getContext().getOutputVertices()) {
+                        if (sinkRelatedVertex instanceof SNode) {
+                            impNodes.addAll(traceImpactedNodes((SNode) sinkRelatedVertex));
+                        } else {
+                            impNodes.addAll(traceImpactedNodes(((SGraph) sinkRelatedVertex).sourceNode));
+                        }
+                    }
+                } else {
+                    impNodes.add(impactNode);
+                }
+            } else {
+                impNodes.addAll(traceImpactedNodes(((SGraph) vertex).sourceNode));
+            }
+        }
+        return impNodes;
     }
 
     private static SNode selectMaster(List<SNode> nodes, GraphHierarchyTree ght, Map<SGraph, List<Vertex>> topoOrderMap) {
@@ -252,13 +278,46 @@ public class PipelineOptimizer {
         return nodes;
     }
 
+    /**
+     * Remove unused input and output field for the graph
+     *
+     * @param graph
+     */
+    public static void removeRedundantFields(SGraph graph) {
+        for (Vertex node : graph.getNodes()) {
+            if (node instanceof SGraph) {
+                SGraph graphNode = (SGraph) node;
+                removeRedundantFields(graphNode);
+            }
+        }
+        //If the graph is a root graph
+        if (graph.getContext() == null) {
+            return;
+        }
+        for (IOTableCell inputCell : graph.getInputTable().getCells()) {
+            IOTableCell sourceOutputCell = graph.sourceNode.getOutputField(inputCell.getFieldSymbol().getSymbolName());
+            //If the inputFiled not provide info to any inner node
+            if (sourceOutputCell.getOutputTarget().size() == 0) {
+                graph.removeInputField(inputCell.getFieldSymbol());
+            }
+        }
+
+        for (IOTableCell outputCell : graph.getOutputTable().getCells()) {
+            //If the output filed not provide info to any outside node
+            if (outputCell.getOutputTarget().size() == 0) {
+                graph.removeOutputField(outputCell.getFieldSymbol());
+            }
+        }
+    }
+
 
     /**
      * Remove the graph which have no out-degree
      *
      * @param graph
      */
-    public static void removeRedundantVertices(SGraph graph) throws Exception {
+    public static int removeRedundantVertices(SGraph graph) throws Exception {
+        int removedCnt = 0;
         List<Vertex> vertices = graph.getNodes();
         vertices.remove(graph.sourceNode);
         vertices.remove(graph.sinkNode);
@@ -270,6 +329,7 @@ public class PipelineOptimizer {
         }
         while (deletionQueue.size() > 0) {
             Vertex curNode = deletionQueue.poll();
+            removedCnt += 1;
             graph.removeNode(curNode);
             Set<Vertex> inputVertices = curNode.getInputVertices();
             inputVertices.forEach(vertex -> {
@@ -280,8 +340,61 @@ public class PipelineOptimizer {
         }
         for (Vertex node : vertices) {
             if (node instanceof SGraph) {
-                removeRedundantVertices((SGraph) node);
+                removedCnt += removeRedundantVertices((SGraph) node);
             }
         }
+        return removedCnt;
+    }
+
+    public static void removeEmptyGraph(SGraph graph) {
+        Queue<SGraph> deletionQueue = new LinkedList<>();
+        for (Vertex node : graph.getNodes()) {
+            if (node instanceof SGraph) {
+                SGraph graphNode = (SGraph) node;
+                removeEmptyGraph(graphNode);
+                if (graphNode.getNodes().size() == 2) {
+                    deletionQueue.add(graphNode);
+                }
+            }
+        }
+        //by pass the empty graph first then delete the graph
+        while (deletionQueue.size() > 0) {
+            SGraph curGraph = deletionQueue.poll();
+            IOTable inputTable = curGraph.getInputTable();
+            for (IOTableCell inputCell : inputTable.getCells()) {
+                for (IOTableCell outputCell : getDirectlyConnectedOutputCell(inputCell)) {
+                    IOTableCell inputSourceCell = inputCell.getInputSource().get(0);
+                    inputSourceCell.removeOutputTo(inputCell);
+                    for (IOTableCell outputTarget : outputCell.getOutputTarget()) {
+                        inputSourceCell.sendOutputTo(outputTarget);
+                    }
+
+                }
+            }
+            graph.removeNode(curGraph);
+        }
+    }
+
+    /**
+     * Find the directly linked sink outputfields for a inputcell
+     *
+     * @param inputCell
+     */
+    private static List<IOTableCell> getDirectlyConnectedOutputCell(IOTableCell inputCell) {
+        List<IOTableCell> directlyConnectedGraphOutCells = new ArrayList<>();
+        SGraph context = (SGraph) inputCell.getParentTable().getContext();
+        IOTableCell sourceNodeOutCell = context.sourceNode.getOutputField(inputCell.getFieldSymbol().getSymbolName());
+        List<IOTableCell> sourceNodeConnectTargets = sourceNodeOutCell.getOutputTarget();
+
+        for (IOTableCell connectedInputCell : sourceNodeConnectTargets) {
+            IOTableCell sinkNodeInputField = context.sinkNode.getInputField(connectedInputCell.getFieldSymbol().getSymbolName());
+            if (sinkNodeInputField != null) { //Check iF the connctedInputcell belong to sinkNode
+                IOTableCell sinkNodeInputCell = context.sinkNode.getInputField(sinkNodeInputField.getFieldSymbol().getSymbolName());
+                IOTableCell graphOutputField = context.getOutputField(sinkNodeInputCell.getFieldSymbol().getSymbolName());
+                directlyConnectedGraphOutCells.add(graphOutputField);
+            }
+        }
+
+        return directlyConnectedGraphOutCells;
     }
 }

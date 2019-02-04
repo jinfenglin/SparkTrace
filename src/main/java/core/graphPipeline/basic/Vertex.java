@@ -4,10 +4,7 @@ import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import org.apache.spark.ml.Pipeline;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  *
@@ -78,9 +75,25 @@ abstract public class Vertex {
         return this;
     }
 
+    public void removeInputField(Symbol symbol) {
+        IOTableCell inCell = inputTable.getCellBySymbol(symbol);
+        for (IOTableCell inSourceCell : new ArrayList<>(inCell.getInputSource())) {
+            inCell.removeInputFrom(inSourceCell);
+        }
+        inputTable.removeCell(inCell);
+    }
+
     public Vertex addInputField(String symbolName) throws Exception {
         Symbol symbol = new Symbol(this, symbolName);
         return addInputField(symbol);
+    }
+
+    public void removeOutputField(Symbol symbol) {
+        IOTableCell outCell = outputTable.getCellBySymbol(symbol);
+        for (IOTableCell outTarget : outCell.getOutputTarget()) {
+            outCell.removeOutputTo(outTarget);
+        }
+        outputTable.removeCell(outCell);
     }
 
     public IOTableCell getInputField(String symbolName) {

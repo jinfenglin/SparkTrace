@@ -16,8 +16,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 
-import static core.pipelineOptimizer.PipelineOptimizer.removeDuplicatedNodes;
-import static core.pipelineOptimizer.PipelineOptimizer.removeRedundantVertices;
+import static core.pipelineOptimizer.PipelineOptimizer.*;
 import static guru.nidi.graphviz.model.Factory.*;
 
 /**
@@ -77,12 +76,22 @@ public class SGraph extends Vertex {
         return this;
     }
 
+    public void removeInputField(Symbol symbol) {
+        super.removeInputField(symbol);
+        sourceNode.removeOutputField(new Symbol(sourceNode, symbol.getSymbolName()));
+    }
+
     @Override
     public Vertex addOutputField(Symbol symbol) throws Exception {
         super.addOutputField(symbol);
         Symbol addedSymbol = new Symbol(sinkNode, symbol.getSymbolName());
         sinkNode.addInputField(addedSymbol);
         return this;
+    }
+
+    public void removeOutputField(Symbol symbol) {
+        super.removeOutputField(symbol);
+        sinkNode.removeInputField(new Symbol(sinkNode, symbol.getSymbolName()));
     }
 
     /**
@@ -154,7 +163,14 @@ public class SGraph extends Vertex {
 
     public void optimize(SGraph graph) throws Exception {
         removeDuplicatedNodes(graph);
-        removeRedundantVertices(graph);
+        while (true) {
+            removeRedundantFields(graph);
+            int removed = removeRedundantVertices(graph);
+            removeEmptyGraph(graph);
+            if (removed == 0) {
+                break;
+            }
+        }
     }
 
     @Override
@@ -413,7 +429,7 @@ public class SGraph extends Vertex {
                 for (Vertex outputNode : vertex.getOutputVertices()) {
                     innerSink = createVizEdge(innerSink, outputNode);
                 }
-                g.add(innerSink,subGraph);
+                g.add(innerSink, subGraph);
             }
         }
         return g;

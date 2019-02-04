@@ -24,6 +24,11 @@ public class InputSourceSet {
     }
 
     private void traceToSource(IOTableCell inputCell) {
+        if (inputCell.getInputSource().size() == 0) {
+            //If a input cell have no input source then it is the end of search
+            inputSources.add(inputCell);
+            return;
+        }
         IOTableCell inputSourceCell = inputCell.getInputSource().get(0); //One input field should have only 1 source
         Vertex providerVertex = inputSourceCell.getParentTable().getContext();
         if (providerVertex instanceof SNode) {
@@ -32,13 +37,13 @@ public class InputSourceSet {
                 inputSources.add(inputSourceCell);
             } else {
                 SGraph contextGraph = (SGraph) providerVertex.getContext();
-                IOTableCell graphInputField = contextGraph.getInputField(inputCell.getFieldSymbol().getSymbolName());
-                if (graphInputField == null) {
-                    inputSources.add(inputSourceCell);
-                } else {
-                    traceToSource(graphInputField);
-                }
+                IOTableCell graphInputField = contextGraph.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
+                traceToSource(graphInputField);
             }
+        } else {
+            SGraph providerGraph = (SGraph) providerVertex;
+            IOTableCell sinkNodeReceiverCell = providerGraph.sinkNode.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
+            traceToSource(sinkNodeReceiverCell);
         }
     }
 
