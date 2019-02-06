@@ -68,7 +68,13 @@ abstract public class Vertex {
         return this;
     }
 
+    private void checkSymbolValid(Symbol symbol) {
+        assert !(inputTable.containsSymbol(symbol) || outputTable.containsSymbol(symbol));
+        assert symbol.getScope().equals(this);
+    }
+
     public Vertex addInputField(Symbol symbol) throws Exception {
+        checkSymbolValid(symbol);
         IOTableCell cell = new IOTableCell(symbol);
         inputTable.addCell(cell);
         SymbolTable.registerInputSymbol(symbol);
@@ -112,7 +118,7 @@ abstract public class Vertex {
     }
 
     public Vertex addOutputField(Symbol symbol) throws Exception {
-        assert symbol.getScope().equals(this);
+        checkSymbolValid(symbol);
         IOTableCell cell = new IOTableCell(symbol);
         outputTable.addCell(cell);
         SymbolTable.registerOutputSymbol(symbol);

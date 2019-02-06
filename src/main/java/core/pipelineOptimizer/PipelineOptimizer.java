@@ -15,6 +15,18 @@ import static core.graphPipeline.basic.SGraph.topologicalSort;
  *
  */
 public class PipelineOptimizer {
+
+    /**
+     * During optimization some new filed will be generated and inserted into the graph. To avoid the conflict between
+     * this names and the user defined name we use the format of source/target filed name + uuid. It can increase the readability
+     * and make the name unique.
+     *
+     * @return
+     */
+    private static String createUniqueNewFieldName(IOTableCell cell) {
+        return cell.getFieldSymbol().getSymbolName() + "-" + UUID.randomUUID();
+    }
+
     /**
      * If the output filed targetCell generate exactly same content as sourceCell, then user can use this function can
      * transfer the dependency of targetCell to sourceCell. penetration can reduce duplicated work and further simplify
@@ -32,19 +44,25 @@ public class PipelineOptimizer {
 
         Vertex sourceTopParentNode = null;
         Vertex targetTopParentNode = null;
+        String sourceOutputFieldName = sourceCell.getFieldSymbol().getSymbolName();
+
+        String addedOutputFieldName = createUniqueNewFieldName(sourceCell);
+        String addedInputFieldName = createUniqueNewFieldName(targetCell);
+
         if (sourceToLCAPath.size() > 0) {
+            boolean isPenetratedVertex = true;
             //Add the sourceCell as an output to all the SGraph in the sourceToLCAPath
             Vertex subGraph = sourceCell.getParentTable().getContext();
-            // TODO: Use unique name here to avoid name conflict
-            // Since the outputField use name from sourceCell, it is possible that newOutField symbol conflict existing
-            // name. A unique symbol name solve the problem.Its value won't change since this symbol receive value from
-            // source cell and will not use its default symbol name as value.
-            String addedOutputFieldName = sourceCell.getFieldSymbol().getSymbolName();
             for (GraphHierarchyTree treeNode : sourceToLCAPath) {
                 SGraph curGraph = treeNode.getNodeContent();
                 Symbol newOutField = new Symbol(curGraph, addedOutputFieldName);//expand the output filed of parent graph
                 curGraph.addOutputField(newOutField);
-                curGraph.connect(subGraph, addedOutputFieldName, curGraph.sinkNode, addedOutputFieldName);
+                if (isPenetratedVertex) {
+                    curGraph.connect(subGraph, sourceOutputFieldName, curGraph.sinkNode, addedOutputFieldName);
+                    isPenetratedVertex = false;
+                } else {
+                    curGraph.connect(subGraph, addedOutputFieldName, curGraph.sinkNode, addedOutputFieldName);
+                }
                 subGraph = curGraph;
             }
             sourceTopParentNode = sourceToLCAPath.get(sourceToLCAPath.size() - 1).getNodeContent();
@@ -57,7 +75,6 @@ public class PipelineOptimizer {
             //Add the targetCell as an input to all the SGraph in the targetToLCAPath
             boolean isPenetratedVertex = true; //The first vertex we process is where penetrated filed reside.
             Vertex subGraph = null; // starting from the graph that contains penetrated vertex, there is not sub graph
-            String addedInputFieldName = targetCell.getFieldSymbol().getSymbolName();
 
             for (GraphHierarchyTree treeNode : targetToLCAPath) {
                 SGraph curGraph = treeNode.getNodeContent();
@@ -89,7 +106,7 @@ public class PipelineOptimizer {
 
         SGraph lcaNode = lcaResult.LCANode.getNodeContent();
         if (targetTopParentNode instanceof SGraph) {
-            lcaNode.connect(sourceTopParentNode, sourceCell.getFieldSymbol().getSymbolName(), targetTopParentNode, targetCell.getFieldSymbol().getSymbolName());
+            lcaNode.connect(sourceTopParentNode, addedOutputFieldName, targetTopParentNode, addedInputFieldName);
         } else {
             List<IOTableCell> linkedCells = targetCell.getOutputTarget();
             for (IOTableCell linkedCell : new ArrayList<>(linkedCells)) {
