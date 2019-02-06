@@ -69,6 +69,8 @@ public class PipelineOptimizer {
         } else {
             //The source cell belong to a SNode in the LCA. No need to add the output to sinkNode
             sourceTopParentNode = sourceCell.getParentTable().getContext();
+            addedOutputFieldName = sourceOutputFieldName; //No field added then use the origin field of the node
+
         }
 
         if (targetToLCAPath.size() > 0) {
@@ -102,6 +104,7 @@ public class PipelineOptimizer {
         } else {
             //The targetCell belong to a SNode in LCA. Need to transfer the dependency to the source parent directly.
             targetTopParentNode = targetCell.getParentTable().getContext();
+            addedInputFieldName = targetCell.getFieldSymbol().getSymbolName();
         }
 
         SGraph lcaNode = lcaResult.LCANode.getNodeContent();

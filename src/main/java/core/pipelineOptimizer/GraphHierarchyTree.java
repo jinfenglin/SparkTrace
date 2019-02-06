@@ -44,19 +44,26 @@ public class GraphHierarchyTree {
         boolean node2PathFound = findPath(this, node2, node2Path);
 
         if (node1PathFound && node2PathFound) {
+            int min_length = Math.min(node1Path.size(), node2Path.size());
             int lcaIndex = 1;
-            for (; lcaIndex < node1Path.size() && lcaIndex < node2Path.size(); lcaIndex++) {
+            for (; lcaIndex < min_length; lcaIndex++) {
                 if (!node1Path.get(node1Path.size() - lcaIndex).equals(node2Path.get(node2Path.size() - lcaIndex))) {
                     break;
                 }
             }
-            GraphHierarchyTree lcaNode = node1Path.get(node1Path.size() - lcaIndex + 1);
-            List<GraphHierarchyTree> node1ToLCAPath = node1Path.subList(0, node1Path.size() - lcaIndex + 1);
-            List<GraphHierarchyTree> node2ToLCAPath = node2Path.subList(0, node2Path.size() - lcaIndex + 1);
 
-            result.LCANode = lcaNode;
-            result.node1ToLCAPath = node1ToLCAPath;
+            if (lcaIndex == min_length && min_length > 1) {
+                lcaIndex -= 1;
+            }
+
+            GraphHierarchyTree lcaNode = node1Path.get(node1Path.size() - lcaIndex);
+            List<GraphHierarchyTree> node1ToLCAPath = node1Path.subList(0, node1Path.size() - lcaIndex);
+            List<GraphHierarchyTree> node2ToLCAPath = node2Path.subList(0, node2Path.size() - lcaIndex);
+
+            result.LCANode = lcaNode; //The root node
+            result.node1ToLCAPath = node1ToLCAPath; //From the direct parent (inclusive) to root node (exclusive)
             result.node2ToLCAPath = node2ToLCAPath;
+
         }
         return result;
     }
