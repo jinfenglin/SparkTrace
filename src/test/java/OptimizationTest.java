@@ -2,25 +2,12 @@ import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
 import examples.TestBase;
-import examples.VSMTask;
-import featurePipeline.DummyStage;
-import featurePipeline.SGraphIOStage;
-import featurePipeline.UnsupervisedStage.UnsupervisedStage;
-import guru.nidi.graphviz.engine.Format;
-import guru.nidi.graphviz.engine.Graphviz;
-import guru.nidi.graphviz.model.MutableGraph;
-import guru.nidi.graphviz.model.MutableNode;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Test;
-
-import java.io.File;
-import java.io.IOException;
-
-import static guru.nidi.graphviz.model.Factory.*;
 
 /**
  *
@@ -234,6 +221,81 @@ public class OptimizationTest extends TestBase {
         graph.showGraph("dual_subGraph__after_optimize");
         Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
         result.show();
+    }
+
+    @Test
+    public void subSubGraphTest() throws Exception {
+        Dataset<Row> dataset = getSentenceLabelDataset();
+        //Create VSM graph contain subgraph
+        SGraph VSMGraph = new SGraph("VSMGraph");
+        VSMGraph.addInputField("text");
+        VSMGraph.addOutputField("TF-IDF");
+        SGraph htfSubGraph = createHTFSubGraph("HTFSubGraph");
+        IDF idf = new IDF();
+        SNode idfNode = new SDFNode(idf, "idf1");
+        idfNode.addInputField("s_idf_in");
+        idfNode.addOutputField("s_idf_out");
+
+        VSMGraph.addNode(htfSubGraph);
+        VSMGraph.addNode(idfNode);
+
+        VSMGraph.connect(VSMGraph.sourceNode, "text", htfSubGraph, "text");
+        VSMGraph.connect(htfSubGraph, "TF", idfNode, "s_idf_in");
+        VSMGraph.connect(idfNode, "s_idf_out", VSMGraph.sinkNode, "TF-IDF");
+
+        //Create HF graph contain no sub graph
+        SGraph htfGraph = createHTFSubGraph("HTF");
+
+        //Create back ground graph
+        SGraph graph = new SGraph("subSubGraphTest");
+        graph.addInputField("sentence");
+        graph.addOutputField("TF");
+        graph.addOutputField("TF-IDF");
+
+        graph.addNode(VSMGraph);
+        graph.addNode(htfGraph);
+
+        graph.connect(graph.sourceNode, "sentence", VSMGraph, "text");
+        graph.connect(graph.sourceNode, "sentence", htfGraph, "text");
+        graph.connect(VSMGraph, "TF-IDF", graph.sinkNode, "TF-IDF");
+        graph.connect(htfGraph, "TF", graph.sinkNode, "TF");
+
+        graph.showGraph("subSubGraphTest_before_optimize");
+        graph.optimize(graph);
+        graph.showGraph("subSubGraphTest_after_optimize");
+        Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
+        result.show();
+
+    }
+
+    /**
+     * Create a sub graph with tokenizer and hashtf
+     *
+     * @return
+     */
+    private SGraph createHTFSubGraph(String graphId) throws Exception {
+        SGraph subGraph = new SGraph(graphId);
+        subGraph.addInputField("text");
+        subGraph.addOutputField("TF");
+
+        Tokenizer tk2 = new Tokenizer();
+        SNode tkNode2 = new SNode(tk2, graphId + "_tokenizer");
+        tkNode2.addInputField("text");
+        tkNode2.addOutputField("tokens");
+
+        HashingTF hashingTF2 = new HashingTF();
+        SNode hashTFNode2 = new SNode(hashingTF2, graphId + "_hashTF");
+        hashTFNode2.addInputField("tokenInput");
+        hashTFNode2.addOutputField("TF");
+
+        subGraph.addNode(tkNode2);
+        subGraph.addNode(hashTFNode2);
+
+        subGraph.connect(subGraph.sourceNode, "text", tkNode2, "text");
+        subGraph.connect(tkNode2, "tokens", hashTFNode2, "tokenInput");
+        subGraph.connect(hashTFNode2, "TF", subGraph.sinkNode, "TF");
+
+        return subGraph;
     }
 
 }

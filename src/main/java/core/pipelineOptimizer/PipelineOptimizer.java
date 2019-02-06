@@ -56,7 +56,7 @@ public class PipelineOptimizer {
         if (targetToLCAPath.size() > 0) {
             //Add the targetCell as an input to all the SGraph in the targetToLCAPath
             boolean isPenetratedVertex = true; //The first vertex we process is where penetrated filed reside.
-            Vertex subGraph = targetCell.getParentTable().getContext();
+            Vertex subGraph = null; // starting from the graph that contains penetrated vertex, there is not sub graph
             String addedInputFieldName = targetCell.getFieldSymbol().getSymbolName();
 
             for (GraphHierarchyTree treeNode : targetToLCAPath) {
@@ -79,6 +79,7 @@ public class PipelineOptimizer {
                 } else {
                     curGraph.connect(curGraph.sourceNode, addedInputFieldName, subGraph, addedInputFieldName);
                 }
+                subGraph = curGraph;
             }
             targetTopParentNode = targetToLCAPath.get(targetToLCAPath.size() - 1).getNodeContent();
         } else {

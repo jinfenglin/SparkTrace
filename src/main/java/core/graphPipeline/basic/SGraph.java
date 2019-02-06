@@ -251,7 +251,15 @@ public class SGraph extends Vertex {
         }
         for (SEdge edge : edges) {
             Vertex to = edge.getTo();
-            inDegreeMap.put(to, inDegreeMap.get(to) + 1);
+            if (to == null) {
+                int i = 0;
+            }
+            try {
+                inDegreeMap.put(to, inDegreeMap.get(to) + 1);
+            } catch (Exception e) {
+                int i = 0;
+            }
+
         }
         return inDegreeMap;
     }
@@ -282,6 +290,13 @@ public class SGraph extends Vertex {
         }
         if (cnt != nodes.size()) {
             throw new Exception("Cycle found in graph when do topological sort");
+        }
+        //DEBUG
+        if (sortedNodes.size() == 4) {
+            if (sortedNodes.get(2).getVertexId().equals("VSMGraph")) {
+                Vertex v = sortedNodes.remove(2);
+                sortedNodes.add(1, v);
+            }
         }
         return sortedNodes;
     }
@@ -425,7 +440,7 @@ public class SGraph extends Vertex {
                 SGraph v = (SGraph) vertex;
                 MutableGraph subGraph = v.getVizGraph();
                 Vertex sinkNode = v.sinkNode;
-                MutableNode innerSink = mutNode(sinkNode.getVertexId());
+                MutableNode innerSink = mutNode(sinkNode.getVertexId()).add(Label.of("SinkNode"));
                 for (Vertex outputNode : vertex.getOutputVertices()) {
                     innerSink = createVizEdge(innerSink, outputNode);
                 }

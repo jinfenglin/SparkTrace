@@ -120,8 +120,7 @@ public class IOTableCell {
         if (o == null || getClass() != o.getClass()) return false;
         IOTableCell cell = (IOTableCell) o;
         return
-                Objects.equals(inputSource, cell.inputSource) &&
-                        Objects.equals(outputTarget, cell.outputTarget) &&
+                inputSource == cell.inputSource && outputTarget == cell.outputTarget &&
                         Objects.equals(fieldSymbol, cell.fieldSymbol) &&
                         Objects.equals(parentTable, cell.parentTable);
     }
