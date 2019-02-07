@@ -268,6 +268,79 @@ public class OptimizationTest extends TestBase {
 
     }
 
+    @Test
+    public void dualSubSubGraphTest() throws Exception {
+        Dataset<Row> dataset = getSentenceLabelDataset();
+        //Create VSM graph 1 contain subgraph
+        SGraph VSMGraph1 = new SGraph("VSMGraph1");
+        VSMGraph1.addInputField("text");
+        VSMGraph1.addOutputField("TF-IDF");
+        SGraph htfSubGraph = createHTFSubGraph("HTFSubGraph");
+        IDF idf = new IDF();
+        SNode idfNode = new SDFNode(idf, "idf1");
+        idfNode.addInputField("s_idf_in");
+        idfNode.addOutputField("s_idf_out");
+
+        VSMGraph1.addNode(htfSubGraph);
+        VSMGraph1.addNode(idfNode);
+
+        VSMGraph1.connect(VSMGraph1.sourceNode, "text", htfSubGraph, "text");
+        VSMGraph1.connect(htfSubGraph, "TF", idfNode, "s_idf_in");
+        VSMGraph1.connect(idfNode, "s_idf_out", VSMGraph1.sinkNode, "TF-IDF");
+
+        //Create VSM graph 2 contain no subgraph
+        String graphId = "VSMGraph2";
+        SGraph VSMGraph2 = new SGraph(graphId);
+        VSMGraph2.addInputField("text");
+        VSMGraph2.addOutputField("TF-IDF");
+
+        Tokenizer tk2 = new Tokenizer();
+        SNode tkNode2 = new SNode(tk2, graphId + "_tokenizer");
+        tkNode2.addInputField("text");
+        tkNode2.addOutputField("tokens");
+
+        HashingTF hashingTF2 = new HashingTF();
+        SNode hashTFNode2 = new SNode(hashingTF2, graphId + "_hashTF");
+        hashTFNode2.addInputField("tokenInput");
+        hashTFNode2.addOutputField("TF");
+
+        IDF idf2 = new IDF();
+        SNode idfNode2 = new SDFNode(idf2, "idf2");
+        idfNode2.addInputField("s_idf_in");
+        idfNode2.addOutputField("s_idf_out");
+
+        VSMGraph2.addNode(tkNode2);
+        VSMGraph2.addNode(hashTFNode2);
+        VSMGraph2.addNode(idfNode2);
+
+
+        VSMGraph2.connect(VSMGraph2.sourceNode, "text", tkNode2, "text");
+        VSMGraph2.connect(tkNode2, "tokens", hashTFNode2, "tokenInput");
+        VSMGraph2.connect(hashTFNode2, "TF", idfNode2, "s_idf_in");
+        VSMGraph2.connect(idfNode2, "s_idf_out", VSMGraph2.sinkNode, "TF-IDF");
+
+        // Add the two VSM to background graph
+        SGraph graph = new SGraph("dualSubSubGraphTest");
+        graph.addInputField("sentence");
+        graph.addOutputField("TF-IDF1");
+        graph.addOutputField("TF-IDF2");
+
+        graph.addNode(VSMGraph1);
+        graph.addNode(VSMGraph2);
+
+        graph.connect(graph.sourceNode, "sentence", VSMGraph1, "text");
+        graph.connect(graph.sourceNode, "sentence", VSMGraph2, "text");
+        graph.connect(VSMGraph1, "TF-IDF", graph.sinkNode, "TF-IDF1");
+        graph.connect(VSMGraph2, "TF-IDF", graph.sinkNode, "TF-IDF2");
+
+        graph.showGraph("subSubGraphTest_before_optimize_before_optimize");
+        graph.optimize(graph);
+        graph.showGraph("subSubGraphTest_before_optimize_after_optimize");
+        Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
+        result.show();
+
+    }
+
     /**
      * Create a sub graph with tokenizer and hashtf
      *

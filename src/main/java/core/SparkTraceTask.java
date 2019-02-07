@@ -111,7 +111,6 @@ public class SparkTraceTask extends SGraph {
                 Map<String, String> reversedSDFSymbolMap = reverseMapKeyValue(SDFSymbolMap);
 
                 List<IOTableCell> subTaskSDFIOCells = innerTask.getSdfGraph().getOutputTable().getCells();
-
                 //The innerSDF keeps the connection to inner DDF, use this connection to connect innerSTT's sourceNode and innerDDF
                 for (IOTableCell cell : subTaskSDFIOCells) {
                     List<IOTableCell> connectedCells = cell.getOutputTarget();

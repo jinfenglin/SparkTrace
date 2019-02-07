@@ -146,6 +146,8 @@ public class SGraph extends Vertex {
      * @param node
      */
     public void removeNode(Vertex node) {
+        if (node == null)
+            return;
         if (this.nodes.containsKey(node.getVertexId())) {
             this.nodes.remove(node.getVertexId());
             node.setContext(null);
