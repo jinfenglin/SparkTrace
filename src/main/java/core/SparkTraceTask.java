@@ -7,6 +7,7 @@ import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import core.pipelineOptimizer.*;
+import javafx.util.Pair;
 import org.apache.spark.SparkContext;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.util.SchemaUtils;
@@ -23,6 +24,7 @@ import traceability.components.abstractComponents.TraceLink;
 
 import java.util.*;
 
+import static core.pipelineOptimizer.PipelineOptimizer.createUniqueNewFieldName;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.lit;
 
@@ -82,18 +84,22 @@ public class SparkTraceTask extends SGraph {
         //Trace the added outputFields to inner STT's DDF inputs
         //Key is the symbol name in current graph, value is the symbol name in SDF. Value will not change once created..
         Map<String, String> SDFSymbolMap = new HashMap<>();
-        parentSDF.addNode(childSDF);
+        parentSDF.addNode(childSDF); //Move the childSDF to parent SDF
+
+        //The input of childSTT are from parent SDF and passed to childSTT through the ouputfiled of parent SDF.
+        //Once the childSDF is moved into parent SDF, the input provider should connect the childSDF directly
+
+
+        //connect the childSDF to childDDF
         for (IOTableCell outputCell : childSDF.getOutputTable().getCells()) {
-            //Creating symbol in parent with child's symbol name may lead to name conflict, should create a unique name here
-            //These intermediate symbol name will not impact the output name because the symbol value is passed from child SDF
-            // TODO: Use unique name here to avoid name conflict
-            String addedOutputFieldName = outputCell.getFieldSymbol().getSymbolName();
+            String addedOutputFieldName = createUniqueNewFieldName(outputCell);
             Symbol newParentOutputFiled = new Symbol(parentSDF, addedOutputFieldName);
             parentSDF.addOutputField(newParentOutputFiled);
-            parentSDF.connect(childSDF, addedOutputFieldName, parentSDF.sinkNode, addedOutputFieldName);
+            parentSDF.connect(childSDF, outputCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, addedOutputFieldName);
             addedOutputFields.add(newParentOutputFiled);
         }
 
+        //TODO fix this
         for (IOTableCell inputCell : childSDF.getInputTable().getCells()) {
             String addedInputFieldName = inputCell.getFieldSymbol().getSymbolName(); //This name should not change
             Symbol newParentInputField = new Symbol(parentSDF, addedInputFieldName);

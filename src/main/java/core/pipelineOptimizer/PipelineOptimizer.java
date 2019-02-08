@@ -23,7 +23,7 @@ public class PipelineOptimizer {
      *
      * @return
      */
-    private static String createUniqueNewFieldName(IOTableCell cell) {
+    public static String createUniqueNewFieldName(IOTableCell cell) {
         return cell.getFieldSymbol().getSymbolName() + "-" + UUID.randomUUID();
     }
 
