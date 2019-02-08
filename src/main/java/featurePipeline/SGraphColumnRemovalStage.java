@@ -80,4 +80,9 @@ public class SGraphColumnRemovalStage extends Transformer implements HasInputCol
         set(inputCols, inputColArray);
         return this;
     }
+
+    @Override
+    public String toString() {
+        return String.join(",", Arrays.asList(getInputCols()));
+    }
 }

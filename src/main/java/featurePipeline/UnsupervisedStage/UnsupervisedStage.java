@@ -30,10 +30,8 @@ import static org.apache.spark.sql.functions.col;
  */
 public class UnsupervisedStage extends Estimator<UnsupervisedStageModel> implements UnsupervisedStageParam {
     private static final long serialVersionUID = 7000401544310981006L;
-
     private Estimator innerEstimator;
     private DataType columnDataType;
-
     private StringArrayParam inputCols, outputCols;
 
     public UnsupervisedStage(Estimator innerEstimator) {
@@ -58,6 +56,21 @@ public class UnsupervisedStage extends Estimator<UnsupervisedStageModel> impleme
         columnDataType = columnFields.get(0).dataType();
         for (StructField field : columnFields) {
             assert field.dataType().equals(columnDataType);
+        }
+
+        int length = getInputCols().length;
+        for (int i = 0; i < length; i++) {
+            String inputColName = getInputCols()[i];
+            String outputColName = getOutputCols()[i];
+            if (innerEstimator instanceof HasInputCol && innerEstimator instanceof HasOutputCol) {
+                HasInputCol hasInput = (HasInputCol) innerEstimator;
+                hasInput.set(hasInput.inputCol(), inputColName);
+                HasOutputCol hasOutput = (HasOutputCol) innerEstimator;
+                hasOutput.set(hasOutput.outputCol(), outputColName);
+                structType = innerEstimator.transformSchema(structType);
+            } else {
+                Logger.getLogger(this.getClass().getName()).warning("Inner Transformer for Unsupervised Stage not implementing HasInputCol or HasOutputCol");
+            }
         }
         return structType;
     }

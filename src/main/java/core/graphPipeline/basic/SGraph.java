@@ -24,7 +24,7 @@ import static guru.nidi.graphviz.model.Factory.*;
  * To create a graph:
  * 1. Define the IO table for the graph by setting the inputTable and outputTable
  * 2. Add node to the graphs
- * 3. connect the graphs, and remember to connect to the sourceNode and sinkNode
+ * 3. connectSymbol the graphs, and remember to connectSymbol to the sourceNode and sinkNode
  * 4. Add penetrations to the graph
  * 5. Call toPipeline to create a fully configured and runnable pipeline
  */
@@ -32,6 +32,7 @@ public class SGraph extends Vertex {
     private Map<String, Vertex> nodes;
     private Set<SEdge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
     public SNode sourceNode, sinkNode;
+    private Map<String, String> config;
 
     public SGraph() {
         super();
@@ -45,6 +46,7 @@ public class SGraph extends Vertex {
         sinkNode.setContext(this);
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
+        config = new HashMap<>();
     }
 
     public SGraph(String graphId) {
@@ -59,6 +61,15 @@ public class SGraph extends Vertex {
         sinkNode.setContext(this);
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
+        config = new HashMap<>();
+    }
+
+    public void setConfig(Map<String, String> symbolValueMap) {
+        this.config = symbolValueMap;
+        for (String symbolName : this.config.keySet()) {
+            Symbol symbol = getInputTable().getSymbolByVarName(symbolName);
+            SymbolTable.setInputSymbolValue(symbol, this.config.get(symbolName));
+        }
     }
 
     /**
@@ -107,6 +118,8 @@ public class SGraph extends Vertex {
             SymbolTable.shareSymbolValue(graphProviderSymbol, sourceNodeReceiverSymbol, false);
         }
 
+        List<TransparentSNode> transparentVertices = new ArrayList<>(); //collect transVertices for second round process
+        //Need topological order of processing if we don't pick out these nodes for second round processing.
         for (Vertex node : graph.getNodes()) {
             if (node instanceof SGraph) {
                 syncSymbolValues((SGraph) node);
@@ -116,6 +129,21 @@ public class SGraph extends Vertex {
                 for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
                     Symbol receiverSymbol = receiverCell.getFieldSymbol();
                     SymbolTable.shareSymbolValue(providerSymbol, receiverSymbol, true);
+                    if (receiverCell.getParentTable().getContext() instanceof TransparentSNode) {
+                        //Config transvertex input output symbols
+                        TransparentSNode transVertex = ((TransparentSNode) receiverCell.getParentTable().getContext());
+                        transVertex.matchInputToOutput();
+                        transparentVertices.add(transVertex);
+                    }
+                }
+            }
+        }
+        //ensure the target cell receive correct transVertex symbols
+        for (TransparentSNode tv : transparentVertices) {
+            for (IOTableCell providerCell : tv.outputTable.getCells()) {
+                for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
+                    Symbol receiverSymbol = receiverCell.getFieldSymbol();
+                    SymbolTable.shareSymbolValue(providerCell.getFieldSymbol(), receiverSymbol, true);
                 }
             }
         }
@@ -126,6 +154,7 @@ public class SGraph extends Vertex {
             SymbolTable.shareSymbolValue(sinkNodeProviderSymbol, graphReceiverSymbol, false);
         }
     }
+
 
     /**
      * @return
@@ -177,7 +206,9 @@ public class SGraph extends Vertex {
 
     @Override
     public Pipeline toPipeline() throws Exception {
+        boolean cleanColumns = true;
         syncSymbolValues(this);
+
         //Config the SGraphIOStage to parse the InputTable which translate the Symbols to real column names
         SGraphIOStage initStage = (SGraphIOStage) sourceNode.getSparkPipelineStage();
         initStage.setInputCols(inputTable);
@@ -195,9 +226,12 @@ public class SGraph extends Vertex {
         Map<IOTableCell, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
             stages.add(node.toPipeline());
-            if (!node.equals(sinkNode)) {
+            if (!node.equals(sinkNode) && cleanColumns) {
                 for (IOTableCell targetCell : node.getInputTable().getCells()) {
                     for (IOTableCell sourceCell : targetCell.getInputSource()) {
+                        if (sourceCell.getParentTable().getContext().equals(sourceNode) && this.getContext() != null) {
+                            continue; //Source node contains the fields that belong to parent graph
+                        }
                         int remainDemand = demandTable.get(sourceCell) - 1;
                         demandTable.put(sourceCell, remainDemand);
                         if (remainDemand == 0 && sourceCell.isRemovable()) {
@@ -256,11 +290,8 @@ public class SGraph extends Vertex {
             if (to == null) {
                 int i = 0;
             }
-            try {
-                inDegreeMap.put(to, inDegreeMap.get(to) + 1);
-            } catch (Exception e) {
-                int i = 0;
-            }
+            inDegreeMap.put(to, inDegreeMap.get(to) + 1);
+
 
         }
         return inDegreeMap;
@@ -349,12 +380,16 @@ public class SGraph extends Vertex {
         edges.remove(edge);
     }
 
-    public void connect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
+    public void connectSymbol(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
         Symbol s1 = new Symbol(v1, symbolName1);
         Symbol s2 = new Symbol(v2, symbolName2);
-        SEdge edge = new SEdge(s1.getScope(), s2.getScope());
-        addEdge(edge);
         connect(s1, s2);
+    }
+
+    public void connect(Symbol from, Symbol to) {
+        SEdge edge = new SEdge(from.getScope(), to.getScope());
+        addEdge(edge);
+        connectSymbol(from, to);
     }
 
     public void disconnect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
@@ -380,13 +415,14 @@ public class SGraph extends Vertex {
         return noConnectionLeft;
     }
 
+
     /**
      * Connect the parent node of symbol from with parent node of to. It will update the edge sets as well.
      *
      * @param from
      * @param to
      */
-    private void connect(Symbol from, Symbol to) {
+    private void connectSymbol(Symbol from, Symbol to) {
         IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
         IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
         if (fromCell != null && toCell != null) {
@@ -396,7 +432,7 @@ public class SGraph extends Vertex {
         }
     }
 
-    private void disconnect(Symbol from, Symbol to) {
+    protected void disconnect(Symbol from, Symbol to) {
         IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
         IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
         if (fromCell != null && toCell != null) {

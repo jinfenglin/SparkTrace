@@ -17,11 +17,6 @@ public interface UnsupervisedStageParam extends HasInputCols, HasOutputCols {
         return inputColsParam;
     }
 
-    @Override
-    default String[] getInputCols() {
-        return getOrDefault(inputCols());
-    }
-
     default void setInputCols(String[] inputCols) {
         set(inputCols(), inputCols);
     }
@@ -35,6 +30,11 @@ public interface UnsupervisedStageParam extends HasInputCols, HasOutputCols {
     @Override
     default String[] getOutputCols() {
         return getOrDefault(outputCols());
+    }
+
+    @Override
+    default String[] getInputCols() {
+        return getOrDefault(inputCols());
     }
 
     default void setOutputCols(String[] outputCols) {

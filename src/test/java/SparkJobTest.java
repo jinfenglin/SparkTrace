@@ -4,14 +4,10 @@ import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import examples.TestBase;
 import examples.VSMTask;
-import featurePipeline.CosinSimilarityStage;
 import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.feature.Tokenizer;
-import org.apache.spark.ml.param.Param;
-import org.apache.spark.ml.param.shared.HasInputCols;
-import org.apache.spark.ml.param.shared.HasOutputCol;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Before;
@@ -69,7 +65,7 @@ public class SparkJobTest extends TestBase {
         SparkTraceTask vsmTask = VSMTask.getSTT(sparkSession);
         vsmTask.initSTT();
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
-        vsmTask.getSdfGraph().configSDF(vsmTaskInputConfig);
+        vsmTask.setConfig(vsmTaskInputConfig);
         vsmTask.showGraph("singleSparkTaskTest");
         vsmTask.train(commits, improvements, null);
         Dataset<Row> result = vsmTask.trace(commits, improvements);
@@ -88,9 +84,9 @@ public class SparkJobTest extends TestBase {
 
     @Test
     public void nestedSparkTaskTest() throws Exception {
-        SparkTraceTask outerTask = new SparkTraceTask(sparkSession);
+
         //create SDF
-        SDFGraph sdfGraph = new SDFGraph("s_id", "t_id");
+        SDFGraph sdfGraph = new SDFGraph();
         sdfGraph.setId("nestedTask_SDF");
         sdfGraph.addInputField("s_t");
         sdfGraph.addInputField("t_t");
@@ -117,10 +113,10 @@ public class SparkJobTest extends TestBase {
 
         sdfGraph.addNode(stkNode);
         sdfGraph.addNode(ttkNode);
-        sdfGraph.connect(sdfGraph.sourceNode, "s_t", stkNode, "s_text");
-        sdfGraph.connect(sdfGraph.sourceNode, "t_t", ttkNode, "t_text");
-        sdfGraph.connect(stkNode, "s_tokens", sdfGraph.sinkNode, "s_tk");
-        sdfGraph.connect(ttkNode, "t_tokens", sdfGraph.sinkNode, "t_tk");
+        sdfGraph.connectSymbol(sdfGraph.sourceNode, "s_t", stkNode, "s_text");
+        sdfGraph.connectSymbol(sdfGraph.sourceNode, "t_t", ttkNode, "t_text");
+        sdfGraph.connectSymbol(stkNode, "s_tokens", sdfGraph.sinkNode, "s_tk");
+        sdfGraph.connectSymbol(ttkNode, "t_tokens", sdfGraph.sinkNode, "t_tk");
 
 
         //create DDF
@@ -134,15 +130,13 @@ public class SparkJobTest extends TestBase {
 //        SparkTraceTask task = VSMTask.getSTT(sparkSession);
 //        task.getSdfGraph().configSDF(getVSMTaskConfig());
 //        ddfGraph.addNode(task);
-        ddfGraph.connect(ddfGraph.sourceNode, "s_tf_idf", ddfGraph.sinkNode, "tk1");
-        ddfGraph.connect(ddfGraph.sourceNode, "t_tf_idf", ddfGraph.sinkNode, "tk2");
-        //ddfGraph.connect(task, "vsm_cosin_sim_score", ddfGraph, "similarity");
+        ddfGraph.connectSymbol(ddfGraph.sourceNode, "s_tf_idf", ddfGraph.sinkNode, "tk1");
+        ddfGraph.connectSymbol(ddfGraph.sourceNode, "t_tf_idf", ddfGraph.sinkNode, "tk2");
+        //ddfGraph.connectSymbol(task, "vsm_cosin_sim_score", ddfGraph, "similarity");
 
-        outerTask.setSdfGraph(sdfGraph);
-        outerTask.setDdfGraph(ddfGraph);
-        outerTask.connect(sdfGraph, "s_tk", ddfGraph, "s_tf_idf");
-        outerTask.connect(sdfGraph, "t_tk", ddfGraph, "t_tf_idf");
-        outerTask.getSdfGraph().configSDF(nestTaskConfig);
+        SparkTraceTask outerTask = new SparkTraceTask(sparkSession, sdfGraph, ddfGraph, "s_id", "t_id");
+        outerTask.connectSymbol(sdfGraph, "s_tk", ddfGraph, "s_tf_idf");
+        outerTask.connectSymbol(sdfGraph, "t_tk", ddfGraph, "t_tf_idf");
         outerTask.initSTT();
         //Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         //outerTask.getSdfGraph().configSDF(vsmTaskInputConfig);

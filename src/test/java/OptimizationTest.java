@@ -44,10 +44,10 @@ public class OptimizationTest extends TestBase {
 
         graph.addNode(tkNode1);
         graph.addNode(tkNode2);
-        graph.connect(graph.sourceNode, "sentence", tkNode1, "text");
-        graph.connect(tkNode1, "tokens1", graph.sinkNode, "token1");
-        graph.connect(graph.sourceNode, "sentence", tkNode2, "text");
-        graph.connect(tkNode2, "tokens2", graph.sinkNode, "token2");
+        graph.connectSymbol(graph.sourceNode, "sentence", tkNode1, "text");
+        graph.connectSymbol(tkNode1, "tokens1", graph.sinkNode, "token1");
+        graph.connectSymbol(graph.sourceNode, "sentence", tkNode2, "text");
+        graph.connectSymbol(tkNode2, "tokens2", graph.sinkNode, "token2");
         graph.optimize(graph);
         Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
         result.show();
@@ -85,12 +85,12 @@ public class OptimizationTest extends TestBase {
         graph.addNode(tkNode2);
         graph.addNode(hashTFNode);
 
-        graph.connect(graph.sourceNode, "sentence", tkNode1, "text");
-        graph.connect(tkNode1, "tokens1", graph.sinkNode, "token");
+        graph.connectSymbol(graph.sourceNode, "sentence", tkNode1, "text");
+        graph.connectSymbol(tkNode1, "tokens1", graph.sinkNode, "token");
 
-        graph.connect(graph.sourceNode, "sentence", tkNode2, "text");
-        graph.connect(tkNode2, "tokens2", hashTFNode, "tokenInput");
-        graph.connect(hashTFNode, "TF", graph.sinkNode, "hashTF");
+        graph.connectSymbol(graph.sourceNode, "sentence", tkNode2, "text");
+        graph.connectSymbol(tkNode2, "tokens2", hashTFNode, "tokenInput");
+        graph.connectSymbol(hashTFNode, "TF", graph.sinkNode, "hashTF");
         graph.showGraph("RemoveNodeHasDependency_before_optimize");
         graph.optimize(graph);
         Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
@@ -119,9 +119,9 @@ public class OptimizationTest extends TestBase {
         subGraph.addNode(tkNode2);
         subGraph.addNode(hashTFNode);
 
-        subGraph.connect(subGraph.sourceNode, "text", tkNode2, "text");
-        subGraph.connect(tkNode2, "tokens2", hashTFNode, "tokenInput");
-        subGraph.connect(hashTFNode, "TF", subGraph.sinkNode, "TF");
+        subGraph.connectSymbol(subGraph.sourceNode, "text", tkNode2, "text");
+        subGraph.connectSymbol(tkNode2, "tokens2", hashTFNode, "tokenInput");
+        subGraph.connectSymbol(hashTFNode, "TF", subGraph.sinkNode, "TF");
 
         SGraph graph = new SGraph("SubGraphOptimization");
         graph.addInputField("sentence");
@@ -136,16 +136,16 @@ public class OptimizationTest extends TestBase {
         graph.addNode(tkNode1);
         graph.addNode(subGraph);
 
-        graph.connect(graph.sourceNode, "sentence", tkNode1, "text");
-        graph.connect(tkNode1, "tokens1", graph.sinkNode, "token");
+        graph.connectSymbol(graph.sourceNode, "sentence", tkNode1, "text");
+        graph.connectSymbol(tkNode1, "tokens1", graph.sinkNode, "token");
 
-        graph.connect(graph.sourceNode, "sentence", subGraph, "text");
-        graph.connect(subGraph, "TF", graph.sinkNode, "hashTF");
+        graph.connectSymbol(graph.sourceNode, "sentence", subGraph, "text");
+        graph.connectSymbol(subGraph, "TF", graph.sinkNode, "hashTF");
 
         graph.showGraph("subGraphOptimization_before_optimize");
         graph.optimize(graph);
-        Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
         graph.showGraph("subGraphOptimization_after_optimize");
+        Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
         result.show();
     }
 
@@ -176,10 +176,10 @@ public class OptimizationTest extends TestBase {
         subGraph1.addNode(hashTFNode1);
         subGraph1.addNode(idfNode);
 
-        subGraph1.connect(subGraph1.sourceNode, "text", tkNode1, "text");
-        subGraph1.connect(tkNode1, "tokens1", hashTFNode1, "tokenInput");
-        subGraph1.connect(hashTFNode1, "TF", idfNode, "s_idf_in");
-        subGraph1.connect(idfNode, "s_idf_out", subGraph1.sinkNode, "TF-IDF");
+        subGraph1.connectSymbol(subGraph1.sourceNode, "text", tkNode1, "text");
+        subGraph1.connectSymbol(tkNode1, "tokens1", hashTFNode1, "tokenInput");
+        subGraph1.connectSymbol(hashTFNode1, "TF", idfNode, "s_idf_in");
+        subGraph1.connectSymbol(idfNode, "s_idf_out", subGraph1.sinkNode, "TF-IDF");
 
 
         SGraph subGraph2 = new SGraph("HashTFGraph");
@@ -199,9 +199,9 @@ public class OptimizationTest extends TestBase {
         subGraph2.addNode(tkNode2);
         subGraph2.addNode(hashTFNode2);
 
-        subGraph2.connect(subGraph2.sourceNode, "text", tkNode2, "text");
-        subGraph2.connect(tkNode2, "tokens2", hashTFNode2, "tokenInput");
-        subGraph2.connect(hashTFNode2, "TF", subGraph2.sinkNode, "TF");
+        subGraph2.connectSymbol(subGraph2.sourceNode, "text", tkNode2, "text");
+        subGraph2.connectSymbol(tkNode2, "tokens2", hashTFNode2, "tokenInput");
+        subGraph2.connectSymbol(hashTFNode2, "TF", subGraph2.sinkNode, "TF");
 
         SGraph graph = new SGraph("dualSubGraphTest");
         graph.addInputField("sentence");
@@ -211,10 +211,10 @@ public class OptimizationTest extends TestBase {
         graph.addNode(subGraph1);
         graph.addNode(subGraph2);
 
-        graph.connect(graph.sourceNode, "sentence", subGraph1, "text");
-        graph.connect(graph.sourceNode, "sentence", subGraph2, "text");
-        graph.connect(subGraph1, "TF-IDF", graph.sinkNode, "TF-IDF");
-        graph.connect(subGraph2, "TF", graph.sinkNode, "TF");
+        graph.connectSymbol(graph.sourceNode, "sentence", subGraph1, "text");
+        graph.connectSymbol(graph.sourceNode, "sentence", subGraph2, "text");
+        graph.connectSymbol(subGraph1, "TF-IDF", graph.sinkNode, "TF-IDF");
+        graph.connectSymbol(subGraph2, "TF", graph.sinkNode, "TF");
 
         graph.showGraph("dual_subGraph_before_optimize");
         graph.optimize(graph);
@@ -239,9 +239,9 @@ public class OptimizationTest extends TestBase {
         VSMGraph.addNode(htfSubGraph);
         VSMGraph.addNode(idfNode);
 
-        VSMGraph.connect(VSMGraph.sourceNode, "text", htfSubGraph, "text");
-        VSMGraph.connect(htfSubGraph, "TF", idfNode, "s_idf_in");
-        VSMGraph.connect(idfNode, "s_idf_out", VSMGraph.sinkNode, "TF-IDF");
+        VSMGraph.connectSymbol(VSMGraph.sourceNode, "text", htfSubGraph, "text");
+        VSMGraph.connectSymbol(htfSubGraph, "TF", idfNode, "s_idf_in");
+        VSMGraph.connectSymbol(idfNode, "s_idf_out", VSMGraph.sinkNode, "TF-IDF");
 
         //Create HF graph contain no sub graph
         SGraph htfGraph = createHTFSubGraph("HTF");
@@ -255,10 +255,10 @@ public class OptimizationTest extends TestBase {
         graph.addNode(VSMGraph);
         graph.addNode(htfGraph);
 
-        graph.connect(graph.sourceNode, "sentence", VSMGraph, "text");
-        graph.connect(graph.sourceNode, "sentence", htfGraph, "text");
-        graph.connect(VSMGraph, "TF-IDF", graph.sinkNode, "TF-IDF");
-        graph.connect(htfGraph, "TF", graph.sinkNode, "TF");
+        graph.connectSymbol(graph.sourceNode, "sentence", VSMGraph, "text");
+        graph.connectSymbol(graph.sourceNode, "sentence", htfGraph, "text");
+        graph.connectSymbol(VSMGraph, "TF-IDF", graph.sinkNode, "TF-IDF");
+        graph.connectSymbol(htfGraph, "TF", graph.sinkNode, "TF");
 
         graph.showGraph("subSubGraphTest_before_optimize");
         graph.optimize(graph);
@@ -284,9 +284,9 @@ public class OptimizationTest extends TestBase {
         VSMGraph1.addNode(htfSubGraph);
         VSMGraph1.addNode(idfNode);
 
-        VSMGraph1.connect(VSMGraph1.sourceNode, "text", htfSubGraph, "text");
-        VSMGraph1.connect(htfSubGraph, "TF", idfNode, "s_idf_in");
-        VSMGraph1.connect(idfNode, "s_idf_out", VSMGraph1.sinkNode, "TF-IDF");
+        VSMGraph1.connectSymbol(VSMGraph1.sourceNode, "text", htfSubGraph, "text");
+        VSMGraph1.connectSymbol(htfSubGraph, "TF", idfNode, "s_idf_in");
+        VSMGraph1.connectSymbol(idfNode, "s_idf_out", VSMGraph1.sinkNode, "TF-IDF");
 
         //Create VSM graph 2 contain no subgraph
         String graphId = "VSMGraph2";
@@ -314,10 +314,10 @@ public class OptimizationTest extends TestBase {
         VSMGraph2.addNode(idfNode2);
 
 
-        VSMGraph2.connect(VSMGraph2.sourceNode, "text", tkNode2, "text");
-        VSMGraph2.connect(tkNode2, "tokens", hashTFNode2, "tokenInput");
-        VSMGraph2.connect(hashTFNode2, "TF", idfNode2, "s_idf_in");
-        VSMGraph2.connect(idfNode2, "s_idf_out", VSMGraph2.sinkNode, "TF-IDF");
+        VSMGraph2.connectSymbol(VSMGraph2.sourceNode, "text", tkNode2, "text");
+        VSMGraph2.connectSymbol(tkNode2, "tokens", hashTFNode2, "tokenInput");
+        VSMGraph2.connectSymbol(hashTFNode2, "TF", idfNode2, "s_idf_in");
+        VSMGraph2.connectSymbol(idfNode2, "s_idf_out", VSMGraph2.sinkNode, "TF-IDF");
 
         // Add the two VSM to background graph
         SGraph graph = new SGraph("dualSubSubGraphTest");
@@ -328,10 +328,10 @@ public class OptimizationTest extends TestBase {
         graph.addNode(VSMGraph1);
         graph.addNode(VSMGraph2);
 
-        graph.connect(graph.sourceNode, "sentence", VSMGraph1, "text");
-        graph.connect(graph.sourceNode, "sentence", VSMGraph2, "text");
-        graph.connect(VSMGraph1, "TF-IDF", graph.sinkNode, "TF-IDF1");
-        graph.connect(VSMGraph2, "TF-IDF", graph.sinkNode, "TF-IDF2");
+        graph.connectSymbol(graph.sourceNode, "sentence", VSMGraph1, "text");
+        graph.connectSymbol(graph.sourceNode, "sentence", VSMGraph2, "text");
+        graph.connectSymbol(VSMGraph1, "TF-IDF", graph.sinkNode, "TF-IDF1");
+        graph.connectSymbol(VSMGraph2, "TF-IDF", graph.sinkNode, "TF-IDF2");
 
         graph.showGraph("subSubGraphTest_before_optimize_before_optimize");
         graph.optimize(graph);
@@ -364,9 +364,9 @@ public class OptimizationTest extends TestBase {
         subGraph.addNode(tkNode2);
         subGraph.addNode(hashTFNode2);
 
-        subGraph.connect(subGraph.sourceNode, "text", tkNode2, "text");
-        subGraph.connect(tkNode2, "tokens", hashTFNode2, "tokenInput");
-        subGraph.connect(hashTFNode2, "TF", subGraph.sinkNode, "TF");
+        subGraph.connectSymbol(subGraph.sourceNode, "text", tkNode2, "text");
+        subGraph.connectSymbol(tkNode2, "tokens", hashTFNode2, "tokenInput");
+        subGraph.connectSymbol(hashTFNode2, "TF", subGraph.sinkNode, "TF");
 
         return subGraph;
     }

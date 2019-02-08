@@ -5,7 +5,7 @@ import core.graphPipeline.graphSymbol.Symbol;
 import java.util.*;
 
 /**
- * IOTable recorded the mapping relationships between two SNode. The IOTableCells will connect to another IOTableCell.In
+ * IOTable recorded the mapping relationships between two SNode. The IOTableCells will connectSymbol to another IOTableCell.In
  * each SNode there will be one input table and one output table;
  */
 public class IOTable {

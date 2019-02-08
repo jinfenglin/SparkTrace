@@ -5,7 +5,6 @@ import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
-import core.graphPipeline.graphSymbol.Symbol;
 import featurePipeline.CosinSimilarityStage;
 import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
 import featurePipeline.UnsupervisedStage.UnsupervisedStage;
@@ -24,7 +23,7 @@ public class VSMTask {
     }
 
     private static SDFGraph createSDF() throws Exception {
-        SDFGraph sdf = new SDFGraph("s_id", "t_id");
+        SDFGraph sdf = new SDFGraph();
         sdf.setId("VSMTask_SDF");
         createSourceSDF(sdf);
         createTargetSDF(sdf);
@@ -61,10 +60,10 @@ public class VSMTask {
         sdfGraph.addNode(htfNode);
         sdfGraph.addNode(idfNode);
 
-        sdfGraph.connect(sdfGraph.sourceNode, "s_text", tkNode, "s_text");
-        sdfGraph.connect(tkNode, "s_tokens", htfNode, "s_tokens");
-        sdfGraph.connect(htfNode, "s_htf", idfNode, "s_idf_in");
-        sdfGraph.connect(idfNode, "s_idf_out", sdfGraph.sinkNode, "s_tf_idf");
+        sdfGraph.connectSymbol(sdfGraph.sourceNode, "s_text", tkNode, "s_text");
+        sdfGraph.connectSymbol(tkNode, "s_tokens", htfNode, "s_tokens");
+        sdfGraph.connectSymbol(htfNode, "s_htf", idfNode, "s_idf_in");
+        sdfGraph.connectSymbol(idfNode, "s_idf_out", sdfGraph.sinkNode, "s_tf_idf");
     }
 
     private static void createTargetSDF(SDFGraph sdfGraph) throws Exception {
@@ -93,14 +92,14 @@ public class VSMTask {
         sdfGraph.addNode(htfNode);
         sdfGraph.addNode(idfNode);
 
-        sdfGraph.connect(sdfGraph.sourceNode, "t_text", tkNode, "t_text");
-        sdfGraph.connect(tkNode, "t_tokens", htfNode, "t_tokens");
-        sdfGraph.connect(htfNode, "t_htf", idfNode, "t_idf_in");
-        sdfGraph.connect(idfNode, "t_idf_out", sdfGraph.sinkNode, "t_tf_idf");
+        sdfGraph.connectSymbol(sdfGraph.sourceNode, "t_text", tkNode, "t_text");
+        sdfGraph.connectSymbol(tkNode, "t_tokens", htfNode, "t_tokens");
+        sdfGraph.connectSymbol(htfNode, "t_htf", idfNode, "t_idf_in");
+        sdfGraph.connectSymbol(idfNode, "t_idf_out", sdfGraph.sinkNode, "t_tf_idf");
     }
 
     private static SGraph createDDFGraph() throws Exception {
-        SGraph ddfGraph = new SGraph("VSM_DDFGraph");
+        SGraph ddfGraph = new SGraph("VSMTask_DDF");
         ddfGraph.addInputField("s_tf_idf");
         ddfGraph.addInputField("t_tf_idf");
         ddfGraph.addOutputField("vsm_cosin_sim_score");
@@ -113,20 +112,28 @@ public class VSMTask {
 
         ddfGraph.addNode(cosinNode);
 
-        ddfGraph.connect(ddfGraph.sourceNode, "s_tf_idf", cosinNode, "vec1");
-        ddfGraph.connect(ddfGraph.sourceNode, "t_tf_idf", cosinNode, "vec2");
-        ddfGraph.connect(cosinNode, "cosin_score", ddfGraph.sinkNode, "vsm_cosin_sim_score");
+        ddfGraph.connectSymbol(ddfGraph.sourceNode, "s_tf_idf", cosinNode, "vec1");
+        ddfGraph.connectSymbol(ddfGraph.sourceNode, "t_tf_idf", cosinNode, "vec2");
+        ddfGraph.connectSymbol(cosinNode, "cosin_score", ddfGraph.sinkNode, "vsm_cosin_sim_score");
         return ddfGraph;
     }
 
 
     public static SparkTraceTask getSTT(SparkSession sparkSession) throws Exception {
-        SparkTraceTask stt = new SparkTraceTask(sparkSession);
+        SparkTraceTask stt = new SparkTraceTask(sparkSession, createSDF(), createDDFGraph(), "s_id", "t_id");
         stt.setId("VSM_Task");
-        stt.setSdfGraph(createSDF());
-        stt.setDdfGraph(createDDFGraph());
-        stt.connect(stt.getSdfGraph(), "s_tf_idf", stt.getDdfGraph(), "s_tf_idf");
-        stt.connect(stt.getSdfGraph(), "t_tf_idf", stt.getDdfGraph(), "t_tf_idf");
+        stt.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
+        stt.addOutputField("vsm_score");
+
+        stt.connectSymbol(stt.sourceNode, "s_id", stt.getSdfGraph(), "s_id");
+        stt.connectSymbol(stt.sourceNode, "t_id", stt.getSdfGraph(), "t_id");
+        stt.connectSymbol(stt.sourceNode, "s_text", stt.getSdfGraph(), "s_text");
+        stt.connectSymbol(stt.sourceNode, "t_text", stt.getSdfGraph(), "t_text");
+
+        stt.connectSymbol(stt.getSdfGraph(), "s_tf_idf", stt.getDdfGraph(), "s_tf_idf");
+        stt.connectSymbol(stt.getSdfGraph(), "t_tf_idf", stt.getDdfGraph(), "t_tf_idf");
+
+        stt.connectSymbol(stt.getDdfGraph(), "vsm_cosin_sim_score", stt.sinkNode, "vsm_score");
         return stt;
     }
 }

@@ -58,10 +58,10 @@ public class PipelineOptimizer {
                 Symbol newOutField = new Symbol(curGraph, addedOutputFieldName);//expand the output filed of parent graph
                 curGraph.addOutputField(newOutField);
                 if (isPenetratedVertex) {
-                    curGraph.connect(subGraph, sourceOutputFieldName, curGraph.sinkNode, addedOutputFieldName);
+                    curGraph.connectSymbol(subGraph, sourceOutputFieldName, curGraph.sinkNode, addedOutputFieldName);
                     isPenetratedVertex = false;
                 } else {
-                    curGraph.connect(subGraph, addedOutputFieldName, curGraph.sinkNode, addedOutputFieldName);
+                    curGraph.connectSymbol(subGraph, addedOutputFieldName, curGraph.sinkNode, addedOutputFieldName);
                 }
                 subGraph = curGraph;
             }
@@ -91,12 +91,12 @@ public class PipelineOptimizer {
                         Vertex toVertex = linkedCell.getParentTable().getContext();
                         String toFieldName = linkedCell.getFieldSymbol().getSymbolName();
                         curGraph.disconnect(fromVertex, fromFieldName, toVertex, toFieldName);
-                        curGraph.connect(curGraph.sourceNode, addedInputFieldName, toVertex, toFieldName);
+                        curGraph.connectSymbol(curGraph.sourceNode, addedInputFieldName, toVertex, toFieldName);
                         curGraph.sourceNode.getOutputField(addedInputFieldName).setRemovable(false);
                     }
                     isPenetratedVertex = false;
                 } else {
-                    curGraph.connect(curGraph.sourceNode, addedInputFieldName, subGraph, addedInputFieldName);
+                    curGraph.connectSymbol(curGraph.sourceNode, addedInputFieldName, subGraph, addedInputFieldName);
                 }
                 subGraph = curGraph;
             }
@@ -109,7 +109,7 @@ public class PipelineOptimizer {
 
         SGraph lcaNode = lcaResult.LCANode.getNodeContent();
         if (targetTopParentNode instanceof SGraph) {
-            lcaNode.connect(sourceTopParentNode, addedOutputFieldName, targetTopParentNode, addedInputFieldName);
+            lcaNode.connectSymbol(sourceTopParentNode, addedOutputFieldName, targetTopParentNode, addedInputFieldName);
         } else {
             List<IOTableCell> linkedCells = targetCell.getOutputTarget();
             for (IOTableCell linkedCell : new ArrayList<>(linkedCells)) {
@@ -119,7 +119,7 @@ public class PipelineOptimizer {
                 String sourceCellFiledName = sourceCell.getFieldSymbol().getSymbolName();
                 String targetCellFieldName = targetCell.getFieldSymbol().getSymbolName();
                 lcaNode.disconnect(targetTopParentNode, targetCellFieldName, linkedVertex, linkedFieldName);
-                lcaNode.connect(sourceTopParentNode, sourceCellFiledName, linkedVertex, linkedFieldName);
+                lcaNode.connectSymbol(sourceTopParentNode, sourceCellFiledName, linkedVertex, linkedFieldName);
             }
         }
     }

@@ -2,7 +2,6 @@ package featurePipeline.UnsupervisedStage;
 
 
 import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
-import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Model;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;
