@@ -30,8 +30,8 @@ public class SDFGraph extends SGraph implements SDFInterface {
     }
 
     @Override
-    public void connectSymbol(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
-        super.connectSymbol(v1, symbolName1, v2, symbolName2);
+    public void connect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
+        super.connect(v1, symbolName1, v2, symbolName2);
         if (v2.equals(this.sinkNode)) {
             if (v1 instanceof SDFInterface) {
                 SDFInterface sdfV1 = (SDFInterface) v1;

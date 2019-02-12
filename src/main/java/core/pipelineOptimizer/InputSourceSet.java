@@ -36,11 +36,13 @@ public class InputSourceSet {
             if (isNonIOSNode) {
                 inputSources.add(inputSourceCell);
             } else {
+                //Skip the sourceNode and keep searching
                 SGraph contextGraph = (SGraph) providerVertex.getContext();
                 IOTableCell graphInputField = contextGraph.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
                 traceToSource(graphInputField);
             }
         } else {
+            //look into the SGraph and keep search
             SGraph providerGraph = (SGraph) providerVertex;
             IOTableCell sinkNodeReceiverCell = providerGraph.sinkNode.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
             traceToSource(sinkNodeReceiverCell);

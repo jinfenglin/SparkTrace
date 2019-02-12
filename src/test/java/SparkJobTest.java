@@ -113,10 +113,10 @@ public class SparkJobTest extends TestBase {
 
         sdfGraph.addNode(stkNode);
         sdfGraph.addNode(ttkNode);
-        sdfGraph.connectSymbol(sdfGraph.sourceNode, "s_t", stkNode, "s_text");
-        sdfGraph.connectSymbol(sdfGraph.sourceNode, "t_t", ttkNode, "t_text");
-        sdfGraph.connectSymbol(stkNode, "s_tokens", sdfGraph.sinkNode, "s_tk");
-        sdfGraph.connectSymbol(ttkNode, "t_tokens", sdfGraph.sinkNode, "t_tk");
+        sdfGraph.connect(sdfGraph.sourceNode, "s_t", stkNode, "s_text");
+        sdfGraph.connect(sdfGraph.sourceNode, "t_t", ttkNode, "t_text");
+        sdfGraph.connect(stkNode, "s_tokens", sdfGraph.sinkNode, "s_tk");
+        sdfGraph.connect(ttkNode, "t_tokens", sdfGraph.sinkNode, "t_tk");
 
 
         //create DDF
@@ -130,13 +130,13 @@ public class SparkJobTest extends TestBase {
 //        SparkTraceTask task = VSMTask.getSTT(sparkSession);
 //        task.getSdfGraph().configSDF(getVSMTaskConfig());
 //        ddfGraph.addNode(task);
-        ddfGraph.connectSymbol(ddfGraph.sourceNode, "s_tf_idf", ddfGraph.sinkNode, "tk1");
-        ddfGraph.connectSymbol(ddfGraph.sourceNode, "t_tf_idf", ddfGraph.sinkNode, "tk2");
+        ddfGraph.connect(ddfGraph.sourceNode, "s_tf_idf", ddfGraph.sinkNode, "tk1");
+        ddfGraph.connect(ddfGraph.sourceNode, "t_tf_idf", ddfGraph.sinkNode, "tk2");
         //ddfGraph.connectSymbol(task, "vsm_cosin_sim_score", ddfGraph, "similarity");
 
         SparkTraceTask outerTask = new SparkTraceTask(sparkSession, sdfGraph, ddfGraph, "s_id", "t_id");
-        outerTask.connectSymbol(sdfGraph, "s_tk", ddfGraph, "s_tf_idf");
-        outerTask.connectSymbol(sdfGraph, "t_tk", ddfGraph, "t_tf_idf");
+        outerTask.connect(sdfGraph, "s_tk", ddfGraph, "s_tf_idf");
+        outerTask.connect(sdfGraph, "t_tk", ddfGraph, "t_tf_idf");
         outerTask.initSTT();
         //Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         //outerTask.getSdfGraph().configSDF(vsmTaskInputConfig);

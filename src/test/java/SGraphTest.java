@@ -57,11 +57,11 @@ public class SGraphTest extends TestBase {
         g1.addNode(n3);
         g1.addNode(n4);
 
-        g1.connectSymbol(g1.sourceNode, "sentence", n1, "text");
-        g1.connectSymbol(n1, "tokens", n2, "token");
-        g1.connectSymbol(n2, "htf", n3, "true_htf");
-        g1.connectSymbol(n1, "tokens", n4, "tokens");
-        g1.connectSymbol(n3, "idf", g1.sinkNode, "output_idf");
+        g1.connect(g1.sourceNode, "sentence", n1, "text");
+        g1.connect(n1, "tokens", n2, "token");
+        g1.connect(n2, "htf", n3, "true_htf");
+        g1.connect(n1, "tokens", n4, "tokens");
+        g1.connect(n3, "idf", g1.sinkNode, "output_idf");
 
         return g1;
     }
@@ -131,10 +131,10 @@ public class SGraphTest extends TestBase {
         globalGraph.addNode(n1);
         globalGraph.addNode(subGraph);
 
-        globalGraph.connectSymbol(globalGraph.sourceNode, "sentence", subGraph, "sentence");
-        globalGraph.connectSymbol(globalGraph.sourceNode, "sentence", n1, "text");
-        globalGraph.connectSymbol(n1, "tokens", globalGraph.sinkNode, "tokens");
-        globalGraph.connectSymbol(subGraph, "output_idf", globalGraph.sinkNode, "output_idf");
+        globalGraph.connect(globalGraph.sourceNode, "sentence", subGraph, "sentence");
+        globalGraph.connect(globalGraph.sourceNode, "sentence", n1, "text");
+        globalGraph.connect(n1, "tokens", globalGraph.sinkNode, "tokens");
+        globalGraph.connect(subGraph, "output_idf", globalGraph.sinkNode, "output_idf");
 
         GraphHierarchyTree ght = new GraphHierarchyTree(null, globalGraph);
         PipelineOptimizer.penetrate(n1.getOutputField("tokens"), subGraph.getNode("tokenizer").getOutputField("tokens"), ght);

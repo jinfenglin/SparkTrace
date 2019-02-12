@@ -4,7 +4,7 @@ import core.graphPipeline.graphSymbol.SymbolTable;
 import org.apache.spark.ml.PipelineStage;
 
 /**
- *
+ * A transparentSNode including infusionNode and IOStages
  */
 public class TransparentSNode extends SNode implements ITransparentVertex {
     public TransparentSNode(PipelineStage pipelineStage) {

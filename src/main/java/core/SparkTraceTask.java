@@ -16,7 +16,6 @@ import traceability.components.abstractComponents.TraceLink;
 
 import java.util.*;
 
-import static core.pipelineOptimizer.PipelineOptimizer.createUniqueNewFieldName;
 import static org.apache.spark.sql.functions.lit;
 
 
@@ -72,80 +71,20 @@ public class SparkTraceTask extends SGraph {
             String toSymbolName = SDFAddedField.getSymbolName();
 
             DDF.addInputField(toSymbolName);
-            this.connectSymbol(SDF, fromSymbolName, DDF, toSymbolName);//TODO toSymbolName should be unique name
+            this.connect(SDF, fromSymbolName, DDF, toSymbolName);//TODO toSymbolName should be unique name
             addedDDFSymbolNames.add(SDFAddedField.getSymbolName());
             SDFSymbolMap.put(toSymbolName, fromSymbolName);
         }
         return addedDDFSymbolNames;
     }
 
-    private void mergeSDF(SGraph parentSDF, SGraph childSDF, List<GraphHierarchyTree> path) throws Exception {
-        List<Symbol> addedOutputFields = new ArrayList<>();
-        //Trace the added outputFields to inner STT's DDF inputs
-        //Key is the symbol name in current graph, value is the symbol name in SDF. Value will not change once created..
-        Map<String, String> SDFSymbolMap = new HashMap<>();
-        parentSDF.addNode(childSDF); //Move the childSDF to parent SDF
-
-        //The input of childSTT are from parent SDF and passed to childSTT through the ouputfiled of parent SDF.
-        //Once the childSDF is moved into parent SDF, the input provider should connectSymbol the childSDF directly
+    private void mergeSubTask(SparkTraceTask parentTask, SparkTraceTask childTask, List<GraphHierarchyTree> path) throws Exception {
+        SDFGraph parentSDF = parentTask.sdfGraph;
+        SDFGraph childSDF = childTask.sdfGraph;
 
 
-        //connectSymbol the childSDF to childDDF
-        for (IOTableCell outputCell : childSDF.getOutputTable().getCells()) {
-            String addedOutputFieldName = createUniqueNewFieldName(outputCell);
-            Symbol newParentOutputFiled = new Symbol(parentSDF, addedOutputFieldName);
-            parentSDF.addOutputField(newParentOutputFiled);
-            parentSDF.connectSymbol(childSDF, outputCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, addedOutputFieldName);
-            addedOutputFields.add(newParentOutputFiled);
-        }
 
-        //TODO fix this
-        for (IOTableCell inputCell : childSDF.getInputTable().getCells()) {
-            String addedInputFieldName = inputCell.getFieldSymbol().getSymbolName(); //This name should not change
-            Symbol newParentInputField = new Symbol(parentSDF, addedInputFieldName);
-            parentSDF.addInputField(newParentInputField);
-            parentSDF.connectSymbol(parentSDF.sourceNode, addedInputFieldName, childSDF, addedInputFieldName);
-        }
 
-        SGraph lastGraph = path.get(0).getNodeContent();
-        List<String> addedSymbolNames = connectSDFToDDF(addedOutputFields, parentSDF, lastGraph, SDFSymbolMap);
-        for (int i = 1; i < path.size(); i++) {
-            SGraph curGraph = path.get(i).getNodeContent();
-            if (curGraph instanceof SparkTraceTask) {
-                //if current level is a STT connectSymbol the STT input to its DDF input
-                SparkTraceTask innerTask = (SparkTraceTask) curGraph;
-                Map<String, String> reversedSDFSymbolMap = reverseMapKeyValue(SDFSymbolMap);
-
-                List<IOTableCell> subTaskSDFIOCells = innerTask.getSdfGraph().getOutputTable().getCells();
-                //The innerSDF keeps the connection to inner DDF, use this connection to connectSymbol innerSTT's sourceNode and innerDDF
-                for (IOTableCell cell : subTaskSDFIOCells) {
-                    List<IOTableCell> connectedCells = cell.getOutputTarget();
-                    IOTableCell parentSDFOutputCell = null;
-                    IOTableCell innerTaskDDFInputCell = null;
-                    for (IOTableCell conCell : connectedCells) {
-                        if (conCell.getParentTable().getContext().equals(parentSDF.sinkNode)) {
-                            parentSDFOutputCell = conCell;
-                        } else if (conCell.getParentTable().getContext().equals(innerTask.getDdfGraph().sourceNode)) {
-                            innerTaskDDFInputCell = conCell;
-                        }
-                    }
-                    String innerSTTInputFiledSymbolName = reversedSDFSymbolMap.get(parentSDFOutputCell.getFieldSymbol().getSymbolName());
-                    String innerDDFInputFiledSymbolName = innerTaskDDFInputCell.getFieldSymbol().getSymbolName();
-                    innerTask.connectSymbol(innerTask.sourceNode, innerSTTInputFiledSymbolName, innerTask.getDdfGraph(), innerDDFInputFiledSymbolName);
-                }
-            } else {
-                //Create input field for current graph, connectSymbol the input from parent graph to current graph
-                for (String symbolName : addedSymbolNames) {
-                    String addInputFieldName = symbolName; //TODO unique name
-                    String symbolNameInSDF = SDFSymbolMap.get(symbolName);
-                    SDFSymbolMap.remove(symbolName);
-                    SDFSymbolMap.put(addInputFieldName, symbolNameInSDF);
-                    curGraph.addInputField(addInputFieldName);
-                    lastGraph.connectSymbol(lastGraph.sourceNode, symbolName, curGraph, addInputFieldName);
-                }
-            }
-            lastGraph = curGraph;
-        }
     }
 
     /**
@@ -190,7 +129,7 @@ public class SparkTraceTask extends SGraph {
                     ght.findPath(DDFTreeNode, sparkTaskTreeNode, path);
 
                     //Merge the childSTT to the parent STT
-                    mergeSDF(sdfGraph, subTask.getSdfGraph(), path);
+                    mergeSubTask(this, subTask, path);
                 }
             }
         }

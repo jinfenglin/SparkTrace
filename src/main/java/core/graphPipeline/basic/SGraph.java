@@ -380,7 +380,7 @@ public class SGraph extends Vertex {
         edges.remove(edge);
     }
 
-    public void connectSymbol(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
+    public void connect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
         Symbol s1 = new Symbol(v1, symbolName1);
         Symbol s2 = new Symbol(v2, symbolName2);
         connect(s1, s2);

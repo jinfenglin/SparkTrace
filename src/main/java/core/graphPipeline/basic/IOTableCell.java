@@ -1,6 +1,7 @@
 package core.graphPipeline.basic;
 
 import core.graphPipeline.graphSymbol.Symbol;
+import featurePipeline.SGraphIOStage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -112,6 +113,29 @@ public class IOTableCell {
 
     public void setRemovable(boolean removable) {
         this.removable = removable;
+    }
+
+
+    public IOTableCell traceToSource() {
+        if (getInputSource().size() == 0) {
+            return null;
+        }
+        IOTableCell inputSourceCell = getInputSource().get(0); //One input field should have only 1 source
+        Vertex providerVertex = inputSourceCell.getParentTable().getContext();
+        if (providerVertex instanceof SNode) {
+            boolean isNonIOSNode = !(((SNode) providerVertex).getSparkPipelineStage() instanceof SGraphIOStage);
+            if (isNonIOSNode) {
+                return inputSourceCell;
+            } else {
+                SGraph contextGraph = (SGraph) providerVertex.getContext();
+                IOTableCell graphInputField = contextGraph.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
+                return graphInputField;
+            }
+        } else {
+            SGraph providerGraph = (SGraph) providerVertex;
+            IOTableCell sinkNodeReceiverCell = providerGraph.sinkNode.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
+            return sinkNodeReceiverCell;
+        }
     }
 
     @Override
