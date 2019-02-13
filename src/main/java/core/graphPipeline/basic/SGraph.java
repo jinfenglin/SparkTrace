@@ -174,7 +174,7 @@ public class SGraph extends Vertex {
      *
      * @param node
      */
-    public void removeNode(Vertex node) {
+    public void removeNode(Vertex node) throws Exception {
         if (node == null)
             return;
         if (this.nodes.containsKey(node.getVertexId())) {
@@ -189,6 +189,12 @@ public class SGraph extends Vertex {
         } else {
             Logger.getLogger(this.getClass().getName()).warning(String.format("%s is not contained in the graph nodes", node.getVertexId()));
         }
+    }
+
+    public void removeNodeWithoutCleanRelations(Vertex node) {
+        if (node == null)
+            return;
+        this.nodes.remove(node.getVertexId());
     }
 
 
@@ -324,13 +330,6 @@ public class SGraph extends Vertex {
         if (cnt != nodes.size()) {
             throw new Exception("Cycle found in graph when do topological sort");
         }
-        //DEBUG
-        if (sortedNodes.size() == 4) {
-            if (sortedNodes.get(2).getVertexId().equals("VSMGraph")) {
-                Vertex v = sortedNodes.remove(2);
-                sortedNodes.add(1, v);
-            }
-        }
         return sortedNodes;
     }
 
@@ -362,7 +361,7 @@ public class SGraph extends Vertex {
      * @param from
      * @param to
      */
-    private void clearConnection(Vertex from, Vertex to) {
+    private void clearConnection(Vertex from, Vertex to) throws Exception {
         for (IOTableCell sourceCell : from.getOutputTable().getCells()) {
             List<IOTableCell> toVertexReceiverCells = new ArrayList<>();
             for (IOTableCell receiverCell : sourceCell.getOutputTarget()) {
@@ -392,13 +391,27 @@ public class SGraph extends Vertex {
         connectSymbol(from, to);
     }
 
-    public void disconnect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
+    public void disconnect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) throws Exception {
         Symbol s1 = new Symbol(v1, symbolName1);
         Symbol s2 = new Symbol(v2, symbolName2);
-        SEdge edge = new SEdge(s1.getScope(), s2.getScope());
         disconnect(s1, s2);
-        if (noConnectionBetweenVertex(v1, v2)) {
+    }
+
+    public void disconnect(Symbol from, Symbol to) throws Exception {
+        SEdge edge = new SEdge(from.getScope(), to.getScope());
+        disconnectSymbol(from, to);
+        if (noConnectionBetweenVertex(from.getScope(), to.getScope())) {
             removeEdge(edge);
+        }
+    }
+
+    protected void disconnectSymbol(Symbol from, Symbol to) throws Exception {
+        IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
+        IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
+        if (fromCell != null && toCell != null) {
+            fromCell.removeOutputTo(toCell);
+        } else {
+            throw new Exception(String.format(" %s not found", getMissingSymbolInfo(from, to)));
         }
     }
 
@@ -428,26 +441,8 @@ public class SGraph extends Vertex {
         if (fromCell != null && toCell != null) {
             fromCell.sendOutputTo(toCell);
         } else {
-            StringJoiner notFoundInfo = new StringJoiner(",");
-            if (fromCell == null) {
-                notFoundInfo.add(from.toString());
-            }
-            if (toCell == null) {
-                notFoundInfo.add(to.toString());
-            }
-
-            throw new Exception(" %s not found".format(notFoundInfo.toString()));
+            throw new Exception(String.format("%s not found", (getMissingSymbolInfo(from, to))));
             //Logger.getLogger(this.getClass().getName()).info(String.format("Symbol %s to Symbol %s can not be connected", from, to));
-        }
-    }
-
-    protected void disconnect(Symbol from, Symbol to) {
-        IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
-        IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
-        if (fromCell != null && toCell != null) {
-            fromCell.removeOutputTo(toCell);
-        } else {
-            Logger.getLogger(this.getClass().getName()).info(String.format("Symbol %s to Symbol %s can not be connected", from, to));
         }
     }
 
@@ -513,5 +508,18 @@ public class SGraph extends Vertex {
 
     public void showGraph(String figName) throws IOException {
         Graphviz.fromGraph(getVizGraph()).render(Format.PNG).toFile(new File(String.format("figures/%s.png", figName)));
+    }
+
+    private String getMissingSymbolInfo(Symbol s1, Symbol s2) {
+        StringJoiner notFoundInfo = new StringJoiner(",");
+        IOTableCell c1 = s1.getScope().outputTable.getCellBySymbol(s1);
+        IOTableCell c2 = s2.getScope().inputTable.getCellBySymbol(s2);
+        if (c1 == null) {
+            notFoundInfo.add(s1.toString());
+        }
+        if (c2 == null) {
+            notFoundInfo.add(s2.toString());
+        }
+        return notFoundInfo.toString();
     }
 }

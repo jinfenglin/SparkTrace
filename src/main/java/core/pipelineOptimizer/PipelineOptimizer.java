@@ -336,7 +336,7 @@ public class PipelineOptimizer {
      *
      * @param graph
      */
-    public static int removeRedundantVertices(SGraph graph) {
+    public static int removeRedundantVertices(SGraph graph) throws Exception {
         int removedCnt = 0;
         List<Vertex> vertices = graph.getNodes();
         vertices.remove(graph.sourceNode);
@@ -366,7 +366,7 @@ public class PipelineOptimizer {
         return removedCnt;
     }
 
-    public static void removeEmptyGraph(SGraph graph) {
+    public static void removeEmptyGraph(SGraph graph) throws Exception {
         Queue<SGraph> deletionQueue = new LinkedList<>();
         for (Vertex node : graph.getNodes()) {
             if (node instanceof SGraph) {

@@ -100,25 +100,27 @@ public class SparkTraceTask extends SGraph {
                 parentDDF.addInputField(parentDDFNewInputFieldName);
                 parentSDF.connect(childSDF, targetCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, parentSDFNewOutputFieldName); //connect childSDF to parentSDF
                 connect(parentSDF, parentSDFNewOutputFieldName, parentDDF, parentDDFNewInputFieldName);//connect new added field from parentSDF to parentDDF
-
+                int pathIndex = path.size() - 1;
                 if (path.size() > 2) {
-                    path.remove(path.size() - 1); //remove the graph where parent DDF reside (this task)
-                    SGraph contextGraph = path.remove(path.size() - 1).getNodeContent(); // DDF as context graph (because subtask must in DDF)
+                    pathIndex -= 1; //remove the graph where parentDDF reside (this task) and take parentDDF as context graph (because subtask must in parentDDF)
+                    SGraph contextGraph = path.get(pathIndex).getNodeContent();
                     String penetrationOutputFiledName = parentDDFNewInputFieldName;
-                    while (path.size() > 0) {
+                    while (pathIndex > 0) {
                         //Connect the new added output to inner graph's added input field
                         String penetrationInputFiledName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
-                        SGraph innerSGraph = path.remove(path.size() - 1).getNodeContent();
+                        pathIndex -= 1;
+                        SGraph innerSGraph = path.get(pathIndex).getNodeContent();
                         innerSGraph.addInputField(penetrationInputFiledName);
                         contextGraph.connect(contextGraph.sourceNode, penetrationOutputFiledName, innerSGraph, penetrationInputFiledName);
                         contextGraph = innerSGraph;
                         penetrationOutputFiledName = penetrationInputFiledName;
                     }
                     contextGraph.connect(contextGraph.sourceNode, penetrationOutputFiledName, childDDF, targetCell.getFieldSymbol().getSymbolName());
+                    childTask.disconnect(childSDF, outputCell.getFieldSymbol().getSymbolName(), childDDF, targetCell.getFieldSymbol().getSymbolName());
                 }
             }
         }
-        childTask.removeNode(childSDF); //TODO remove nodes will clear all connection which cause the bug
+        childTask.removeNodeWithoutCleanRelations(childSDF);
         childTask.sdfGraph = null;
     }
 
@@ -126,7 +128,7 @@ public class SparkTraceTask extends SGraph {
     /**
      * Modify the infusion node to connectSymbol the sdf and ddf.
      */
-    private void infuse() throws Exception {
+    public void infuse() throws Exception {
         if (infusionNode == null) {
             return;
         }
@@ -137,7 +139,7 @@ public class SparkTraceTask extends SGraph {
             infusionNode.addOutputField(infusionOut);
             this.connect(sdfOut.getFieldSymbol(), infusionIn);
             sdfOut.setRemovable(false);
-            for (IOTableCell ddfReceiver : sdfOut.getOutputTarget()) {
+            for (IOTableCell ddfReceiver : new ArrayList<>(sdfOut.getOutputTarget())) {
                 connect(infusionOut, ddfReceiver.getFieldSymbol());
                 disconnect(sdfOut.getFieldSymbol(), ddfReceiver.getFieldSymbol());
             }
@@ -239,7 +241,7 @@ public class SparkTraceTask extends SGraph {
         return sdfGraph;
     }
 
-    public void setSdfGraph(SDFGraph sdfGraph) {
+    public void setSdfGraph(SDFGraph sdfGraph) throws Exception {
         removeNode(getSdfGraph());
         this.sdfGraph = sdfGraph;
         addNode(sdfGraph);
@@ -249,7 +251,7 @@ public class SparkTraceTask extends SGraph {
         return ddfGraph;
     }
 
-    public void setDdfGraph(SGraph ddfGraph) {
+    public void setDdfGraph(SGraph ddfGraph) throws Exception {
         removeNode(getDdfGraph());
         this.ddfGraph = ddfGraph;
         addNode(getDdfGraph());

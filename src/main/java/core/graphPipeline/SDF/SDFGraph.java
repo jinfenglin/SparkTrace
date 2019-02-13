@@ -25,7 +25,7 @@ public class SDFGraph extends SGraph implements SDFInterface {
     }
 
     @Override
-    public void removeNode(Vertex vertex) {
+    public void removeNode(Vertex vertex) throws Exception {
         assert vertex instanceof SDFNode || vertex instanceof SDFGraph;
         super.removeNode(vertex);
     }
@@ -43,7 +43,7 @@ public class SDFGraph extends SGraph implements SDFInterface {
     }
 
     @Override
-    public void disconnect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
+    public void disconnect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) throws Exception {
         super.disconnect(v1, symbolName1, v2, symbolName2);
         if (v2.equals(this.sinkNode)) {
             if (v1 instanceof SDFInterface) {
