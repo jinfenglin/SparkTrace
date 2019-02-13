@@ -134,7 +134,7 @@ public class SNode extends Vertex {
         List<String> stageIds = new ArrayList<>();
         stageIds.add(stage.getClass().getSimpleName());
         if (stage instanceof HasInnerStage) {
-            List<String> innerIds = getStageTypes(stage);
+            List<String> innerIds = getStageTypes(((HasInnerStage) stage).getInnerStage());
             stageIds.addAll(innerIds);
         }
         return stageIds;

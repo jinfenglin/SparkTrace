@@ -105,7 +105,7 @@ public class VSMTask {
         ddfGraph.addOutputField("vsm_cosin_sim_score");
 
         CosinSimilarityStage cosinSimilarityStage = new CosinSimilarityStage();
-        SNode cosinNode = new SNode(cosinSimilarityStage);
+        SNode cosinNode = new SNode(cosinSimilarityStage,"cosin_similarity");
         cosinNode.addInputField("vec1");
         cosinNode.addInputField("vec2");
         cosinNode.addOutputField("cosin_score");

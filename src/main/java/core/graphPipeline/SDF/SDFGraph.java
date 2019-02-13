@@ -17,6 +17,7 @@ public class SDFGraph extends SGraph implements SDFInterface {
         outputTypeMap = new HashMap<>();
     }
 
+
     @Override
     public void addNode(Vertex vertex) {
         assert vertex instanceof SDFNode || vertex instanceof SDFGraph;

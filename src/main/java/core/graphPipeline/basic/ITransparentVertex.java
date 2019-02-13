@@ -7,5 +7,7 @@ package core.graphPipeline.basic;
 public interface ITransparentVertex {
     void matchOutputToInput();
 
+    IOTableCell getRelativeInputFiled(IOTableCell outputCell) throws Exception;
+
     void matchInputToOutput();
 }

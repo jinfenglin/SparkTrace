@@ -33,6 +33,7 @@ public class SGraph extends Vertex {
     private Set<SEdge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
     public SNode sourceNode, sinkNode;
     private Map<String, String> config;
+    private Map<SGraph, MutableGraph> vizSet;
 
     public SGraph() {
         super();
@@ -47,6 +48,7 @@ public class SGraph extends Vertex {
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
         config = new HashMap<>();
+        vizSet = new HashMap<>();
     }
 
     public SGraph(String graphId) {
@@ -467,6 +469,8 @@ public class SGraph extends Vertex {
                     nodeTitle = "SourceNode";
                 } else if (nodeTitle.startsWith("SinkNode")) {
                     nodeTitle = "SinkNode";
+                } else if (nodeTitle.startsWith("infusion")) {
+                    nodeTitle = "Infusion";
                 }
                 MutableNode vNode = mutNode(v.getVertexId()).add(Label.of(nodeTitle));
                 for (Vertex outputNode : v.getOutputVertices()) { //note: sink node have no outputVertices, parent graph hold this information
@@ -476,6 +480,7 @@ public class SGraph extends Vertex {
 
             } else {
                 SGraph v = (SGraph) vertex;
+               
                 MutableGraph subGraph = v.getVizGraph();
                 Vertex sinkNode = v.sinkNode;
                 MutableNode innerSink = mutNode(sinkNode.getVertexId()).add(Label.of("SinkNode"));

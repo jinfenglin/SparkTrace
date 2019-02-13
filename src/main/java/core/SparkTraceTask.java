@@ -78,19 +78,57 @@ public class SparkTraceTask extends SGraph {
         return addedDDFSymbolNames;
     }
 
-    private void mergeSubTask(SparkTraceTask parentTask, SparkTraceTask childTask, List<GraphHierarchyTree> path) throws Exception {
-        SDFGraph parentSDF = parentTask.sdfGraph;
+    private void mergeSubTask(SparkTraceTask childTask, List<GraphHierarchyTree> path) throws Exception {
+        SDFGraph parentSDF = this.sdfGraph;
         SDFGraph childSDF = childTask.sdfGraph;
+        SGraph parentDDF = this.ddfGraph;
+        SGraph childDDF = childTask.ddfGraph;
+        parentSDF.addNode(childSDF);
 
+        for (IOTableCell inputCell : childSDF.getInputTable().getCells()) {
+            IOTableCell inputSource = inputCell.traceToSource(true, parentSDF);
+            assert inputSource != inputCell; //SDF must have input
+            parentSDF.connect(inputSource.getFieldSymbol(), inputCell.getFieldSymbol());
+        }
 
+        for (IOTableCell outputCell : childSDF.getOutputTable().getCells()) {
+            List<IOTableCell> targetCells = outputCell.getOutputTarget();
+            for (IOTableCell targetCell : targetCells) {
+                String parentSDFNewOutputFieldName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
+                String parentDDFNewInputFieldName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
+                parentSDF.addOutputField(parentSDFNewOutputFieldName);
+                parentDDF.addInputField(parentDDFNewInputFieldName);
+                connect(parentSDF, parentSDFNewOutputFieldName, parentDDF, parentDDFNewInputFieldName);
 
-
+                SGraph contextGraph = parentDDF;
+                String penetrationOutputFiledName = parentDDFNewInputFieldName;
+                if (path.size() > 1) {
+                    path.remove(path.size() - 1); //remove the graph which this task reside
+                    while (path.size() > 0) {
+                        //Connect the new added output to inner graph's added input field
+                        String penetrationInputFiledName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
+                        SGraph innerSGraph = path.remove(path.size() - 1).getNodeContent();
+                        innerSGraph.addInputField(penetrationInputFiledName);
+                        contextGraph.connect(contextGraph.sourceNode, penetrationOutputFiledName, innerSGraph, penetrationInputFiledName);
+                        contextGraph = innerSGraph;
+                        penetrationOutputFiledName = penetrationInputFiledName;
+                    }
+                    contextGraph.connect(contextGraph.sourceNode, penetrationOutputFiledName, childDDF, targetCell.getFieldSymbol().getSymbolName());
+                }
+            }
+        }
+        childTask.removeNode(childSDF);
+        childTask.sdfGraph = null;
     }
+
 
     /**
      * Modify the infusion node to connectSymbol the sdf and ddf.
      */
     private void infuse() throws Exception {
+        if (infusionNode == null) {
+            return;
+        }
         for (IOTableCell sdfOut : sdfGraph.getOutputTable().getCells()) {
             Symbol infusionIn = new Symbol(infusionNode, sdfOut.getFieldSymbol().getSymbolName() + "_in");
             Symbol infusionOut = new Symbol(infusionNode, sdfOut.getFieldSymbol().getSymbolName() + "_out");
@@ -111,7 +149,6 @@ public class SparkTraceTask extends SGraph {
      * Take O(n) time.
      */
     public void initSTT() throws Exception {
-        infuse();
         GraphHierarchyTree ght = new GraphHierarchyTree(null, this);
         if (!isInitialed) {
             isInitialed = true;
@@ -127,9 +164,8 @@ public class SparkTraceTask extends SGraph {
                     GraphHierarchyTree DDFTreeNode = ght.findNode(ddfGraph);
                     List<GraphHierarchyTree> path = new ArrayList<>();
                     ght.findPath(DDFTreeNode, sparkTaskTreeNode, path);
-
                     //Merge the childSTT to the parent STT
-                    mergeSubTask(this, subTask, path);
+                    mergeSubTask(subTask, path);
                 }
             }
         }
@@ -137,6 +173,7 @@ public class SparkTraceTask extends SGraph {
 
     @Override
     public Pipeline toPipeline() throws Exception {
+        infuse();
         ((InfusionStage) infusionNode.getSparkPipelineStage()).setSourceIdCol(getSourceIdCol());
         ((InfusionStage) infusionNode.getSparkPipelineStage()).setTargetIdCol(getTargetIdCol());
         return super.toPipeline();

@@ -1,7 +1,9 @@
 package core.graphPipeline.basic;
 
 import core.graphPipeline.graphSymbol.Symbol;
+import featurePipeline.InfusionStage.InfusionStage;
 import featurePipeline.SGraphIOStage;
+import org.apache.spark.ml.PipelineStage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -116,25 +118,47 @@ public class IOTableCell {
     }
 
 
-    public IOTableCell traceToSource() {
+    /**
+     * Trace back to the origin input source for an input cell. If clearPath boolean is set tobe true, then
+     * the connect on the path are disconnected
+     *
+     * @param clearPath
+     * @return
+     * @throws Exception
+     */
+    public IOTableCell traceToSource(boolean clearPath, SGraph topContext) throws Exception {
         if (getInputSource().size() == 0) {
-            return null;
+            return this;
         }
         IOTableCell inputSourceCell = getInputSource().get(0); //One input field should have only 1 source
         Vertex providerVertex = inputSourceCell.getParentTable().getContext();
+        SGraph contextGraph = (SGraph) providerVertex.getContext();
+        if (clearPath) {
+            contextGraph.disconnect(inputSourceCell.getFieldSymbol(), this.getFieldSymbol());
+        }
+
+        //If search reach nodes in topContext then no recursion should invoke
+        if (contextGraph.equals(topContext)) {
+            return inputSourceCell;
+        }
+
         if (providerVertex instanceof SNode) {
-            boolean isNonIOSNode = !(((SNode) providerVertex).getSparkPipelineStage() instanceof SGraphIOStage);
-            if (isNonIOSNode) {
-                return inputSourceCell;
-            } else {
-                SGraph contextGraph = (SGraph) providerVertex.getContext();
+            PipelineStage providerStage = ((SNode) providerVertex).getSparkPipelineStage();
+            if (providerStage instanceof SGraphIOStage) {
+                contextGraph = (SGraph) providerVertex.getContext();
                 IOTableCell graphInputField = contextGraph.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
-                return graphInputField;
+                return graphInputField.traceToSource(clearPath, topContext);
+            } else if (providerStage instanceof InfusionStage) {
+                //bypass the infusion node to find the real input source in SDF
+                IOTableCell infusionInput = ((TransparentSNode) providerVertex).getRelativeInputFiled(inputSourceCell);
+                return infusionInput.traceToSource(clearPath, topContext);
+            } else {
+                return inputSourceCell;
             }
         } else {
             SGraph providerGraph = (SGraph) providerVertex;
             IOTableCell sinkNodeReceiverCell = providerGraph.sinkNode.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
-            return sinkNodeReceiverCell;
+            return sinkNodeReceiverCell.traceToSource(clearPath, topContext);
         }
     }
 
