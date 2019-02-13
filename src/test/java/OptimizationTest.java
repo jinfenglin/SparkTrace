@@ -389,8 +389,8 @@ public class OptimizationTest extends TestBase {
         sdf.connect(sdf.sourceNode, "s_id", sdf.sinkNode, "s_id_out");
 
         SGraph ddf = new SGraph();
-        ddf.addInputField("s_text");
-        ddf.addInputField("t_text");
+        ddf.addInputField("s_text").addInputField("s_id");
+        ddf.addInputField("t_text").addInputField("t_id");
         ddf.addOutputField("vsm_cosin_sim_score");
         ddf.setId("ParentTask_DDF");
 
@@ -412,6 +412,8 @@ public class OptimizationTest extends TestBase {
 
         context.connect(context.getSdfGraph(), "s_text_out", context.getDdfGraph(), "s_text");
         context.connect(context.getSdfGraph(), "t_text_out", context.getDdfGraph(), "t_text");
+        context.connect(context.getSdfGraph(), "s_id_out", context.getDdfGraph(), "s_id");
+        context.connect(context.getSdfGraph(), "t_id_out", context.getDdfGraph(), "t_id");
         context.connect(context.getDdfGraph(), "vsm_cosin_sim_score", context.sinkNode, "vsm_score");
 
         context.showGraph("TaskMergeTest_before_optimize");

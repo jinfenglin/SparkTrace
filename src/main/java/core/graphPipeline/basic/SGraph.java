@@ -33,7 +33,6 @@ public class SGraph extends Vertex {
     private Set<SEdge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
     public SNode sourceNode, sinkNode;
     private Map<String, String> config;
-    private Map<SGraph, MutableGraph> vizSet;
 
     public SGraph() {
         super();
@@ -48,7 +47,6 @@ public class SGraph extends Vertex {
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
         config = new HashMap<>();
-        vizSet = new HashMap<>();
     }
 
     public SGraph(String graphId) {
@@ -382,13 +380,13 @@ public class SGraph extends Vertex {
         edges.remove(edge);
     }
 
-    public void connect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) {
+    public void connect(Vertex v1, String symbolName1, Vertex v2, String symbolName2) throws Exception {
         Symbol s1 = new Symbol(v1, symbolName1);
         Symbol s2 = new Symbol(v2, symbolName2);
         connect(s1, s2);
     }
 
-    public void connect(Symbol from, Symbol to) {
+    public void connect(Symbol from, Symbol to) throws Exception {
         SEdge edge = new SEdge(from.getScope(), to.getScope());
         addEdge(edge);
         connectSymbol(from, to);
@@ -424,13 +422,22 @@ public class SGraph extends Vertex {
      * @param from
      * @param to
      */
-    private void connectSymbol(Symbol from, Symbol to) {
+    private void connectSymbol(Symbol from, Symbol to) throws Exception {
         IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
         IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
         if (fromCell != null && toCell != null) {
             fromCell.sendOutputTo(toCell);
         } else {
-            Logger.getLogger(this.getClass().getName()).info(String.format("Symbol %s to Symbol %s can not be connected", from, to));
+            StringJoiner notFoundInfo = new StringJoiner(",");
+            if (fromCell == null) {
+                notFoundInfo.add(from.toString());
+            }
+            if (toCell == null) {
+                notFoundInfo.add(to.toString());
+            }
+
+            throw new Exception(" %s not found".format(notFoundInfo.toString()));
+            //Logger.getLogger(this.getClass().getName()).info(String.format("Symbol %s to Symbol %s can not be connected", from, to));
         }
     }
 
@@ -480,7 +487,6 @@ public class SGraph extends Vertex {
 
             } else {
                 SGraph v = (SGraph) vertex;
-               
                 MutableGraph subGraph = v.getVizGraph();
                 Vertex sinkNode = v.sinkNode;
                 MutableNode innerSink = mutNode(sinkNode.getVertexId()).add(Label.of("SinkNode"));

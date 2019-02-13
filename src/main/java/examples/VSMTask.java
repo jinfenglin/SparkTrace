@@ -31,7 +31,7 @@ public class VSMTask {
     }
 
     private static void createSourceSDF(SDFGraph sdfGraph) throws Exception {
-        sdfGraph.addInputField("s_text");
+        sdfGraph.addInputField("s_text").addInputField("s_id");
         sdfGraph.addOutputField("s_tf_idf");
         SDFNode.SDFType type = SDFNode.SDFType.SOURCE_SDF;
 
@@ -67,6 +67,7 @@ public class VSMTask {
     }
 
     private static void createTargetSDF(SDFGraph sdfGraph) throws Exception {
+        sdfGraph.addInputField("t_id");
         sdfGraph.addInputField("t_text");
         sdfGraph.addOutputField("t_tf_idf");
         SDFNode.SDFType type = SDFNode.SDFType.TARGET_SDF;
@@ -105,7 +106,7 @@ public class VSMTask {
         ddfGraph.addOutputField("vsm_cosin_sim_score");
 
         CosinSimilarityStage cosinSimilarityStage = new CosinSimilarityStage();
-        SNode cosinNode = new SNode(cosinSimilarityStage,"cosin_similarity");
+        SNode cosinNode = new SNode(cosinSimilarityStage, "cosin_similarity");
         cosinNode.addInputField("vec1");
         cosinNode.addInputField("vec2");
         cosinNode.addOutputField("cosin_score");

@@ -93,17 +93,18 @@ public class SparkTraceTask extends SGraph {
 
         for (IOTableCell outputCell : childSDF.getOutputTable().getCells()) {
             List<IOTableCell> targetCells = outputCell.getOutputTarget();
-            for (IOTableCell targetCell : targetCells) {
+            for (IOTableCell targetCell : new ArrayList<>(targetCells)) {
                 String parentSDFNewOutputFieldName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
                 String parentDDFNewInputFieldName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
                 parentSDF.addOutputField(parentSDFNewOutputFieldName);
                 parentDDF.addInputField(parentDDFNewInputFieldName);
-                connect(parentSDF, parentSDFNewOutputFieldName, parentDDF, parentDDFNewInputFieldName);
+                parentSDF.connect(childSDF, targetCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, parentSDFNewOutputFieldName); //connect childSDF to parentSDF
+                connect(parentSDF, parentSDFNewOutputFieldName, parentDDF, parentDDFNewInputFieldName);//connect new added field from parentSDF to parentDDF
 
-                SGraph contextGraph = parentDDF;
-                String penetrationOutputFiledName = parentDDFNewInputFieldName;
-                if (path.size() > 1) {
-                    path.remove(path.size() - 1); //remove the graph which this task reside
+                if (path.size() > 2) {
+                    path.remove(path.size() - 1); //remove the graph where parent DDF reside (this task)
+                    SGraph contextGraph = path.remove(path.size() - 1).getNodeContent(); // DDF as context graph (because subtask must in DDF)
+                    String penetrationOutputFiledName = parentDDFNewInputFieldName;
                     while (path.size() > 0) {
                         //Connect the new added output to inner graph's added input field
                         String penetrationInputFiledName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
@@ -117,7 +118,7 @@ public class SparkTraceTask extends SGraph {
                 }
             }
         }
-        childTask.removeNode(childSDF);
+        childTask.removeNode(childSDF); //TODO remove nodes will clear all connection which cause the bug
         childTask.sdfGraph = null;
     }
 
@@ -160,10 +161,10 @@ public class SparkTraceTask extends SGraph {
                     subTask.initSTT();
 
                     //Find a path from parent STT's DDF graph to subTask in GHT, the first node in path is parent DDF
-                    GraphHierarchyTree sparkTaskTreeNode = ght.findNode(subTask);
-                    GraphHierarchyTree DDFTreeNode = ght.findNode(ddfGraph);
+                    GraphHierarchyTree subTaskDDFTreeNode = ght.findNode(subTask.ddfGraph);
+                    GraphHierarchyTree parentDDFTreeNode = ght.findNode(ddfGraph);
                     List<GraphHierarchyTree> path = new ArrayList<>();
-                    ght.findPath(DDFTreeNode, sparkTaskTreeNode, path);
+                    ght.findPath(parentDDFTreeNode, subTaskDDFTreeNode, path);
                     //Merge the childSTT to the parent STT
                     mergeSubTask(subTask, path);
                 }
