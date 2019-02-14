@@ -131,4 +131,13 @@ public class TestBase {
         return data.union(nulls);
     }
 
+    protected Map<String, String> getVSMTaskConfig() {
+        Map<String, String> vsmTaskInputConfig = new HashMap<>();
+        vsmTaskInputConfig.put("s_text", "commit_content");
+        vsmTaskInputConfig.put("t_text", "issue_content");
+        vsmTaskInputConfig.put("s_id", "commit_id");
+        vsmTaskInputConfig.put("t_id", "issue_id");
+        return vsmTaskInputConfig;
+    }
+
 }

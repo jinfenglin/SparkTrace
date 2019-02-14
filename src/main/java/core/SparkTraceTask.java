@@ -16,6 +16,7 @@ import traceability.components.abstractComponents.TraceLink;
 
 import java.util.*;
 
+import static org.apache.spark.sql.functions.instr;
 import static org.apache.spark.sql.functions.lit;
 
 
@@ -44,7 +45,7 @@ public class SparkTraceTask extends SGraph {
         this.sparkSession = sparkSession;
         this.sdfGraph = sdfGraph;
         this.ddfGraph = ddfGraph;
-        this.infusionNode = new TransparentSNode(new InfusionStage(sdfGraph, ddfGraph), "infusion_" + UUID.randomUUID());
+        this.infusionNode = new TransparentSNode(new InfusionStage(sdfGraph, ddfGraph), "Infusion_" + UUID.randomUUID());
         addNode(sdfGraph);
         addNode(ddfGraph);
         addNode(this.infusionNode);
@@ -133,16 +134,19 @@ public class SparkTraceTask extends SGraph {
             return;
         }
         for (IOTableCell sdfOut : sdfGraph.getOutputTable().getCells()) {
+            if (sdfOut.getOutputTarget().size() == 0) {
+                continue;        //If this field is not used
+            }
             Symbol infusionIn = new Symbol(infusionNode, sdfOut.getFieldSymbol().getSymbolName() + "_in");
             Symbol infusionOut = new Symbol(infusionNode, sdfOut.getFieldSymbol().getSymbolName() + "_out");
             infusionNode.addInputField(infusionIn);
             infusionNode.addOutputField(infusionOut);
-            this.connect(sdfOut.getFieldSymbol(), infusionIn);
-            sdfOut.setRemovable(false);
             for (IOTableCell ddfReceiver : new ArrayList<>(sdfOut.getOutputTarget())) {
                 connect(infusionOut, ddfReceiver.getFieldSymbol());
                 disconnect(sdfOut.getFieldSymbol(), ddfReceiver.getFieldSymbol());
             }
+            sdfOut.setRemovable(false);
+            this.connect(sdfOut.getFieldSymbol(), infusionIn);
         }
     }
 
@@ -161,6 +165,7 @@ public class SparkTraceTask extends SGraph {
                     SparkTraceTask subTask = (SparkTraceTask) node;
                     //Make sure the child STT have merged all inner STTs
                     subTask.initSTT();
+                    subTask.infusionNode = null;
 
                     //Find a path from parent STT's DDF graph to subTask in GHT, the first node in path is parent DDF
                     GraphHierarchyTree subTaskDDFTreeNode = ght.findNode(subTask.ddfGraph);
@@ -176,9 +181,10 @@ public class SparkTraceTask extends SGraph {
 
     @Override
     public Pipeline toPipeline() throws Exception {
-        infuse();
-        ((InfusionStage) infusionNode.getSparkPipelineStage()).setSourceIdCol(getSourceIdCol());
-        ((InfusionStage) infusionNode.getSparkPipelineStage()).setTargetIdCol(getTargetIdCol());
+        if (infusionNode != null) {
+            ((InfusionStage) infusionNode.getSparkPipelineStage()).setSourceIdCol(getSourceIdCol());
+            ((InfusionStage) infusionNode.getSparkPipelineStage()).setTargetIdCol(getTargetIdCol());
+        }
         return super.toPipeline();
     }
 

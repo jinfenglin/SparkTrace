@@ -2,6 +2,7 @@ package core.graphPipeline.basic;
 
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
+import featurePipeline.InfusionStage.InfusionStage;
 import featurePipeline.SGraphColumnRemovalStage;
 import featurePipeline.SGraphIOStage;
 import guru.nidi.graphviz.attribute.Label;
@@ -241,6 +242,9 @@ public class SGraph extends Vertex {
                         int remainDemand = demandTable.get(sourceCell) - 1;
                         demandTable.put(sourceCell, remainDemand);
                         if (remainDemand == 0 && sourceCell.isRemovable()) {
+                            if (sourceCell.getFieldSymbol().getSymbolValue().equals("s_idf_out")) {
+                                int i = 0;
+                            }
                             SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
                             removalStage.setInputCols(new String[]{sourceCell.getFieldSymbol().getSymbolValue()});
                             stages.add(removalStage);
@@ -465,6 +469,9 @@ public class SGraph extends Vertex {
         for (Vertex vertex : this.getNodes()) {
             if (vertex instanceof SNode) {
                 SNode v = (SNode) vertex;
+                if (v.getSparkPipelineStage() instanceof InfusionStage || v instanceof TransparentSNode) {
+                    int i = 0;
+                }
                 String nodeTitle = v.getVertexId();
                 //Simplify the node name
                 if (nodeTitle.startsWith("SourceNode")) {
