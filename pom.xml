@@ -106,6 +106,12 @@
             <version>0.8.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.master</groupId>
+            <artifactId>spark-stemming_2.10</artifactId>
+            <version>0.2.0</version>
+        </dependency>
+
     </dependencies>
 
 

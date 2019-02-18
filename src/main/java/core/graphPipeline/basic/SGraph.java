@@ -202,7 +202,8 @@ public class SGraph extends Vertex {
     public void optimize(SGraph graph) throws Exception {
         removeDuplicatedNodes(graph);
         while (true) {
-            removeRedundantFields(graph);
+            removeRedundantInputFields(graph);
+            removeRedundantOutputFields(graph);
             int removed = removeRedundantVertices(graph);
             removeEmptyGraph(graph);
             if (removed == 0) {

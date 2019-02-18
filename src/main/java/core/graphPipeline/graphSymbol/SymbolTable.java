@@ -14,14 +14,14 @@ public final class SymbolTable {
     private SymbolTable() {
     }
 
-    public static Map<Symbol, String> getOutputSymbolValueMap() {
+    private static Map<Symbol, String> getOutputSymbolValueMap() {
         if (outputSymbolValues == null) {
             outputSymbolValues = new HashMap<>();
         }
         return outputSymbolValues;
     }
 
-    public static Map<Symbol, String> getInputSymbolValueMap() {
+    private static Map<Symbol, String> getInputSymbolValueMap() {
         if (inputSymbolValues == null) {
             inputSymbolValues = new HashMap<>();
         }

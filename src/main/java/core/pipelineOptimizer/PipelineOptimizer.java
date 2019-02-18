@@ -304,11 +304,29 @@ public class PipelineOptimizer {
      *
      * @param graph
      */
-    public static void removeRedundantFields(SGraph graph) {
+    public static void removeRedundantOutputFields(SGraph graph) {
+        //If the graph is a root graph
+        if (graph.getContext() != null) {
+            for (IOTableCell outputCell : graph.getOutputTable().getCells()) {
+                //If the output filed not provide info to any outside node
+                if (outputCell.getOutputTarget().size() == 0) {
+                    graph.removeOutputField(outputCell.getFieldSymbol());
+                }
+            }
+        }
         for (Vertex node : graph.getNodes()) {
             if (node instanceof SGraph) {
                 SGraph graphNode = (SGraph) node;
-                removeRedundantFields(graphNode);
+                removeRedundantOutputFields(graphNode);
+            }
+        }
+    }
+
+    public static void removeRedundantInputFields(SGraph graph) {
+        for (Vertex node : graph.getNodes()) {
+            if (node instanceof SGraph) {
+                SGraph graphNode = (SGraph) node;
+                removeRedundantInputFields(graphNode);
             }
         }
         //If the graph is a root graph
@@ -320,13 +338,6 @@ public class PipelineOptimizer {
             //If the inputFiled not provide info to any inner node
             if (sourceOutputCell.getOutputTarget().size() == 0) {
                 graph.removeInputField(inputCell.getFieldSymbol());
-            }
-        }
-
-        for (IOTableCell outputCell : graph.getOutputTable().getCells()) {
-            //If the output filed not provide info to any outside node
-            if (outputCell.getOutputTarget().size() == 0) {
-                graph.removeOutputField(outputCell.getFieldSymbol());
             }
         }
     }
