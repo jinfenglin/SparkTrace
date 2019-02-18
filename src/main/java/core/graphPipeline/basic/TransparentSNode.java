@@ -21,7 +21,7 @@ public class TransparentSNode extends SNode implements ITransparentVertex {
         for (int i = 0; i < inputTable.getCells().size(); i++) {
             IOTableCell inputCell = inputTable.getCells().get(i);
             IOTableCell outputCell = outputTable.getCells().get(i);
-            SymbolTable.setInputSymbolValue(inputCell.getFieldSymbol(), SymbolTable.getOutputSymbolValue(outputCell.getFieldSymbol()));
+            SymbolTable.setSymbolValue(inputCell.getFieldSymbol(), SymbolTable.getSymbolValue(outputCell.getFieldSymbol()));
         }
     }
 
@@ -42,7 +42,7 @@ public class TransparentSNode extends SNode implements ITransparentVertex {
         for (int i = 0; i < inputTable.getCells().size(); i++) {
             IOTableCell inputCell = inputTable.getCells().get(i);
             IOTableCell outputCell = outputTable.getCells().get(i);
-            SymbolTable.setOutputSymbolValue(outputCell.getFieldSymbol(), SymbolTable.getInputSymbolValue(inputCell.getFieldSymbol()));
+            SymbolTable.setSymbolValue(outputCell.getFieldSymbol(), SymbolTable.getSymbolValue(inputCell.getFieldSymbol()));
         }
     }
 }

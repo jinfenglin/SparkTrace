@@ -71,7 +71,7 @@ public class SDFGraph extends SGraph implements SDFInterface {
     private Set<String> getSymbolValuesByName(Set<String> names) {
         Set<String> symbolValues = new HashSet<>();
         for (String name : names) {
-            String value = SymbolTable.getOutputSymbolValue(new Symbol(this, name));
+            String value = SymbolTable.getSymbolValue(new Symbol(this, name));
             symbolValues.add(value);
         }
         return symbolValues;

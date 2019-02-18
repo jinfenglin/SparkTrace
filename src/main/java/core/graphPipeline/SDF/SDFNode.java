@@ -1,7 +1,6 @@
 package core.graphPipeline.SDF;
 
 import core.graphPipeline.basic.SNode;
-import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import org.apache.spark.ml.PipelineStage;
@@ -40,7 +39,7 @@ public class SDFNode extends SNode implements SDFInterface {
     private Set<String> getSymbolValuesByName(Set<String> names) {
         Set<String> symbolValues = new HashSet<>();
         for (String name : names) {
-            String value = SymbolTable.getOutputSymbolValue(new Symbol(this, name));
+            String value = SymbolTable.getSymbolValue(new Symbol(this, name));
             symbolValues.add(value);
         }
         return symbolValues;

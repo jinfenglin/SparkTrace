@@ -25,9 +25,9 @@ public class Symbol {
 
     public String getSymbolValue() {
         if (scope.getInputTable().containsSymbol(this)) {
-            return SymbolTable.getInputSymbolValue(this);
+            return SymbolTable.getSymbolValue(this);
         } else if (scope.getOutputTable().containsSymbol(this)) {
-            return SymbolTable.getOutputSymbolValue(this);
+            return SymbolTable.getSymbolValue(this);
         }
         return null;
     }

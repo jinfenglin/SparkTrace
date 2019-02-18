@@ -16,7 +16,6 @@ import traceability.components.abstractComponents.TraceLink;
 
 import java.util.*;
 
-import static org.apache.spark.sql.functions.instr;
 import static org.apache.spark.sql.functions.lit;
 
 
@@ -280,10 +279,10 @@ public class SparkTraceTask extends SGraph {
     }
 
     public String getSourceIdCol() {
-        return SymbolTable.getInputSymbolValue(new Symbol(this, sourceIdCol));
+        return SymbolTable.getSymbolValue(new Symbol(this, sourceIdCol));
     }
 
     public String getTargetIdCol() {
-        return SymbolTable.getInputSymbolValue(new Symbol(this, targetIdCol));
+        return SymbolTable.getSymbolValue(new Symbol(this, targetIdCol));
     }
 }

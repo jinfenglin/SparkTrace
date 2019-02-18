@@ -1,35 +1,17 @@
 package core.graphPipeline.graphSymbol;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A global table record the all available symbols.
  */
 public final class SymbolTable {
-    private static Map<Symbol, String> outputSymbolValues, inputSymbolValues;
 
     private SymbolTable() {
     }
 
-    private static Map<Symbol, String> getOutputSymbolValueMap() {
-        if (outputSymbolValues == null) {
-            outputSymbolValues = new HashMap<>();
-        }
-        return outputSymbolValues;
-    }
-
-    private static Map<Symbol, String> getInputSymbolValueMap() {
-        if (inputSymbolValues == null) {
-            inputSymbolValues = new HashMap<>();
-        }
-        return inputSymbolValues;
-    }
-
-    private static String resolveValueConflicts(Symbol symbol) {
-        return symbol.getScope().getVertexId() + "_" + symbol.getSymbolName();
+    private static Map<Symbol, String> getSymbolValueMap(Symbol symbol) {
+        return symbol.getScope().getSymbolValues();
     }
 
     /**
@@ -39,45 +21,24 @@ public final class SymbolTable {
      * @return
      */
     private static String defaultSymbolValue(Symbol symbol) {
-        return symbol.getSymbolName();
+        return String.format("%s-%s-%s", symbol.getScope().getVertexId(), symbol.getSymbolName(), UUID.randomUUID());
     }
 
-    public static String getInputSymbolValue(Symbol symbol) {
-        Map<Symbol, String> symbolValueMap = getInputSymbolValueMap();
+
+    public static String getSymbolValue(Symbol symbol) {
+        assert symbol.getScope().getSymbolValues().containsKey(symbol);
+        Map<Symbol, String> symbolValueMap = getSymbolValueMap(symbol);
         return symbolValueMap.get(symbol);
     }
 
-    public static void setInputSymbolValue(Symbol symbol, String value) {
-        Map<Symbol, String> symbolValueMap = getInputSymbolValueMap();
+    public static void setSymbolValue(Symbol symbol, String value) {
+        Map<Symbol, String> symbolValueMap = getSymbolValueMap(symbol);
         symbolValueMap.put(symbol, value);
     }
 
-    public static String getOutputSymbolValue(Symbol symbol) {
-        Map<Symbol, String> symbolValueMap = getOutputSymbolValueMap();
-        return symbolValueMap.get(symbol);
-    }
-
-    public static void setOutputSymbolValue(Symbol symbol, String value) {
-        Map<Symbol, String> symbolValueMap = getOutputSymbolValueMap();
-        symbolValueMap.put(symbol, value);
-    }
-
-    public static void registerInputSymbol(Symbol symbol) {
-        Map<Symbol, String> symbolValueMap = getInputSymbolValueMap();
-        symbolValueMap.put(symbol, defaultSymbolValue(symbol));
-    }
-
-    public static void registerOutputSymbol(Symbol symbol) {
-        Map<Symbol, String> symbolValueMap = getOutputSymbolValueMap();
-        if (!symbolValueMap.containsKey(symbol)) {
-            Set<String> valueSet = new HashSet<>(symbolValueMap.values());
-            String defaultVal = defaultSymbolValue(symbol);
-            if (valueSet.contains(defaultVal)) {
-                symbolValueMap.put(symbol, resolveValueConflicts(symbol));
-            } else {
-                symbolValueMap.put(symbol, defaultVal);
-            }
-        }
+    public static void registerSymbol(Symbol symbol) {
+        assert !symbol.getScope().getSymbolValues().containsKey(symbol);
+        setSymbolValue(symbol, defaultSymbolValue(symbol));
     }
 
     /**
@@ -88,24 +49,9 @@ public final class SymbolTable {
      * @param valueProvider
      * @param receiver
      */
-    public static void shareSymbolValue(Symbol valueProvider, Symbol receiver, boolean shareOutputToInput) throws Exception {
-        Map<Symbol, String> inputSymbolValueMap = getInputSymbolValueMap();
-        Map<Symbol, String> outputSymbolValueMap = getOutputSymbolValueMap();
-        String value = null;
-        if (shareOutputToInput) {
-            value = outputSymbolValueMap.get(valueProvider);
-        } else {
-            value = inputSymbolValueMap.get(valueProvider);
-        }
-
-        if (value == null) {
-            throw new Exception(String.format("valueProvider %s or receiver %s is not found", valueProvider, receiver));
-        }
-        if (shareOutputToInput) {
-            inputSymbolValueMap.put(receiver, value);
-        } else {
-            outputSymbolValueMap.put(receiver, value);
-        }
+    public static void shareSymbolValue(Symbol valueProvider, Symbol receiver) throws Exception {
+        String value = getSymbolValue(valueProvider);
+        setSymbolValue(receiver, value);
     }
 
 }

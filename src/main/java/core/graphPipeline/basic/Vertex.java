@@ -13,11 +13,13 @@ abstract public class Vertex {
     protected String vertexId;
     protected IOTable inputTable, outputTable;
     protected Vertex context; //If a vertex is included in another vertex, then the second vertex is the context
+    protected Map<Symbol, String> symbolValues;
 
     private void init() {
         vertexId = UUID.randomUUID().toString();
         inputTable = new IOTable(this);
         outputTable = new IOTable(this);
+        symbolValues = new HashMap<>();
     }
 
     public Vertex() {
@@ -77,7 +79,7 @@ abstract public class Vertex {
         checkSymbolValid(symbol);
         IOTableCell cell = new IOTableCell(symbol);
         inputTable.addCell(cell);
-        SymbolTable.registerInputSymbol(symbol);
+        SymbolTable.registerSymbol(symbol);
         return this;
     }
 
@@ -121,7 +123,7 @@ abstract public class Vertex {
         checkSymbolValid(symbol);
         IOTableCell cell = new IOTableCell(symbol);
         outputTable.addCell(cell);
-        SymbolTable.registerOutputSymbol(symbol);
+        SymbolTable.registerSymbol(symbol);
         return this;
     }
 
@@ -169,5 +171,11 @@ abstract public class Vertex {
         this.context = context;
     }
 
+    public Map<Symbol, String> getSymbolValues() {
+        return symbolValues;
+    }
 
+    public void setSymbolValues(Map<Symbol, String> symbolValues) {
+        this.symbolValues = symbolValues;
+    }
 }

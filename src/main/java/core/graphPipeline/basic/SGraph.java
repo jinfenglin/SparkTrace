@@ -69,7 +69,7 @@ public class SGraph extends Vertex {
         this.config = symbolValueMap;
         for (String symbolName : this.config.keySet()) {
             Symbol symbol = getInputTable().getSymbolByVarName(symbolName);
-            SymbolTable.setInputSymbolValue(symbol, this.config.get(symbolName));
+            SymbolTable.setSymbolValue(symbol, this.config.get(symbolName));
         }
     }
 
@@ -116,7 +116,7 @@ public class SGraph extends Vertex {
         for (IOTableCell graphInputCell : graph.getInputTable().getCells()) {
             Symbol graphProviderSymbol = graphInputCell.getFieldSymbol();
             Symbol sourceNodeReceiverSymbol = graph.sourceNode.getOutputTable().getSymbolByVarName(graphProviderSymbol.getSymbolName());
-            SymbolTable.shareSymbolValue(graphProviderSymbol, sourceNodeReceiverSymbol, false);
+            SymbolTable.shareSymbolValue(graphProviderSymbol, sourceNodeReceiverSymbol);
         }
 
         List<TransparentSNode> transparentVertices = new ArrayList<>(); //collect transVertices for second round process
@@ -129,7 +129,7 @@ public class SGraph extends Vertex {
                 Symbol providerSymbol = providerCell.getFieldSymbol();
                 for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
                     Symbol receiverSymbol = receiverCell.getFieldSymbol();
-                    SymbolTable.shareSymbolValue(providerSymbol, receiverSymbol, true);
+                    SymbolTable.shareSymbolValue(providerSymbol, receiverSymbol);
                     if (receiverCell.getParentTable().getContext() instanceof TransparentSNode) {
                         //Config transvertex input output symbols
                         TransparentSNode transVertex = ((TransparentSNode) receiverCell.getParentTable().getContext());
@@ -144,15 +144,14 @@ public class SGraph extends Vertex {
             for (IOTableCell providerCell : tv.outputTable.getCells()) {
                 for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
                     Symbol receiverSymbol = receiverCell.getFieldSymbol();
-                    SymbolTable.shareSymbolValue(providerCell.getFieldSymbol(), receiverSymbol, true);
+                    SymbolTable.shareSymbolValue(providerCell.getFieldSymbol(), receiverSymbol);
                 }
             }
         }
-
         for (IOTableCell graphOutputCell : graph.getOutputTable().getCells()) {
             Symbol graphReceiverSymbol = graphOutputCell.getFieldSymbol();
             Symbol sinkNodeProviderSymbol = graph.sinkNode.getInputTable().getSymbolByVarName(graphReceiverSymbol.getSymbolName());
-            SymbolTable.shareSymbolValue(sinkNodeProviderSymbol, graphReceiverSymbol, false);
+            SymbolTable.shareSymbolValue(sinkNodeProviderSymbol, graphReceiverSymbol);
         }
     }
 
