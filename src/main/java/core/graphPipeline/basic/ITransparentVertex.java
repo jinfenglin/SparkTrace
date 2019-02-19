@@ -5,9 +5,18 @@ package core.graphPipeline.basic;
  * whose symbol values can match to each other
  */
 public interface ITransparentVertex {
-    void matchOutputToInput();
-
+    /**
+     * The input and output are matched by their index. Given a outputCell find a inputcell with same index in IOTable.
+     *
+     * @param outputCell
+     * @return
+     * @throws Exception
+     */
     IOTableCell getRelativeInputFiled(IOTableCell outputCell) throws Exception;
 
-    void matchInputToOutput();
+    IOTableCell getRelativeOutputField(IOTableCell inputField) throws Exception;
+
+    void matchOutputToInput() throws Exception;
+
+    void matchInputToOutput() throws Exception;
 }

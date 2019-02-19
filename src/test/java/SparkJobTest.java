@@ -125,7 +125,7 @@ public class SparkJobTest extends TestBase {
         ddfGraph.connect(ddfGraph.sourceNode, "t_tf_idf", ddfGraph.sinkNode, "tk2");
         //ddfGraph.connectSymbol(task, "vsm_cosin_sim_score", ddfGraph, "similarity");
 
-        SparkTraceTask outerTask = new SparkTraceTask(sparkSession, sdfGraph, ddfGraph, "s_id", "t_id");
+        SparkTraceTask outerTask = new SparkTraceTask(sdfGraph, ddfGraph, "s_id", "t_id");
         outerTask.connect(sdfGraph, "s_tk", ddfGraph, "s_tf_idf");
         outerTask.connect(sdfGraph, "t_tk", ddfGraph, "t_tf_idf");
         outerTask.initSTT();
@@ -163,7 +163,7 @@ public class SparkJobTest extends TestBase {
         ddf.connect(ddf.sourceNode, "t_id", t1, "t_id");
         ddf.connect(t1, "vsm_score", ddf.sinkNode, "vsm_cosin_sim_score");
 
-        SparkTraceTask context = new SparkTraceTask(sparkSession, sdf, ddf, "s_id", "t_id");
+        SparkTraceTask context = new SparkTraceTask(sdf, ddf, "s_id", "t_id");
         context.setId("ContextTask");
         context.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
         context.addOutputField("vsm_score");

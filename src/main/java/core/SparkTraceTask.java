@@ -32,16 +32,15 @@ public class SparkTraceTask extends SGraph {
     private boolean isInitialed = false; //record whether the task is init or not
     //Symbol name for id column which can be configured in different places.
     private String sourceIdCol, targetIdCol;
-    private SparkSession sparkSession;
+
     private SDFGraph sdfGraph;
     private SGraph ddfGraph;
     private TransparentSNode infusionNode;
     private PipelineModel taskModel;
 
 
-    public SparkTraceTask(SparkSession sparkSession, SDFGraph sdfGraph, SGraph ddfGraph, String sourceIdCol, String targetIdCol) {
+    public SparkTraceTask(SDFGraph sdfGraph, SGraph ddfGraph, String sourceIdCol, String targetIdCol) {
         super();
-        this.sparkSession = sparkSession;
         this.sdfGraph = sdfGraph;
         this.ddfGraph = ddfGraph;
         this.infusionNode = new TransparentSNode(new InfusionStage(sdfGraph, ddfGraph), "Infusion_" + UUID.randomUUID());

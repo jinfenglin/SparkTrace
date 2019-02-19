@@ -121,7 +121,7 @@ public class VSMTask {
 
 
     public static SparkTraceTask getSTT(SparkSession sparkSession) throws Exception {
-        SparkTraceTask stt = new SparkTraceTask(sparkSession, createSDF(), createDDFGraph(), "s_id", "t_id");
+        SparkTraceTask stt = new SparkTraceTask(createSDF(), createDDFGraph(), "s_id", "t_id");
         stt.setId("VSM_Task");
         stt.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
         stt.addOutputField("vsm_score");

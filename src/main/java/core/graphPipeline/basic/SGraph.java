@@ -68,7 +68,7 @@ public class SGraph extends Vertex {
     public void setConfig(Map<String, String> symbolValueMap) {
         this.config = symbolValueMap;
         for (String symbolName : this.config.keySet()) {
-            Symbol symbol = getInputTable().getSymbolByVarName(symbolName);
+            Symbol symbol = new Symbol(this, symbolName);
             SymbolTable.setSymbolValue(symbol, this.config.get(symbolName));
         }
     }
@@ -107,7 +107,7 @@ public class SGraph extends Vertex {
     }
 
     /**
-     * Let the connected symbols share same value
+     * Let the connected symbols share same value. The final output table's column name can be renamed by a renaming stage
      */
     private static void syncSymbolValues(SGraph graph) throws Exception {
         //SourceNode and SinkNode are special in the graph. The sourceNode don't have connection on its InputTable,

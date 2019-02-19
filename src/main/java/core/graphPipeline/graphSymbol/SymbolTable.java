@@ -21,7 +21,7 @@ public final class SymbolTable {
      * @return
      */
     private static String defaultSymbolValue(Symbol symbol) {
-        return String.format("%s-%s-%s", symbol.getScope().getVertexId(), symbol.getSymbolName(), UUID.randomUUID());
+        return String.format("%s_%s_%s", symbol.getScope().getVertexId(), symbol.getSymbolName(), UUID.randomUUID().toString().replace("-", "_"));
     }
 
 
