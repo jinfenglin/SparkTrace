@@ -29,7 +29,7 @@ public class LDAPipeline {
         htfNode2.addInputField("tokens");
         htfNode2.addOutputField("htf");
 
-        LDA lda = new LDAWithIO().setK(10).setMaxIter(5);
+        LDA lda = new LDAWithIO().setK(10).setMaxIter(5).setOptimizer("em");
         UnsupervisedStage un_lda = new UnsupervisedStage(lda);
         SNode ldaNode = new SNode(un_lda, "shared_LDA");
         ldaNode.addInputField("vec1");
