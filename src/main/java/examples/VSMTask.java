@@ -5,7 +5,7 @@ import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
-import featurePipelineStages.CosinSimilarityStage;
+import featurePipelineStages.VecSimilarity.SparseVecSimilarity.SparseVecCosinSimilarityStage;
 import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import featurePipelineStages.UnsupervisedStage.UnsupervisedStage;
 import org.apache.spark.ml.feature.HashingTF;
@@ -105,7 +105,7 @@ public class VSMTask {
         ddfGraph.addInputField("t_tf_idf");
         ddfGraph.addOutputField("vsm_cosin_sim_score");
 
-        CosinSimilarityStage cosinSimilarityStage = new CosinSimilarityStage();
+        SparseVecCosinSimilarityStage cosinSimilarityStage = new SparseVecCosinSimilarityStage();
         SNode cosinNode = new SNode(cosinSimilarityStage, "cosin_similarity");
         cosinNode.addInputField("vec1");
         cosinNode.addInputField("vec2");
