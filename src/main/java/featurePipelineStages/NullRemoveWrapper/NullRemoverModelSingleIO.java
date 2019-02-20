@@ -1,4 +1,4 @@
-package featurePipeline.NullRemoveWrapper;
+package featurePipelineStages.NullRemoveWrapper;
 
 import org.apache.spark.ml.Model;
 import org.apache.spark.ml.PipelineStage;
@@ -10,9 +10,6 @@ import org.apache.spark.ml.param.shared.HasOutputCol;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
-
-import java.util.NoSuchElementException;
-import java.util.logging.Logger;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.lit;
@@ -59,7 +56,7 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
 
     @Override
     public NullRemoverModelSingleIO copy(ParamMap paramMap) {
-        return new NullRemoverModelSingleIO(getInnerTransformer()).setParent(parent());
+        return new NullRemoverModelSingleIO(getInnerTransformerCopy()).setParent(parent());
     }
 
     /**
@@ -68,6 +65,10 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
      * @return
      */
     private Transformer getInnerTransformer() {
+        return innerTransformer;
+    }
+
+    private Transformer getInnerTransformerCopy() {
         return innerTransformer.copy(org$apache$spark$ml$param$Params$$paramMap());
     }
 

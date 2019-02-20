@@ -1,4 +1,4 @@
-package featurePipeline;
+package featurePipelineStages;
 
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;

@@ -1,4 +1,4 @@
-package featurePipeline.InfusionStage;
+package featurePipelineStages.InfusionStage;
 
 import org.apache.spark.ml.param.BooleanParam;
 import org.apache.spark.ml.param.Param;

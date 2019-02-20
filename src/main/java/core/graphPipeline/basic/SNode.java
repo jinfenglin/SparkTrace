@@ -1,11 +1,10 @@
 package core.graphPipeline.basic;
 
-import featurePipeline.NullRemoveWrapper.HasInnerStage;
-import featurePipeline.NullRemoveWrapper.InnerStageImplementHasInputCol;
-import featurePipeline.NullRemoveWrapper.InnerStageImplementHasOutputCol;
+import featurePipelineStages.NullRemoveWrapper.HasInnerStage;
+import featurePipelineStages.NullRemoveWrapper.InnerStageImplementHasInputCol;
+import featurePipelineStages.NullRemoveWrapper.InnerStageImplementHasOutputCol;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
-import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.shared.HasInputCol;
 import org.apache.spark.ml.param.shared.HasInputCols;
@@ -15,10 +14,7 @@ import org.apache.spark.ml.param.shared.HasOutputCols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Logger;
-
-import static core.pipelineOptimizer.PipelineOptimizer.*;
 
 
 /**

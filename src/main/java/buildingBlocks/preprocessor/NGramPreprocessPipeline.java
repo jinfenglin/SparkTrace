@@ -1,8 +1,8 @@
-package buildingBlocks;
+package buildingBlocks.preprocessor;
 
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
-import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
+import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import org.apache.spark.ml.feature.NGram;
 
 /**

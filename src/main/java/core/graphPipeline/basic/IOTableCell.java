@@ -1,8 +1,8 @@
 package core.graphPipeline.basic;
 
 import core.graphPipeline.graphSymbol.Symbol;
-import featurePipeline.InfusionStage.InfusionStage;
-import featurePipeline.SGraphIOStage;
+import featurePipelineStages.InfusionStage.InfusionStage;
+import featurePipelineStages.SGraphIOStage;
 import org.apache.spark.ml.PipelineStage;
 
 import java.util.ArrayList;

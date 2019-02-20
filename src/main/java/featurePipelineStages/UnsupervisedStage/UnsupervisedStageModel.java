@@ -1,7 +1,7 @@
-package featurePipeline.UnsupervisedStage;
+package featurePipelineStages.UnsupervisedStage;
 
 
-import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
+import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import org.apache.spark.ml.Model;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;

@@ -1,11 +1,9 @@
 package core.pipelineOptimizer;
 
 import core.graphPipeline.basic.*;
-import featurePipeline.SGraphIOStage;
-import org.apache.parquet.io.InputFile;
+import featurePipelineStages.SGraphIOStage;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 

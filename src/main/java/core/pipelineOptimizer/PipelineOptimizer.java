@@ -3,7 +3,7 @@ package core.pipelineOptimizer;
 
 import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
-import featurePipeline.SGraphIOStage;
+import featurePipelineStages.SGraphIOStage;
 import javafx.util.Pair;
 
 import java.util.*;

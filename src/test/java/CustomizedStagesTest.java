@@ -1,8 +1,8 @@
 import examples.TestBase;
-import featurePipeline.CosinSimilarityStage;
-import featurePipeline.NullRemoveWrapper.NullRemoverEstimatorSingleIO;
-import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
-import featurePipeline.UnsupervisedStage.UnsupervisedStage;
+import featurePipelineStages.CosinSimilarityStage;
+import featurePipelineStages.NullRemoveWrapper.NullRemoverEstimatorSingleIO;
+import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
+import featurePipelineStages.UnsupervisedStage.UnsupervisedStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
@@ -16,8 +16,6 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static org.apache.spark.sql.functions.col;
 
 /**
  *

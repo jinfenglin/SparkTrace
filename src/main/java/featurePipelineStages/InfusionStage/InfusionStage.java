@@ -1,4 +1,4 @@
-package featurePipeline.InfusionStage;
+package featurePipelineStages.InfusionStage;
 
 import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.basic.SGraph;

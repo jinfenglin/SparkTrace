@@ -1,12 +1,8 @@
-package buildingBlocks;
+package buildingBlocks.text2TFIDF;
 
-import core.graphPipeline.SDF.SDFNode;
+import buildingBlocks.preprocessor.EnglishPreprocess;
+import buildingBlocks.vectorize.TFIDFPipeline;
 import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
-import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
-import featurePipeline.UnsupervisedStage.UnsupervisedStage;
-import org.apache.spark.ml.feature.HashingTF;
-import org.apache.spark.ml.feature.IDF;
 
 /**
  * Convert two columns of text into TF-IDF. Index the model on both column of text

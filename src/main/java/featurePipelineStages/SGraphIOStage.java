@@ -1,4 +1,4 @@
-package featurePipeline;
+package featurePipelineStages;
 
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.basic.IOTable;

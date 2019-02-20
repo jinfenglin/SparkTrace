@@ -1,11 +1,10 @@
-import buildingBlocks.EnglishPreprocess;
-import buildingBlocks.NGramPreprocessPipeline;
-import buildingBlocks.Text2NGramTFIDFPipeline;
-import buildingBlocks.Text2TFIDFPipeline;
+import buildingBlocks.preprocessor.EnglishPreprocess;
+import buildingBlocks.preprocessor.NGramPreprocessPipeline;
+import buildingBlocks.text2TFIDF.Text2LDAPipeline;
+import buildingBlocks.text2TFIDF.Text2NGramTFIDFPipeline;
+import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
 import core.graphPipeline.basic.SGraph;
 import examples.TestBase;
-import org.apache.spark.ml.feature.HashingTF;
-import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Test;
@@ -70,6 +69,16 @@ public class BuildingBlockTest extends TestBase {
         config.put("ngram-tf-idf2", "ngram-tf-idf2");
         graph.setConfig(config);
         graph.toPipeline().fit(getMultiSentenceRowData()).transform(getMultiSentenceRowData()).show();
+    }
+
+    @Test
+    public void LDAPipelineTest() throws Exception {
+        SGraph graph = Text2LDAPipeline.getGraph("ldaTest");
+        Map config = new HashMap<>();
+        config.put("text1", "text1");
+        config.put("text2", "text2");
+        graph.setConfig(config);
+        graph.toPipeline().fit(getMultiSentenceRowData()).transform(getMultiSentenceRowData()).show(false);
     }
 
 }

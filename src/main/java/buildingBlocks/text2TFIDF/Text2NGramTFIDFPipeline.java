@@ -1,5 +1,7 @@
-package buildingBlocks;
+package buildingBlocks.text2TFIDF;
 
+import buildingBlocks.preprocessor.NGramPreprocessPipeline;
+import buildingBlocks.vectorize.TFIDFPipeline;
 import core.graphPipeline.basic.SGraph;
 
 /**

@@ -1,7 +1,7 @@
 import core.graphPipeline.basic.*;
 import core.pipelineOptimizer.*;
 import examples.TestBase;
-import featurePipeline.SGraphColumnRemovalStage;
+import featurePipelineStages.SGraphColumnRemovalStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.feature.HashingTF;

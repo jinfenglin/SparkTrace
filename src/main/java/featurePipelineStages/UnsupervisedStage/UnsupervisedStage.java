@@ -1,9 +1,6 @@
-package featurePipeline.UnsupervisedStage;
+package featurePipelineStages.UnsupervisedStage;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Estimator;
-import org.apache.spark.ml.Model;
-import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.StringArrayParam;

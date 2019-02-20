@@ -1,9 +1,9 @@
-package buildingBlocks;
+package buildingBlocks.vectorize;
 
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
-import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
-import featurePipeline.UnsupervisedStage.UnsupervisedStage;
+import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
+import featurePipelineStages.UnsupervisedStage.UnsupervisedStage;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
 

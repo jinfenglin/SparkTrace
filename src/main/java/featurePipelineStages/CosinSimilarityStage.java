@@ -1,4 +1,4 @@
-package featurePipeline;
+package featurePipelineStages;
 
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.linalg.SparseVector;
@@ -7,17 +7,12 @@ import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.StringArrayParam;
 import org.apache.spark.ml.param.shared.HasInputCols;
 import org.apache.spark.ml.param.shared.HasOutputCol;
-import org.apache.spark.ml.util.SchemaUtils;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-
-import java.io.Serializable;
 
 import static org.apache.spark.sql.functions.callUDF;
 

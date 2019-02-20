@@ -1,4 +1,4 @@
-package featurePipeline.UnsupervisedStage;
+package featurePipelineStages.UnsupervisedStage;
 
 import org.apache.spark.ml.param.StringArrayParam;
 import org.apache.spark.ml.param.shared.HasInputCols;

@@ -5,12 +5,11 @@ import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import core.pipelineOptimizer.*;
-import featurePipeline.InfusionStage.InfusionStage;
+import featurePipelineStages.InfusionStage.InfusionStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
 import traceability.components.abstractComponents.TraceArtifact;
 import traceability.components.abstractComponents.TraceLink;
 

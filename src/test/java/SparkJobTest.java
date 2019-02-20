@@ -4,7 +4,7 @@ import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import examples.TestBase;
 import examples.VSMTask;
-import featurePipeline.NullRemoveWrapper.NullRemoverModelSingleIO;
+import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.feature.Tokenizer;

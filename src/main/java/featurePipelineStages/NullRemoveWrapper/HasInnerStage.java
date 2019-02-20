@@ -1,4 +1,4 @@
-package featurePipeline.NullRemoveWrapper;
+package featurePipelineStages.NullRemoveWrapper;
 
 import org.apache.spark.ml.PipelineStage;
 

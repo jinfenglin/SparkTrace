@@ -2,9 +2,9 @@ package core.graphPipeline.basic;
 
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
-import featurePipeline.InfusionStage.InfusionStage;
-import featurePipeline.SGraphColumnRemovalStage;
-import featurePipeline.SGraphIOStage;
+import featurePipelineStages.InfusionStage.InfusionStage;
+import featurePipelineStages.SGraphColumnRemovalStage;
+import featurePipelineStages.SGraphIOStage;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
