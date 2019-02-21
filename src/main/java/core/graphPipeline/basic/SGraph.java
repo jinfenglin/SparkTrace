@@ -470,24 +470,22 @@ public class SGraph extends Vertex implements SDFInterface {
     }
 
     public MutableGraph getVizGraph() {
-        MutableGraph g = mutGraph(getVertexId()).setDirected(true).setCluster(true);
+        String vertexPath = getVertexPath();
+        MutableGraph g = mutGraph(vertexPath).setDirected(true).setCluster(true);
         g.graphAttrs().add(Label.of(getVertexId()));
         for (Vertex vertex : this.getNodes()) {
             if (vertex instanceof SNode) {
                 SNode v = (SNode) vertex;
-                if (v.getSparkPipelineStage() instanceof InfusionStage || v instanceof TransparentSNode) {
-                    int i = 0;
-                }
                 String nodeTitle = v.getVertexId();
                 //Simplify the node name
                 if (nodeTitle.startsWith("SourceNode")) {
                     nodeTitle = "SourceNode";
                 } else if (nodeTitle.startsWith("SinkNode")) {
                     nodeTitle = "SinkNode";
-                } else if (nodeTitle.startsWith("infusion")) {
+                } else if (nodeTitle.startsWith("Infusion")) {
                     nodeTitle = "Infusion";
                 }
-                MutableNode vNode = mutNode(v.getVertexId()).add(Label.of(nodeTitle));
+                MutableNode vNode = mutNode(v.getVertexPath()).add(Label.of(nodeTitle));
                 for (Vertex outputNode : v.getOutputVertices()) { //note: sink node have no outputVertices, parent graph hold this information
                     vNode = createVizEdge(vNode, outputNode);
                 }
@@ -497,7 +495,7 @@ public class SGraph extends Vertex implements SDFInterface {
                 SGraph v = (SGraph) vertex;
                 MutableGraph subGraph = v.getVizGraph();
                 Vertex sinkNode = v.sinkNode;
-                MutableNode innerSink = mutNode(sinkNode.getVertexId()).add(Label.of("SinkNode"));
+                MutableNode innerSink = mutNode(sinkNode.getVertexPath()).add(Label.of("SinkNode"));
                 for (Vertex outputNode : vertex.getOutputVertices()) {
                     innerSink = createVizEdge(innerSink, outputNode);
                 }
@@ -509,12 +507,12 @@ public class SGraph extends Vertex implements SDFInterface {
 
     private MutableNode createVizEdge(MutableNode vizFromNode, Vertex outputNode) {
         if (outputNode instanceof SNode) {
-            vizFromNode = vizFromNode.addLink(outputNode.getVertexId());
+            vizFromNode = vizFromNode.addLink(outputNode.getVertexPath());
         } else {
             SGraph subGraph = (SGraph) outputNode;
             SNode innerSource = subGraph.sourceNode;
             MutableGraph innerGraph = subGraph.getVizGraph();// create inner graph, this graph is implicitly added to the parent
-            vizFromNode = vizFromNode.addLink(innerSource.getVertexId());
+            vizFromNode = vizFromNode.addLink(innerSource.getVertexPath());
         }
         return vizFromNode;
     }
@@ -557,7 +555,7 @@ public class SGraph extends Vertex implements SDFInterface {
     }
 
     @Override
-    public Set<String> getSourceSDFOutput()  {
+    public Set<String> getSourceSDFOutput() {
         Set<String> symbolNames = splitSDFOutputs().getKey();
         return getSymbolValuesByName(symbolNames);
     }

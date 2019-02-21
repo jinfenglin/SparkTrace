@@ -157,6 +157,22 @@ abstract public class Vertex {
         return vertexId;
     }
 
+    /**
+     * Get the global path of the vertex in the whole graph
+     *
+     * @return
+     */
+    public String getVertexPath() {
+        String prefix = "";
+        if (getContext() != null) {
+            prefix = getContext().getVertexPath();
+        }
+        StringJoiner joiner = new StringJoiner("_");
+        joiner.add(prefix);
+        joiner.add(getVertexId());
+        return joiner.toString();
+    }
+
     public void setVertexId(String vertexId) {
         this.vertexId = vertexId;
     }
