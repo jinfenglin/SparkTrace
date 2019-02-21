@@ -31,6 +31,14 @@ abstract public class Vertex {
         this.vertexId = vertexId;
     }
 
+    public Vertex(Vertex vertex) {
+        this.vertexId = vertex.vertexId;
+        inputTable = vertex.inputTable;
+        outputTable = vertex.outputTable;
+        context = vertex.context;
+        symbolValues = vertex.symbolValues;
+    }
+
     /**
      * Get vertices which provide in degree to the vertex
      *

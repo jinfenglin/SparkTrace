@@ -9,10 +9,16 @@ To create a graph programmer need to do following steps:
 2. Define the IO fields for the graph. If the graph is SDFGraph, then assign the type of output to output fields
 3. Create SNodes.If the nodes are added into SDFGraph, then the pipeline stages should be wrapped in NullRemoverStage 
 4. Add nodes to the graph
-5. 
+
+Create a TraceTask
+===
+1. Create SDF Graph and DDFGraph
+2. init the Task
+3. infuse the task
+4. optimize the task
+5. Run train and test
 
 ###TODO
-
 TODO: 
 3. Modify the SDFGraph which only need to receive sdftype at SDFGraph level and can convert a graph into SDFGraph
 

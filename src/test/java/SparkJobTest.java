@@ -1,3 +1,4 @@
+import buildingBlocks.traceTasks.VSMTraceBuilder;
 import core.SparkTraceTask;
 import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.basic.SGraph;
@@ -62,76 +63,18 @@ public class SparkJobTest extends TestBase {
 
     @Test
     public void singleSparkTaskTest() throws Exception {
-        SparkTraceTask vsmTask = VSMTask.getSTT(sparkSession);
+        SparkTraceTask vsmTask = new VSMTraceBuilder().getTask("s_id","t_id");
         vsmTask.initSTT();
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         vsmTask.setConfig(vsmTaskInputConfig);
+        vsmTask.initSTT();
+        vsmTask.infuse();
+        vsmTask.optimize(vsmTask);
         vsmTask.showGraph("singleSparkTaskTest");
         vsmTask.train(commits, improvements, null);
         Dataset<Row> result = vsmTask.trace(commits, improvements);
         result.show();
         System.out.print(String.format("Total link num: %s are processed...", result.count()));
-    }
-
-    @Test
-    public void nestedSparkTaskTest() throws Exception {
-
-        //create SDF
-        SDFGraph sdfGraph = new SDFGraph();
-        sdfGraph.setId("nestedTask_SDF");
-        sdfGraph.addInputField("s_t");
-        sdfGraph.addInputField("t_t");
-        sdfGraph.addOutputField("s_tk", SDFGraph.SDFType.SOURCE_SDF);
-        sdfGraph.addOutputField("t_tk", SDFGraph.SDFType.TARGET_SDF);
-
-        Map<String, String> nestTaskConfig = new HashMap<>();
-        nestTaskConfig.put("s_t", "commit_content");
-        nestTaskConfig.put("t_t", "issue_content");
-        nestTaskConfig.put("s_id", "commit_id");
-        nestTaskConfig.put("t_id", "issue_id");
-
-        Tokenizer sTk = new Tokenizer();
-        SNode stkNode = new SNode(new NullRemoverModelSingleIO(sTk), "source_tokenizer");
-        stkNode.addInputField("s_text");
-        stkNode.addOutputField("s_tokens");
-
-        Tokenizer tTk = new Tokenizer();
-        SNode ttkNode = new SNode(new NullRemoverModelSingleIO(tTk), "target_tokenizer");
-        ttkNode.addInputField("t_text");
-        ttkNode.addOutputField("t_tokens");
-
-        sdfGraph.addNode(stkNode);
-        sdfGraph.addNode(ttkNode);
-        sdfGraph.connect(sdfGraph.sourceNode, "s_t", stkNode, "s_text");
-        sdfGraph.connect(sdfGraph.sourceNode, "t_t", ttkNode, "t_text");
-        sdfGraph.connect(stkNode, "s_tokens", sdfGraph.sinkNode, "s_tk");
-        sdfGraph.connect(ttkNode, "t_tokens", sdfGraph.sinkNode, "t_tk");
-
-
-        //create DDF
-        SGraph ddfGraph = new SGraph("nestedTask_DDF");
-        ddfGraph.addInputField("s_tf_idf");
-        ddfGraph.addInputField("t_tf_idf");
-        ddfGraph.addOutputField("tk1");
-        ddfGraph.addOutputField("tk2");
-        ddfGraph.addOutputField("similarity");
-
-//        SparkTraceTask task = VSMTask.getSTT(sparkSession);
-//        task.getSdfGraph().configSDF(getVSMTaskConfig());
-//        ddfGraph.addNode(task);
-        ddfGraph.connect(ddfGraph.sourceNode, "s_tf_idf", ddfGraph.sinkNode, "tk1");
-        ddfGraph.connect(ddfGraph.sourceNode, "t_tf_idf", ddfGraph.sinkNode, "tk2");
-        //ddfGraph.connectSymbol(task, "vsm_cosin_sim_score", ddfGraph, "similarity");
-
-        SparkTraceTask outerTask = new SparkTraceTask(sdfGraph, ddfGraph, "s_id", "t_id");
-        outerTask.connect(sdfGraph, "s_tk", ddfGraph, "s_tf_idf");
-        outerTask.connect(sdfGraph, "t_tk", ddfGraph, "t_tf_idf");
-        outerTask.initSTT();
-        //Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
-        //outerTask.getSdfGraph().configSDF(vsmTaskInputConfig);
-        outerTask.train(commits, improvements, null);
-        Dataset<Row> result = outerTask.trace(commits, improvements);
-        result.show();
     }
 
     @Test

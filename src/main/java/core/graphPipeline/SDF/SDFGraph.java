@@ -22,6 +22,16 @@ public class SDFGraph extends SGraph implements SDFInterface {
         outputTypeMap = new HashMap<>();
     }
 
+    public SDFGraph(String id) {
+        super(id);
+        outputTypeMap = new HashMap<>();
+    }
+
+    public SDFGraph(SGraph sGraph, Map<String, SDFType> outputTypeMap) {
+        super(sGraph);
+        this.outputTypeMap = outputTypeMap;
+    }
+
     @Override
     public void removeOutputField(Symbol symbol) {
         super.removeOutputField(symbol);

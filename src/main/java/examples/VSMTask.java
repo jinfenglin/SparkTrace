@@ -1,5 +1,6 @@
 package examples;
 
+import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.basic.SGraph;
@@ -91,23 +92,8 @@ public class VSMTask {
     }
 
     private static SGraph createDDFGraph() throws Exception {
-        SGraph ddfGraph = new SGraph("VSMTask_DDF");
-        ddfGraph.addInputField("s_tf_idf");
-        ddfGraph.addInputField("t_tf_idf");
-        ddfGraph.addOutputField("vsm_cosin_sim_score");
-
-        SparseVecCosinSimilarityStage cosinSimilarityStage = new SparseVecCosinSimilarityStage();
-        SNode cosinNode = new SNode(cosinSimilarityStage, "cosin_similarity");
-        cosinNode.addInputField("vec1");
-        cosinNode.addInputField("vec2");
-        cosinNode.addOutputField("cosin_score");
-
-        ddfGraph.addNode(cosinNode);
-
-        ddfGraph.connect(ddfGraph.sourceNode, "s_tf_idf", cosinNode, "vec1");
-        ddfGraph.connect(ddfGraph.sourceNode, "t_tf_idf", cosinNode, "vec2");
-        ddfGraph.connect(cosinNode, "cosin_score", ddfGraph.sinkNode, "vsm_cosin_sim_score");
-        return ddfGraph;
+        SGraph ddf = SparseCosinSimilarityPipeline.getGraph("VSM_DDF");//vec1,2 - cosin_sim
+        return ddf;
     }
 
 
@@ -122,10 +108,10 @@ public class VSMTask {
         stt.connect(stt.sourceNode, "s_text", stt.getSdfGraph(), "s_text");
         stt.connect(stt.sourceNode, "t_text", stt.getSdfGraph(), "t_text");
 
-        stt.connect(stt.getSdfGraph(), "s_tf_idf", stt.getDdfGraph(), "s_tf_idf");
-        stt.connect(stt.getSdfGraph(), "t_tf_idf", stt.getDdfGraph(), "t_tf_idf");
+        stt.connect(stt.getSdfGraph(), "s_tf_idf", stt.getDdfGraph(), "vec1");
+        stt.connect(stt.getSdfGraph(), "t_tf_idf", stt.getDdfGraph(), "vec2");
 
-        stt.connect(stt.getDdfGraph(), "vsm_cosin_sim_score", stt.sinkNode, "vsm_score");
+        stt.connect(stt.getDdfGraph(), "cosin_sim", stt.sinkNode, "vsm_score");
         return stt;
     }
 }

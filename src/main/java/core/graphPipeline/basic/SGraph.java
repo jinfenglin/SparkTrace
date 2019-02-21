@@ -65,6 +65,15 @@ public class SGraph extends Vertex {
         config = new HashMap<>();
     }
 
+    public SGraph(SGraph sGraph) {
+        super(sGraph);
+        nodes = sGraph.nodes;
+        edges = sGraph.edges;
+        sourceNode = sGraph.sourceNode;
+        sinkNode = sGraph.sinkNode;
+        config = sGraph.config;
+    }
+
     public void setConfig(Map<String, String> symbolValueMap) {
         this.config = symbolValueMap;
         for (String symbolName : this.config.keySet()) {
@@ -242,9 +251,6 @@ public class SGraph extends Vertex {
                         int remainDemand = demandTable.get(sourceCell) - 1;
                         demandTable.put(sourceCell, remainDemand);
                         if (remainDemand == 0 && sourceCell.isRemovable()) {
-                            if (sourceCell.getFieldSymbol().getSymbolValue().equals("s_idf_out")) {
-                                int i = 0;
-                            }
                             SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
                             removalStage.setInputCols(new String[]{sourceCell.getFieldSymbol().getSymbolValue()});
                             stages.add(removalStage);

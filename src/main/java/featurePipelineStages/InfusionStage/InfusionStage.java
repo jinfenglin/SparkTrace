@@ -106,7 +106,9 @@ public class InfusionStage extends Transformer implements InfusionStageParam {
     public StructType transformSchema(StructType structType) {
         Set<String> sourceSDFCols = sdfGraph.getSourceSDFOutput();
         Set<String> targetSDFCols = sdfGraph.getTargetSDFOutputs();
-        //TODO mismatch between real schema and return schema
+        //ensure all output field have been assigned with a type
+        assert sourceSDFCols.size() + targetSDFCols.size() == sdfGraph.getOutputTable().getCells().size();
+        //TODO fix the mismatch between real schema and return schema
         return structType;
     }
 
