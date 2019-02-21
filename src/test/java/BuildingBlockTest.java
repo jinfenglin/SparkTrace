@@ -77,7 +77,7 @@ public class BuildingBlockTest extends TestBase {
         config.put("tf-idf1", "tf-idf1");
         config.put("tf-idf2", "tf-idf2");
         graph.setConfig(config);
-        graph.toPipeline().fit(getMultiSentenceRowData()).transform(getMultiSentenceRowData()).show();
+        graph.toPipeline().fit(getMultiSentenceRowData()).transform(getMultiSentenceRowData());
     }
 
     @Test

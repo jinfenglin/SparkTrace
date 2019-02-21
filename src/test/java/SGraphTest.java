@@ -1,6 +1,9 @@
+import buildingBlocks.preprocessor.EnglishPreprocess;
+import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
 import core.graphPipeline.basic.*;
 import core.pipelineOptimizer.*;
 import examples.TestBase;
+import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import featurePipelineStages.SGraphColumnRemovalStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
@@ -12,8 +15,11 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Assert;
 import org.junit.Test;
+import visualization.graphvizapi.Graph;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -154,4 +160,23 @@ public class SGraphTest extends TestBase {
         dataset = removalStage.transform(dataset);
         Assert.assertEquals(0, dataset.columns().length);
     }
+
+
+    @Test
+    public void nestPipelineTest() {
+        Dataset<Row> dataset = getSentenceLabelDataset();
+        NullRemoverModelSingleIO tk = new NullRemoverModelSingleIO(new Tokenizer().setInputCol("sentence"));
+
+        Pipeline p1 = makePipeline(tk);
+        HashingTF htf = new HashingTF().setInputCol(tk.getOutputCol());
+        Pipeline p2 = makePipeline(p1, htf);
+        IDF idf = new IDF().setInputCol(htf.getOutputCol());
+        Pipeline p3 = makePipeline(p2, idf);
+        p3.fit(dataset);
+    }
+
+    private Pipeline makePipeline(PipelineStage... stage) {
+        return new Pipeline().setStages(stage);
+    }
+
 }
