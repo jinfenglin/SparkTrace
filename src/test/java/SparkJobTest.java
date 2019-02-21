@@ -1,11 +1,7 @@
 import buildingBlocks.traceTasks.VSMTraceBuilder;
 import core.SparkTraceTask;
-import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
 import examples.TestBase;
-import examples.VSMTask;
-import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.feature.Tokenizer;
@@ -64,13 +60,13 @@ public class SparkJobTest extends TestBase {
     @Test
     public void singleSparkTaskTest() throws Exception {
         SparkTraceTask vsmTask = new VSMTraceBuilder().getTask("s_id","t_id");
-        vsmTask.initSTT();
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         vsmTask.setConfig(vsmTaskInputConfig);
+        vsmTask.showGraph("singleSparkTaskTest_before");
         vsmTask.initSTT();
         vsmTask.infuse();
         vsmTask.optimize(vsmTask);
-        vsmTask.showGraph("singleSparkTaskTest");
+        vsmTask.showGraph("singleSparkTaskTest_after");
         vsmTask.train(commits, improvements, null);
         Dataset<Row> result = vsmTask.trace(commits, improvements);
         result.show();
@@ -79,14 +75,14 @@ public class SparkJobTest extends TestBase {
 
     @Test
     public void TaskMergeTest() throws Exception {
-        SparkTraceTask t1 = VSMTask.getSTT(sparkSession);
-        SDFGraph sdf = new SDFGraph();
+        SparkTraceTask t1 = new VSMTraceBuilder().getTask("s_id","t_id");
+        SGraph sdf = new SGraph();
         sdf.setId("ParentTask_SDF");
         sdf.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
-        sdf.addOutputField("s_text_out", SDFGraph.SDFType.SOURCE_SDF);
-        sdf.addOutputField("t_text_out", SDFGraph.SDFType.TARGET_SDF);
-        sdf.addOutputField("s_id_out", SDFGraph.SDFType.SOURCE_SDF);
-        sdf.addOutputField("t_id_out", SDFGraph.SDFType.TARGET_SDF);
+        sdf.addOutputField("s_text_out", SGraph.SDFType.SOURCE_SDF);
+        sdf.addOutputField("t_text_out", SGraph.SDFType.TARGET_SDF);
+        sdf.addOutputField("s_id_out", SGraph.SDFType.SOURCE_SDF);
+        sdf.addOutputField("t_id_out", SGraph.SDFType.TARGET_SDF);
 
         sdf.connect(sdf.sourceNode, "s_text", sdf.sinkNode, "s_text_out");
         sdf.connect(sdf.sourceNode, "t_text", sdf.sinkNode, "t_text_out");

@@ -1,5 +1,6 @@
 package core.graphPipeline.basic;
 
+import core.graphPipeline.SDF.SDFInterface;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import featurePipelineStages.InfusionStage.InfusionStage;
@@ -29,11 +30,17 @@ import static guru.nidi.graphviz.model.Factory.*;
  * 4. Add penetrations to the graph
  * 5. Call toPipeline to create a fully configured and runnable pipeline
  */
-public class SGraph extends Vertex {
+public class SGraph extends Vertex implements SDFInterface {
+    public enum SDFType {
+        SOURCE_SDF,
+        TARGET_SDF,
+    }
+
     private Map<String, Vertex> nodes;
     private Set<SEdge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
     public SNode sourceNode, sinkNode;
     private Map<String, String> config;
+    private Map<String, SDFType> outputTypeMap;
 
     public SGraph() {
         super();
@@ -48,6 +55,7 @@ public class SGraph extends Vertex {
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
         config = new HashMap<>();
+        outputTypeMap = new HashMap<>();
     }
 
     public SGraph(String graphId) {
@@ -63,15 +71,7 @@ public class SGraph extends Vertex {
         nodes.put(sourceNode.vertexId, sourceNode);
         nodes.put(sinkNode.vertexId, sinkNode);
         config = new HashMap<>();
-    }
-
-    public SGraph(SGraph sGraph) {
-        super(sGraph);
-        nodes = sGraph.nodes;
-        edges = sGraph.edges;
-        sourceNode = sGraph.sourceNode;
-        sinkNode = sGraph.sinkNode;
-        config = sGraph.config;
+        outputTypeMap = new HashMap<>();
     }
 
     public void setConfig(Map<String, String> symbolValueMap) {
@@ -107,13 +107,16 @@ public class SGraph extends Vertex {
         super.addOutputField(symbol);
         Symbol addedSymbol = new Symbol(sinkNode, symbol.getSymbolName());
         sinkNode.addInputField(addedSymbol);
+        outputTypeMap.put(symbol.getSymbolName(), null);
         return this;
     }
 
     public void removeOutputField(Symbol symbol) {
         super.removeOutputField(symbol);
         sinkNode.removeInputField(new Symbol(sinkNode, symbol.getSymbolName()));
+        outputTypeMap.remove(symbol.getSymbolName());
     }
+
 
     /**
      * Let the connected symbols share same value. The final output table's column name can be renamed by a renaming stage
@@ -205,7 +208,6 @@ public class SGraph extends Vertex {
             return;
         this.nodes.remove(node.getVertexId());
     }
-
 
     public void optimize(SGraph graph) throws Exception {
         removeDuplicatedNodes(graph);
@@ -343,7 +345,6 @@ public class SGraph extends Vertex {
         return sortedNodes;
     }
 
-
     public List<Vertex> getNodes() {
         return new ArrayList<>(nodes.values());
     }
@@ -407,7 +408,7 @@ public class SGraph extends Vertex {
         disconnect(s1, s2);
     }
 
-    public void disconnect(Symbol from, Symbol to) throws Exception {
+    protected void disconnect(Symbol from, Symbol to) throws Exception {
         SEdge edge = new SEdge(from.getScope(), to.getScope());
         disconnectSymbol(from, to);
         if (noConnectionBetweenVertex(from.getScope(), to.getScope())) {
@@ -415,7 +416,7 @@ public class SGraph extends Vertex {
         }
     }
 
-    protected void disconnectSymbol(Symbol from, Symbol to) throws Exception {
+    private void disconnectSymbol(Symbol from, Symbol to) throws Exception {
         IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
         IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
         if (fromCell != null && toCell != null) {
@@ -437,7 +438,6 @@ public class SGraph extends Vertex {
         }
         return noConnectionLeft;
     }
-
 
     /**
      * Connect the parent node of symbol from with parent node of to. It will update the edge sets as well.
@@ -535,4 +535,44 @@ public class SGraph extends Vertex {
         }
         return notFoundInfo.toString();
     }
+
+    @Override
+    public Map<String, SDFType> getOutputTypeMap() {
+        return outputTypeMap;
+    }
+
+    private Set<String> getSymbolValuesByName(Set<String> names) {
+        Set<String> symbolValues = new HashSet<>();
+        for (String name : names) {
+            String value = SymbolTable.getSymbolValue(new Symbol(this, name));
+            symbolValues.add(value);
+        }
+        return symbolValues;
+    }
+
+    @Override
+    public Set<String> getTargetSDFOutputs() {
+        Set<String> symbolNames = splitSDFOutputs().getValue();
+        return getSymbolValuesByName(symbolNames);
+    }
+
+    @Override
+    public Set<String> getSourceSDFOutput()  {
+        Set<String> symbolNames = splitSDFOutputs().getKey();
+        return getSymbolValuesByName(symbolNames);
+    }
+
+    public Vertex addOutputField(Symbol symbol, SDFType type) throws Exception {
+        super.addOutputField(symbol);
+        assignTypeToOutputField(symbol.getSymbolName(), type);
+        return this;
+    }
+
+    public Vertex addOutputField(String symbolName, SDFType type) throws Exception {
+        Symbol symbol = new Symbol(this, symbolName);
+        addOutputField(symbol, type);
+        return this;
+    }
+
+
 }

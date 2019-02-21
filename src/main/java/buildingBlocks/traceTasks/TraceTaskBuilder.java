@@ -1,14 +1,13 @@
 package buildingBlocks.traceTasks;
 
 import core.SparkTraceTask;
-import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.basic.SGraph;
 
 /**
  *
  */
 public interface TraceTaskBuilder {
-    SDFGraph createSDF() throws Exception;
+    SGraph createSDF() throws Exception;
 
     SGraph createDDF() throws Exception;
 

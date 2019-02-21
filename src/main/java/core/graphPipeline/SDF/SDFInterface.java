@@ -1,6 +1,8 @@
 package core.graphPipeline.SDF;
 
 
+import static core.graphPipeline.basic.SGraph.SDFType;
+
 import javafx.util.Pair;
 
 import java.util.HashSet;
@@ -8,13 +10,13 @@ import java.util.Map;
 import java.util.Set;
 
 public interface SDFInterface {
-    default SDFGraph.SDFType getOutputSymbolType(String symbolName) {
+    default SDFType getOutputSymbolType(String symbolName) {
         return getOutputTypeMap().get(symbolName);
     }
 
-    Map<String, SDFGraph.SDFType> getOutputTypeMap();
+    Map<String, SDFType> getOutputTypeMap();
 
-    default void assignTypeToOutputField(String symbolName, SDFGraph.SDFType type) {
+    default void assignTypeToOutputField(String symbolName, SDFType type) {
         getOutputTypeMap().put(symbolName, type);
     }
 
@@ -24,12 +26,12 @@ public interface SDFInterface {
      * @return
      */
     default Pair<Set<String>, Set<String>> splitSDFOutputs() {
-        Map<String, SDFGraph.SDFType> outputTypes = getOutputTypeMap();
+        Map<String, SDFType> outputTypes = getOutputTypeMap();
         Set<String> sourceSymbol = new HashSet<>();
         Set<String> targetSymbol = new HashSet<>();
         for (String outputField : outputTypes.keySet()) {
-            SDFGraph.SDFType type = outputTypes.get(outputField);
-            if (type.equals(SDFGraph.SDFType.SOURCE_SDF)) {
+            SDFType type = outputTypes.get(outputField);
+            if (type.equals(SDFType.SOURCE_SDF)) {
                 sourceSymbol.add(outputField);
             } else {
                 targetSymbol.add(outputField);
@@ -43,7 +45,7 @@ public interface SDFInterface {
      *
      * @return
      */
-    Set<String> getTargetSDFOutputs();
+    Set<String> getTargetSDFOutputs() throws Exception;
 
-    Set<String> getSourceSDFOutput();
+    Set<String> getSourceSDFOutput() throws Exception;
 }

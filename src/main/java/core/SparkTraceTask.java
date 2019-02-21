@@ -1,6 +1,5 @@
 package core;
 
-import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
@@ -32,13 +31,13 @@ public class SparkTraceTask extends SGraph {
     //Symbol name for id column which can be configured in different places.
     private String sourceIdCol, targetIdCol;
 
-    private SDFGraph sdfGraph;
+    private SGraph sdfGraph;
     private SGraph ddfGraph;
     private TransparentSNode infusionNode;
     private PipelineModel taskModel;
 
 
-    public SparkTraceTask(SDFGraph sdfGraph, SGraph ddfGraph, String sourceIdCol, String targetIdCol) {
+    public SparkTraceTask(SGraph sdfGraph, SGraph ddfGraph, String sourceIdCol, String targetIdCol) {
         super();
         this.sdfGraph = sdfGraph;
         this.ddfGraph = ddfGraph;
@@ -77,8 +76,8 @@ public class SparkTraceTask extends SGraph {
     }
 
     private void mergeSubTask(SparkTraceTask childTask, List<GraphHierarchyTree> path) throws Exception {
-        SDFGraph parentSDF = this.sdfGraph;
-        SDFGraph childSDF = childTask.sdfGraph;
+        SGraph parentSDF = this.sdfGraph;
+        SGraph childSDF = childTask.sdfGraph;
         SGraph parentDDF = this.ddfGraph;
         SGraph childDDF = childTask.ddfGraph;
         parentSDF.addNode(childSDF);
@@ -95,7 +94,7 @@ public class SparkTraceTask extends SGraph {
                 String targetSymbolName = targetCell.getFieldSymbol().getSymbolName();
                 String parentSDFNewOutputFieldName = targetSymbolName + "_" + UUID.randomUUID();
                 String parentDDFNewInputFieldName = targetSymbolName + "_" + UUID.randomUUID();
-                SDFGraph.SDFType type = childSDF.getOutputSymbolType(outputCell.getFieldSymbol().getSymbolName());
+                SGraph.SDFType type = childSDF.getOutputSymbolType(outputCell.getFieldSymbol().getSymbolName());
                 parentSDF.addOutputField(parentSDFNewOutputFieldName, type);
                 parentDDF.addInputField(parentDDFNewInputFieldName);
                 parentSDF.connect(childSDF, outputCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, parentSDFNewOutputFieldName); //connect childSDF to parentSDF
@@ -242,11 +241,11 @@ public class SparkTraceTask extends SGraph {
         return result;
     }
 
-    public SDFGraph getSdfGraph() {
+    public SGraph getSdfGraph() {
         return sdfGraph;
     }
 
-    public void setSdfGraph(SDFGraph sdfGraph) throws Exception {
+    public void setSdfGraph(SGraph sdfGraph) throws Exception {
         removeNode(getSdfGraph());
         this.sdfGraph = sdfGraph;
         addNode(sdfGraph);

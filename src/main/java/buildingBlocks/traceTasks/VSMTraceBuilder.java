@@ -3,7 +3,6 @@ package buildingBlocks.traceTasks;
 import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
-import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.basic.SGraph;
 
 import java.util.HashMap;
@@ -14,13 +13,11 @@ import java.util.Map;
  */
 public class VSMTraceBuilder implements TraceTaskBuilder {
     @Override
-    public SDFGraph createSDF() throws Exception {
+    public SGraph createSDF() throws Exception {
         SGraph graph = Text2TFIDFPipeline.getGraph("VSM_SDF");//text1,2 = "tf-idf1,2"
-        Map<String, SDFGraph.SDFType> outputTypeMap = new HashMap<>();
-        outputTypeMap.put("tf-idf1", SDFGraph.SDFType.SOURCE_SDF);
-        outputTypeMap.put("tf-idf2", SDFGraph.SDFType.TARGET_SDF);
-        SDFGraph sdfGraph = new SDFGraph(graph, outputTypeMap);
-        return sdfGraph;
+        graph.assignTypeToOutputField("tf-idf1", SGraph.SDFType.SOURCE_SDF);
+        graph.assignTypeToOutputField("tf-idf2", SGraph.SDFType.TARGET_SDF);
+        return graph;
     }
 
     @Override
@@ -46,6 +43,5 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
         task.addOutputField("vsm_sim");
         connectSDFToDDF(task);
         return task;
-
     }
 }

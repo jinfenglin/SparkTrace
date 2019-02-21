@@ -1,6 +1,5 @@
 package featurePipelineStages.InfusionStage;
 
-import core.graphPipeline.SDF.SDFGraph;
 import core.graphPipeline.basic.SGraph;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.BooleanParam;
@@ -31,10 +30,10 @@ public class InfusionStage extends Transformer implements InfusionStageParam {
     private StringArrayParam inputCols, outputCols;
     private Param<String> sourceIdCol, targetIdCol;
     private Dataset<Row> goldenLinks;
-    private SDFGraph sdfGraph;
+    private SGraph sdfGraph;
     private SGraph ddfGraph;
 
-    public InfusionStage(SDFGraph sdfGraph, SGraph ddfGraph) {
+    public InfusionStage(SGraph sdfGraph, SGraph ddfGraph) {
         inputCols = initInputCols();
         outputCols = initOutputCols();
         trainingFlag = initTrainingFlag();
@@ -71,7 +70,7 @@ public class InfusionStage extends Transformer implements InfusionStageParam {
         }
     }
 
-    private Dataset<Row> getSourceSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
+    private Dataset<Row> getSourceSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs)  {
         Set<String> sourceSDFCols = sdfGraph.getSourceSDFOutput();
         String sourceIdColName = getSourceIdCol();
         sourceSDFCols.add(sourceIdColName);
