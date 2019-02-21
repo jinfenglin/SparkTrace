@@ -37,7 +37,7 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
 
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
-        Logger.getLogger(this.getClass().getName()).info(String.format("running nullremover with inner stage {}".format(innerTransformer.getClass().getName())));
+        Logger.getLogger(this.getClass().getName()).info(String.format("running nullremover with inner stage %s", innerTransformer.getClass().getSimpleName()));
         Dataset<Row> inputDataset = dataset.toDF();
         Dataset<Row> inputNoNull = inputDataset.where(col(getInputCol()).isNotNull());
         Dataset<Row> inputHasNull = inputDataset.where(col(getInputCol()).isNull());

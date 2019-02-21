@@ -167,9 +167,9 @@ public class SGraphTest extends TestBase {
         Dataset<Row> dataset = getSentenceLabelDataset();
         NullRemoverModelSingleIO tk = new NullRemoverModelSingleIO(new Tokenizer().setInputCol("sentence"));
 
-        Pipeline p1 = makePipeline(tk);
         HashingTF htf = new HashingTF().setInputCol(tk.getOutputCol());
-        Pipeline p2 = makePipeline(p1, htf);
+
+        Pipeline p2 = makePipeline(tk, new NullRemoverModelSingleIO(htf));
         IDF idf = new IDF().setInputCol(htf.getOutputCol());
         Pipeline p3 = makePipeline(p2, idf);
         p3.fit(dataset);

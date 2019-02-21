@@ -47,9 +47,9 @@ public class BuildingBlockTest extends TestBase {
     public void EnglishPreprocessingPipelineTest() throws Exception {
         SGraph graph = EnglishPreprocess.getGraph("");
         Map config = new HashMap<>();
-        config.put("text", "sentence");
+        config.put("text", "commit_content");
         graph.setConfig(config);
-        graph.toPipeline().fit(getSentenceLabelDataset()).transform(getSentenceLabelDataset()).show(false);
+        graph.toPipeline().fit(commits).transform(commits).show(false);
     }
 
     @Test
@@ -60,12 +60,6 @@ public class BuildingBlockTest extends TestBase {
         graph.setConfig(config);
         Dataset<Row> dataset = graph.toPipeline().fit(getSentenceLabelDataset()).transform(getSentenceLabelDataset());
         dataset.show();
-//        HashingTF htf = new HashingTF();
-//        htf.setInputCol(dataset.columns()[1]);
-//        dataset = htf.transform(dataset);
-//        IDF idf = new IDF();
-//        idf.setInputCol(htf.getOutputCol());
-//        idf.fit(dataset).transform(dataset).show();
     }
 
     @Test

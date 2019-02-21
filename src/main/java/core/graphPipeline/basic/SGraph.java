@@ -6,6 +6,7 @@ import core.graphPipeline.graphSymbol.SymbolTable;
 import featurePipelineStages.InfusionStage.InfusionStage;
 import featurePipelineStages.SGraphColumnRemovalStage;
 import featurePipelineStages.SGraphIOStage;
+import featurePipelineStages.cacheStage.CacheStage;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
@@ -243,7 +244,11 @@ public class SGraph extends Vertex implements SDFInterface {
         List<PipelineStage> stages = new ArrayList<>();
         Map<IOTableCell, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
-            stages.add(node.toPipeline());
+            //stages.add(node.toPipeline());
+            stages.addAll(Arrays.asList(node.toPipeline().getStages()));
+            if (node.getOutputVertices().size() >= 2 && node != sourceNode && node != sinkNode) {
+                stages.add(new CacheStage());
+            }
             //Add column clean stages
             if (!node.equals(sinkNode) && cleanColumns) {
                 for (IOTableCell targetCell : node.getInputTable().getCells()) {

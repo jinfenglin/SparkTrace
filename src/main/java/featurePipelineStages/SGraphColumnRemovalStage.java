@@ -9,6 +9,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 
 import java.util.Arrays;
+import java.util.StringJoiner;
 import java.util.logging.Logger;
 
 
@@ -26,10 +27,10 @@ public class SGraphColumnRemovalStage extends Transformer implements HasInputCol
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
         String[] cols = getInputCols();
-        StringBuilder sb = new StringBuilder(",");
+        StringJoiner sb = new StringJoiner(",");
         for (String colName : cols) {
             dataset = dataset.drop(colName);
-            sb.append(colName);
+            sb.add(colName);
         }
         Logger.getLogger("column remover").info("removing column " + sb.toString());
         return (Dataset<Row>) dataset;
