@@ -26,9 +26,12 @@ public class SGraphColumnRemovalStage extends Transformer implements HasInputCol
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
         String[] cols = getInputCols();
+        StringBuilder sb = new StringBuilder(",");
         for (String colName : cols) {
             dataset = dataset.drop(colName);
+            sb.append(colName);
         }
+        Logger.getLogger("column remover").info("removing column " + sb.toString());
         return (Dataset<Row>) dataset;
     }
 
@@ -37,7 +40,6 @@ public class SGraphColumnRemovalStage extends Transformer implements HasInputCol
         String[] cols = getInputCols();
         for (String colName : cols) {
             //assert structType.contains(colName);
-            Logger.getLogger("column remover").info("removing column " + colName);
             structType.drop(structType.fieldIndex(colName));
         }
         return structType;

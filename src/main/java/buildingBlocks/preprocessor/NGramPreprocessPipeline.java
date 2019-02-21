@@ -22,7 +22,6 @@ public class NGramPreprocessPipeline {
         ngramNode.addOutputField("ngrams");
 
         graph.addNode(prep1);
-        graph.addNode(prep1);
         graph.addNode(ngramNode);
 
         graph.connect(graph.sourceNode, "text", prep1, "text");

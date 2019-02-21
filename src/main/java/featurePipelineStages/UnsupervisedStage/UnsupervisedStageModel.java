@@ -31,6 +31,7 @@ public class UnsupervisedStageModel extends Model<UnsupervisedStageModel> implem
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
         transformSchema(dataset.schema());
+        Logger.getLogger(this.getClass().getName()).info("running unsupervised stage");
         int length = getInputCols().length;
         for (int i = 0; i < length; i++) {
             String inputColName = getInputCols()[i];

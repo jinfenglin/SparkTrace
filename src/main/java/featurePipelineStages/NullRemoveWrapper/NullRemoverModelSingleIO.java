@@ -11,6 +11,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 
+import java.util.logging.Logger;
+
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.lit;
 
@@ -35,6 +37,7 @@ public class NullRemoverModelSingleIO extends Model<NullRemoverModelSingleIO> im
 
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
+        Logger.getLogger(this.getClass().getName()).info(String.format("running nullremover with inner stage {}".format(innerTransformer.getClass().getName())));
         Dataset<Row> inputDataset = dataset.toDF();
         Dataset<Row> inputNoNull = inputDataset.where(col(getInputCol()).isNotNull());
         Dataset<Row> inputHasNull = inputDataset.where(col(getInputCol()).isNull());

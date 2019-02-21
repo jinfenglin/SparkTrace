@@ -5,9 +5,6 @@ import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  *
  */
@@ -26,7 +23,7 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
     }
 
     @Override
-    public SparkTraceTask connectSDFToDDF(SparkTraceTask task) throws Exception {
+    public SparkTraceTask connectTask(SparkTraceTask task) throws Exception {
         task.connect(task.sourceNode, "s_text", task.getSdfGraph(), "text1");
         task.connect(task.sourceNode, "t_text", task.getSdfGraph(), "text2");
         task.connect(task.getSdfGraph(), "tf-idf1", task.getDdfGraph(), "vec1");
@@ -41,7 +38,7 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
         task.setId("VSM");
         task.addInputField("s_text").addInputField("t_text");
         task.addOutputField("vsm_sim");
-        connectSDFToDDF(task);
+        connectTask(task);
         return task;
     }
 }

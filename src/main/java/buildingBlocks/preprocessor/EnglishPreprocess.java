@@ -26,19 +26,20 @@ public class EnglishPreprocess {
         removerNode.addInputField("tokens");
         removerNode.addOutputField("cleanTokens");
 
-        Stemmer stemmer = new Stemmer();
-        SNode stemmerNode = new SNode(new NullRemoverModelSingleIO(stemmer), "stemmerNode");
-        stemmerNode.addInputField("cleanTokens");
-        stemmerNode.addOutputField("stemTokens");
+//        Stemmer stemmer = new Stemmer();
+//        SNode stemmerNode = new SNode(new NullRemoverModelSingleIO(stemmer), "stemmerNode");
+//        stemmerNode.addInputField("cleanTokens");
+//        stemmerNode.addOutputField("stemTokens");
 
         graph.addNode(tkNode);
         graph.addNode(removerNode);
-        graph.addNode(stemmerNode);
+//        graph.addNode(stemmerNode);
 
         graph.connect(graph.sourceNode, "text", tkNode, "text");
         graph.connect(tkNode, "tokens", removerNode, "tokens");
-        graph.connect(removerNode, "cleanTokens", stemmerNode, "cleanTokens");
-        graph.connect(stemmerNode, "stemTokens", graph.sinkNode, "cleanTokens");
+//        graph.connect(removerNode, "cleanTokens", stemmerNode, "cleanTokens");
+//        graph.connect(stemmerNode, "stemTokens", graph.sinkNode, "cleanTokens");
+        graph.connect(removerNode, "cleanTokens", graph.sinkNode, "cleanTokens");
         return graph;
     }
 }

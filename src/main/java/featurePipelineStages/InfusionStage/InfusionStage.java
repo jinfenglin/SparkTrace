@@ -70,7 +70,7 @@ public class InfusionStage extends Transformer implements InfusionStageParam {
         }
     }
 
-    private Dataset<Row> getSourceSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs)  {
+    private Dataset<Row> getSourceSDFFeatureVecs(Dataset<Row> mixedSDFeatureVecs) {
         Set<String> sourceSDFCols = sdfGraph.getSourceSDFOutput();
         String sourceIdColName = getSourceIdCol();
         sourceSDFCols.add(sourceIdColName);

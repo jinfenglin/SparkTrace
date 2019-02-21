@@ -244,6 +244,7 @@ public class SGraph extends Vertex implements SDFInterface {
         Map<IOTableCell, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
             stages.add(node.toPipeline());
+            //Add column clean stages
             if (!node.equals(sinkNode) && cleanColumns) {
                 for (IOTableCell targetCell : node.getInputTable().getCells()) {
                     for (IOTableCell sourceCell : targetCell.getInputSource()) {
@@ -490,7 +491,6 @@ public class SGraph extends Vertex implements SDFInterface {
                     vNode = createVizEdge(vNode, outputNode);
                 }
                 g.add(vNode);
-
             } else {
                 SGraph v = (SGraph) vertex;
                 MutableGraph subGraph = v.getVizGraph();

@@ -11,7 +11,7 @@ public interface TraceTaskBuilder {
 
     SGraph createDDF() throws Exception;
 
-    SparkTraceTask connectSDFToDDF(SparkTraceTask traceTask) throws Exception;
+    SparkTraceTask connectTask(SparkTraceTask traceTask) throws Exception;
 
     SparkTraceTask getTask(String sourceId, String targetId) throws Exception;
 }

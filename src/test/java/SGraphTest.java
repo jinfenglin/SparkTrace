@@ -4,6 +4,7 @@ import examples.TestBase;
 import featurePipelineStages.SGraphColumnRemovalStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.Tokenizer;
