@@ -1,10 +1,6 @@
-import core.SparkTraceTask;
-import core.graphPipeline.SDF.SDFGraph;
-import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
 import examples.TestBase;
-import examples.VSMTask;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;
 import org.apache.spark.ml.feature.Tokenizer;
@@ -171,7 +167,7 @@ public class OptimizationTest extends TestBase {
         hashTFNode1.addOutputField("TF");
 
         IDF idf1 = new IDF();
-        SNode idfNode = new SDFNode(idf1, "idf1");
+        SNode idfNode = new SNode(idf1, "idf1");
         idfNode.addInputField("s_idf_in");
         idfNode.addOutputField("s_idf_out");
 
@@ -235,7 +231,7 @@ public class OptimizationTest extends TestBase {
         VSMGraph.addOutputField("TF-IDF");
         SGraph htfSubGraph = createHTFSubGraph("HTFSubGraph");
         IDF idf = new IDF();
-        SNode idfNode = new SDFNode(idf, "idf1");
+        SNode idfNode = new SNode(idf, "idf1");
         idfNode.addInputField("s_idf_in");
         idfNode.addOutputField("s_idf_out");
 
@@ -280,7 +276,7 @@ public class OptimizationTest extends TestBase {
         VSMGraph1.addOutputField("TF-IDF");
         SGraph htfSubGraph = createHTFSubGraph("HTFSubGraph");
         IDF idf = new IDF();
-        SNode idfNode = new SDFNode(idf, "idf1");
+        SNode idfNode = new SNode(idf, "idf1");
         idfNode.addInputField("s_idf_in");
         idfNode.addOutputField("s_idf_out");
 
@@ -308,7 +304,7 @@ public class OptimizationTest extends TestBase {
         hashTFNode2.addOutputField("TF");
 
         IDF idf2 = new IDF();
-        SNode idfNode2 = new SDFNode(idf2, "idf2");
+        SNode idfNode2 = new SNode(idf2, "idf2");
         idfNode2.addInputField("s_idf_in");
         idfNode2.addOutputField("s_idf_out");
 

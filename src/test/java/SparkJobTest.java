@@ -1,7 +1,7 @@
 import core.SparkTraceTask;
 import core.graphPipeline.SDF.SDFGraph;
-import core.graphPipeline.SDF.SDFNode;
 import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.basic.SNode;
 import examples.TestBase;
 import examples.VSMTask;
 import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
@@ -81,8 +81,8 @@ public class SparkJobTest extends TestBase {
         sdfGraph.setId("nestedTask_SDF");
         sdfGraph.addInputField("s_t");
         sdfGraph.addInputField("t_t");
-        sdfGraph.addOutputField("s_tk");
-        sdfGraph.addOutputField("t_tk");
+        sdfGraph.addOutputField("s_tk", SDFGraph.SDFType.SOURCE_SDF);
+        sdfGraph.addOutputField("t_tk", SDFGraph.SDFType.TARGET_SDF);
 
         Map<String, String> nestTaskConfig = new HashMap<>();
         nestTaskConfig.put("s_t", "commit_content");
@@ -91,16 +91,14 @@ public class SparkJobTest extends TestBase {
         nestTaskConfig.put("t_id", "issue_id");
 
         Tokenizer sTk = new Tokenizer();
-        SDFNode stkNode = new SDFNode(new NullRemoverModelSingleIO(sTk), "source_tokenizer");
+        SNode stkNode = new SNode(new NullRemoverModelSingleIO(sTk), "source_tokenizer");
         stkNode.addInputField("s_text");
         stkNode.addOutputField("s_tokens");
-        stkNode.assignTypeToOutputField("s_tokens", SDFNode.SDFType.SOURCE_SDF);
 
         Tokenizer tTk = new Tokenizer();
-        SDFNode ttkNode = new SDFNode(new NullRemoverModelSingleIO(tTk), "target_tokenizer");
+        SNode ttkNode = new SNode(new NullRemoverModelSingleIO(tTk), "target_tokenizer");
         ttkNode.addInputField("t_text");
         ttkNode.addOutputField("t_tokens");
-        ttkNode.assignTypeToOutputField("t_tokens", SDFNode.SDFType.TARGET_SDF);
 
         sdfGraph.addNode(stkNode);
         sdfGraph.addNode(ttkNode);
@@ -142,9 +140,11 @@ public class SparkJobTest extends TestBase {
         SDFGraph sdf = new SDFGraph();
         sdf.setId("ParentTask_SDF");
         sdf.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
-        sdf.addOutputField("s_text_out").addOutputField("t_text_out").addOutputField("s_id_out").addOutputField("t_id_out");
-        sdf.assignTypeToOutputField("s_text_out", SDFNode.SDFType.SOURCE_SDF);
-        sdf.assignTypeToOutputField("t_text_out", SDFNode.SDFType.TARGET_SDF);
+        sdf.addOutputField("s_text_out", SDFGraph.SDFType.SOURCE_SDF);
+        sdf.addOutputField("t_text_out", SDFGraph.SDFType.TARGET_SDF);
+        sdf.addOutputField("s_id_out", SDFGraph.SDFType.SOURCE_SDF);
+        sdf.addOutputField("t_id_out", SDFGraph.SDFType.TARGET_SDF);
+
         sdf.connect(sdf.sourceNode, "s_text", sdf.sinkNode, "s_text_out");
         sdf.connect(sdf.sourceNode, "t_text", sdf.sinkNode, "t_text_out");
         sdf.connect(sdf.sourceNode, "t_id", sdf.sinkNode, "t_id_out");

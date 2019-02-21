@@ -92,11 +92,13 @@ public class SparkTraceTask extends SGraph {
         for (IOTableCell outputCell : childSDF.getOutputTable().getCells()) {
             List<IOTableCell> targetCells = outputCell.getOutputTarget();
             for (IOTableCell targetCell : new ArrayList<>(targetCells)) {
-                String parentSDFNewOutputFieldName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
-                String parentDDFNewInputFieldName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
-                parentSDF.addOutputField(parentSDFNewOutputFieldName);
+                String targetSymbolName = targetCell.getFieldSymbol().getSymbolName();
+                String parentSDFNewOutputFieldName = targetSymbolName + "_" + UUID.randomUUID();
+                String parentDDFNewInputFieldName = targetSymbolName + "_" + UUID.randomUUID();
+                SDFGraph.SDFType type = childSDF.getOutputSymbolType(outputCell.getFieldSymbol().getSymbolName());
+                parentSDF.addOutputField(parentSDFNewOutputFieldName, type);
                 parentDDF.addInputField(parentDDFNewInputFieldName);
-                parentSDF.connect(childSDF, targetCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, parentSDFNewOutputFieldName); //connect childSDF to parentSDF
+                parentSDF.connect(childSDF, outputCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, parentSDFNewOutputFieldName); //connect childSDF to parentSDF
                 connect(parentSDF, parentSDFNewOutputFieldName, parentDDF, parentDDFNewInputFieldName);//connect new added field from parentSDF to parentDDF
                 int pathIndex = path.size() - 1;
                 if (path.size() > 2) {

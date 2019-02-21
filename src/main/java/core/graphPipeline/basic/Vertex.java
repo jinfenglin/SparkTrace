@@ -75,11 +75,15 @@ abstract public class Vertex {
         assert symbol.getScope().equals(this);
     }
 
-    public Vertex addInputField(Symbol symbol) throws Exception {
+    protected void addSymbol(Symbol symbol, IOTable table) throws Exception {
         checkSymbolValid(symbol);
         IOTableCell cell = new IOTableCell(symbol);
-        inputTable.addCell(cell);
+        table.addCell(cell);
         SymbolTable.registerSymbol(symbol);
+    }
+
+    public Vertex addInputField(Symbol symbol) throws Exception {
+        addSymbol(symbol, inputTable);
         return this;
     }
 
@@ -120,10 +124,7 @@ abstract public class Vertex {
     }
 
     public Vertex addOutputField(Symbol symbol) throws Exception {
-        checkSymbolValid(symbol);
-        IOTableCell cell = new IOTableCell(symbol);
-        outputTable.addCell(cell);
-        SymbolTable.registerSymbol(symbol);
+        addSymbol(symbol, outputTable);
         return this;
     }
 
