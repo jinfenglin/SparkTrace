@@ -3,8 +3,10 @@ import buildingBlocks.preprocessor.NGramPreprocessPipeline;
 import buildingBlocks.text2TFIDF.Text2LDAPipeline;
 import buildingBlocks.text2TFIDF.Text2NGramTFIDFPipeline;
 import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
+import buildingBlocks.traceTasks.LDATraceBuilder;
 import buildingBlocks.traceTasks.NGramVSMTraceTask;
 import buildingBlocks.traceTasks.VSMTraceBuilder;
+import buildingBlocks.traceTasks.VoteTraceBuilder;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 import examples.TestBase;
@@ -20,9 +22,6 @@ import traceability.components.maven.MavenLink;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- */
 public class BuildingBlockTest extends TestBase {
     private static final String masterUrl = "local";
     Dataset<MavenCommit> commits;
@@ -109,4 +108,28 @@ public class BuildingBlockTest extends TestBase {
         result.show();
     }
 
+    @Test
+    public void LDATask() throws Exception {
+        SparkTraceTask ldaTask = new LDATraceBuilder().getTask("s_id", "t_id");
+        Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
+        ldaTask.setConfig(vsmTaskInputConfig);
+        ldaTask.initSTT();
+        ldaTask.infuse();
+        ldaTask.optimize(ldaTask);
+        ldaTask.train(commits, improvements, null);
+        Dataset<Row> result = ldaTask.trace(commits, improvements);
+        result.show();
+    }
+
+    @Test
+    public void voteTaskTest() throws Exception {
+        SparkTraceTask voteTask = new VoteTraceBuilder().getTask("s_id", "t_id");
+        Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
+        voteTask.setConfig(vsmTaskInputConfig);
+        voteTask.showGraph("votingSystem_before_optimize");
+        voteTask.initSTT();
+        voteTask.infuse();
+        voteTask.optimize(voteTask);
+        voteTask.showGraph("votingSystem_after_optimize");
+    }
 }

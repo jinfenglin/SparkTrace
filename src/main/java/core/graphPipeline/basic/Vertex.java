@@ -110,7 +110,7 @@ abstract public class Vertex {
 
     public void removeOutputField(Symbol symbol) {
         IOTableCell outCell = outputTable.getCellBySymbol(symbol);
-        for (IOTableCell outTarget : outCell.getOutputTarget()) {
+        for (IOTableCell outTarget : new ArrayList<>(outCell.getOutputTarget())) {
             outCell.removeOutputTo(outTarget);
         }
         outputTable.removeCell(outCell);

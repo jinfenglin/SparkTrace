@@ -83,8 +83,9 @@ public class SparkTraceTask extends SGraph {
         parentSDF.addNode(childSDF);
 
         for (IOTableCell inputCell : childSDF.getInputTable().getCells()) {
-            IOTableCell inputSource = inputCell.traceToSource(true, parentSDF);
+            IOTableCell inputSource = inputCell.traceToSource(false, parentSDF);
             assert inputSource != inputCell; //SDF must have input
+            childTask.disconnect(inputCell.getInputSource().get(0).getFieldSymbol(), inputCell.getFieldSymbol());//disconnect it from sourceNode
             parentSDF.connect(inputSource.getFieldSymbol(), inputCell.getFieldSymbol());
         }
 

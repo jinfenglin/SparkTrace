@@ -566,14 +566,14 @@ public class SGraph extends Vertex implements SDFInterface {
     }
 
     public Vertex addOutputField(Symbol symbol, SDFType type) throws Exception {
-        super.addOutputField(symbol);
+        this.addOutputField(symbol);
         assignTypeToOutputField(symbol.getSymbolName(), type);
         return this;
     }
 
     public Vertex addOutputField(String symbolName, SDFType type) throws Exception {
         Symbol symbol = new Symbol(this, symbolName);
-        addOutputField(symbol, type);
+        this.addOutputField(symbol, type);
         return this;
     }
 

@@ -299,17 +299,34 @@ public class PipelineOptimizer {
         return nodes;
     }
 
+
+    private static int OutputFieldValidDegree(IOTableCell outputCell) throws Exception {
+        int validDegree = 0; //count the numebr of valid connection
+        for (IOTableCell targetCell : outputCell.getOutputTarget()) {
+            Vertex targetVertex = targetCell.getParentTable().getContext();
+            if (targetVertex instanceof ITransparentVertex) {
+                ITransparentVertex tranVertex = (ITransparentVertex) targetVertex;
+                IOTableCell transOut = tranVertex.getRelativeOutputField(targetCell); //get the next output
+                validDegree += OutputFieldValidDegree(transOut);
+            } else {
+                validDegree += 1;
+            }
+        }
+        return validDegree;
+    }
+
     /**
      * Remove unused input and output field for the graph
      *
      * @param graph
      */
-    public static void removeRedundantOutputFields(SGraph graph) {
-        //If the graph is a root graph
+    public static void removeRedundantOutputFields(SGraph graph) throws Exception {
+        //If the graph is a root graph then no removal otherwise do removal
         if (graph.getContext() != null) {
-            for (IOTableCell outputCell : graph.getOutputTable().getCells()) {
+            for (IOTableCell outputCell : new ArrayList<>(graph.getOutputTable().getCells())) {
                 //If the output filed not provide info to any outside node
-                if (outputCell.getOutputTarget().size() == 0) {
+                if (OutputFieldValidDegree(outputCell) == 0) {
+                    //if(outputCell.getOutputTarget().size() == 0) {
                     graph.removeOutputField(outputCell.getFieldSymbol());
                 }
             }

@@ -3,8 +3,10 @@ package core.graphPipeline.basic;
 import featurePipelineStages.NullRemoveWrapper.HasInnerStage;
 import featurePipelineStages.NullRemoveWrapper.InnerStageImplementHasInputCol;
 import featurePipelineStages.NullRemoveWrapper.InnerStageImplementHasOutputCol;
+import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
+import org.apache.spark.ml.feature.StopWordsRemover;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.shared.HasInputCol;
 import org.apache.spark.ml.param.shared.HasInputCols;
@@ -104,6 +106,9 @@ public class SNode extends Vertex {
     }
 
     private List<String> getNonIOParamsValue(PipelineStage stage) {
+        if(stage instanceof StopWordsRemover || stage instanceof NullRemoverModelSingleIO) {
+            int i = 0;
+        }
         List<Param> params = new ArrayList<>(Arrays.asList(stage.params()));
         List<String> paramValues = new ArrayList<>();
         if (stage instanceof HasInputCols) {
