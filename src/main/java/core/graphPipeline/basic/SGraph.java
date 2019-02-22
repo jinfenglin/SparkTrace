@@ -171,11 +171,12 @@ public class SGraph extends Vertex implements SDFInterface {
     /**
      * @return
      */
-    public Map<IOTableCell, Integer> getDemandTable() {
-        Map<IOTableCell, Integer> demandTable = new HashMap<>();
+    public Map<String, Integer> getDemandTable() {
+        Map<String, Integer> demandTable = new HashMap<>();
         for (Vertex vertex : getNodes()) {
             for (IOTableCell cell : vertex.getOutputTable().getCells()) {
-                demandTable.put(cell, demandTable.getOrDefault(cell, 0) + cell.getOutputTarget().size());
+                String cellSymbolValue = cell.getFieldSymbol().getSymbolValue();
+                demandTable.put(cellSymbolValue, demandTable.getOrDefault(cellSymbolValue, 0) + cell.getOutputTarget().size());
             }
         }
         return demandTable;
@@ -241,7 +242,7 @@ public class SGraph extends Vertex implements SDFInterface {
         List<Vertex> topSortNodes = topologicalSort(this);
         Pipeline pipeline = new Pipeline(getVertexId());
         List<PipelineStage> stages = new ArrayList<>();
-        Map<IOTableCell, Integer> demandTable = getDemandTable();
+        Map<String, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
             stages.addAll(Arrays.asList(node.toPipeline().getStages()));
             //Add column clean stages
@@ -251,11 +252,12 @@ public class SGraph extends Vertex implements SDFInterface {
                         if (sourceCell.getParentTable().getContext().equals(sourceNode) && this.getContext() != null) {
                             continue; //Source node contains the fields that belong to parent graph
                         }
-                        int remainDemand = demandTable.get(sourceCell) - 1;
-                        demandTable.put(sourceCell, remainDemand);
+                        String sourceCellSymbolValue = sourceCell.getFieldSymbol().getSymbolValue();
+                        int remainDemand = demandTable.get(sourceCellSymbolValue) - 1;
+                        demandTable.put(sourceCellSymbolValue, remainDemand);
                         if (remainDemand == 0 && sourceCell.isRemovable()) {
                             SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
-                            removalStage.setInputCols(new String[]{sourceCell.getFieldSymbol().getSymbolValue()});
+                            removalStage.setInputCols(new String[]{sourceCellSymbolValue});
                             stages.add(removalStage);
                         }
                     }
