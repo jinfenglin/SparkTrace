@@ -11,6 +11,7 @@ import java.util.*;
  */
 abstract public class Vertex {
     protected String vertexId;
+    protected String vertexLabel;
     protected IOTable inputTable, outputTable;
     protected Vertex context; //If a vertex is included in another vertex, then the second vertex is the context
     protected Map<Symbol, String> symbolValues;

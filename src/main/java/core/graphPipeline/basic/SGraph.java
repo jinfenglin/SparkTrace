@@ -3,7 +3,6 @@ package core.graphPipeline.basic;
 import core.graphPipeline.SDF.SDFInterface;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
-import featurePipelineStages.InfusionStage.InfusionStage;
 import featurePipelineStages.SGraphColumnRemovalStage;
 import featurePipelineStages.SGraphIOStage;
 import featurePipelineStages.cacheStage.CacheStage;
