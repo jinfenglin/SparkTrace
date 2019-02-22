@@ -1,7 +1,6 @@
 package buildingBlocks.traceTasks;
 
 import buildingBlocks.text2TFIDF.Text2NGramTFIDFPipeline;
-import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
@@ -36,7 +35,7 @@ public class NGramVSMTraceTask implements TraceTaskBuilder {
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
         SparkTraceTask task = new SparkTraceTask(createSDF(), createDDF(), sourceId, targetId);
-        task.setId("NGramVSM");
+        task.setVertexLabel("NGramVSM");
         task.addInputField("s_text").addInputField("t_text");
         task.addOutputField("ngram_vsm_sim");
         connectTask(task);

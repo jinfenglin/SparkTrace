@@ -18,6 +18,7 @@ abstract public class Vertex {
 
     private void init() {
         vertexId = UUID.randomUUID().toString();
+        vertexLabel = vertexId;
         inputTable = new IOTable(this);
         outputTable = new IOTable(this);
         symbolValues = new HashMap<>();
@@ -27,17 +28,9 @@ abstract public class Vertex {
         init();
     }
 
-    public Vertex(String vertexId) {
+    public Vertex(String vertexLabel) {
         init();
-        this.vertexId = vertexId;
-    }
-
-    public Vertex(Vertex vertex) {
-        this.vertexId = vertex.vertexId;
-        inputTable = vertex.inputTable;
-        outputTable = vertex.outputTable;
-        context = vertex.context;
-        symbolValues = vertex.symbolValues;
+        this.vertexLabel = vertexLabel;
     }
 
     /**
@@ -159,7 +152,7 @@ abstract public class Vertex {
     }
 
     /**
-     * Get the global path of the vertex in the whole graph
+     * Get the global path of the vertex in the whole graph. For debug use primarily.
      *
      * @return
      */
@@ -170,23 +163,23 @@ abstract public class Vertex {
         }
         StringJoiner joiner = new StringJoiner("_");
         joiner.add(prefix);
-        joiner.add(getVertexId());
+        joiner.add(getVertexLabel());
         return joiner.toString();
     }
 
-    public void setVertexId(String vertexId) {
-        this.vertexId = vertexId;
+    public String getVertexLabel() {
+        return vertexLabel;
     }
 
     @Override
     public String toString() {
         return "Vertex{" +
-                "vertexId='" + vertexId + '\'' +
+                "vertexLabel='" + vertexLabel + '\'' +
                 '}';
     }
 
-    public void setId(String id) {
-        vertexId = id;
+    public void setVertexLabel(String label) {
+        vertexLabel = label;
     }
 
     public Vertex getContext() {

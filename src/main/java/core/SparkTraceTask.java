@@ -41,7 +41,7 @@ public class SparkTraceTask extends SGraph {
         super();
         this.sdfGraph = sdfGraph;
         this.ddfGraph = ddfGraph;
-        this.infusionNode = new TransparentSNode(new InfusionStage(sdfGraph, ddfGraph), "Infusion_" + UUID.randomUUID());
+        this.infusionNode = new TransparentSNode(new InfusionStage(sdfGraph, ddfGraph), "Infusion");
         addNode(sdfGraph);
         addNode(ddfGraph);
         addNode(this.infusionNode);

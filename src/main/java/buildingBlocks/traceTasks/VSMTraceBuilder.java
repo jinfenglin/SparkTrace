@@ -35,7 +35,7 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
         SparkTraceTask task = new SparkTraceTask(createSDF(), createDDF(), sourceId, targetId);
-        task.setId("VSM");
+        task.setVertexLabel("VSM");
         task.addInputField("s_text").addInputField("t_text");
         task.addOutputField("vsm_sim");
         connectTask(task);

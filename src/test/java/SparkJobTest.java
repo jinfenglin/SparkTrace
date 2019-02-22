@@ -77,7 +77,7 @@ public class SparkJobTest extends TestBase {
     public void TaskMergeTest() throws Exception {
         SparkTraceTask t1 = new VSMTraceBuilder().getTask("s_id","t_id");
         SGraph sdf = new SGraph();
-        sdf.setId("ParentTask_SDF");
+        sdf.setVertexLabel("ParentTask_SDF");
         sdf.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
         sdf.addOutputField("s_text_out", SGraph.SDFType.SOURCE_SDF);
         sdf.addOutputField("t_text_out", SGraph.SDFType.TARGET_SDF);
@@ -93,7 +93,7 @@ public class SparkJobTest extends TestBase {
         ddf.addInputField("s_text").addInputField("s_id");
         ddf.addInputField("t_text").addInputField("t_id");
         ddf.addOutputField("vsm_cosin_sim_score");
-        ddf.setId("ParentTask_DDF");
+        ddf.setVertexLabel("ParentTask_DDF");
 
         ddf.addNode(t1);
         ddf.connect(ddf.sourceNode, "s_text", t1, "s_text");
@@ -103,7 +103,7 @@ public class SparkJobTest extends TestBase {
         ddf.connect(t1, "vsm_score", ddf.sinkNode, "vsm_cosin_sim_score");
 
         SparkTraceTask context = new SparkTraceTask(sdf, ddf, "s_id", "t_id");
-        context.setId("ContextTask");
+        context.setVertexLabel("ContextTask");
         context.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
         context.addOutputField("vsm_score");
         context.connect(context.sourceNode, "s_id", sdf, "s_id");

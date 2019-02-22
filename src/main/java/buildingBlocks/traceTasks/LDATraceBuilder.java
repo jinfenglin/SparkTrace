@@ -35,7 +35,7 @@ public class LDATraceBuilder implements TraceTaskBuilder {
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
         SparkTraceTask task = new SparkTraceTask(createSDF(), createDDF(), sourceId, targetId);
-        task.setId("LDA");
+        task.setVertexLabel("LDA");
         task.addInputField("s_text").addInputField("t_text");
         task.addOutputField("lda_sim");
         connectTask(task);

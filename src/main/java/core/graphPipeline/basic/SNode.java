@@ -35,8 +35,8 @@ public class SNode extends Vertex {
         sparkPipelineStage = pipelineStage;
     }
 
-    public SNode(PipelineStage pipelineStage, String nodeId) {
-        super(nodeId);
+    public SNode(PipelineStage pipelineStage, String label) {
+        super(label);
         sparkPipelineStage = pipelineStage;
     }
 

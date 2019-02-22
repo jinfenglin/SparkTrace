@@ -11,8 +11,8 @@ public class TransparentSNode extends SNode implements ITransparentVertex {
         super(pipelineStage);
     }
 
-    public TransparentSNode(PipelineStage pipelineStage, String nodeId) {
-        super(pipelineStage, nodeId);
+    public TransparentSNode(PipelineStage pipelineStage, String label) {
+        super(pipelineStage, label);
     }
 
     @Override

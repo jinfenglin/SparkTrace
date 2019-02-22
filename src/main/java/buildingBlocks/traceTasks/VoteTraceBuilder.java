@@ -65,7 +65,7 @@ public class VoteTraceBuilder implements TraceTaskBuilder {
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
         SparkTraceTask task = new SparkTraceTask(createSDF(), createDDF(), sourceId, targetId);
-        task.setId("vote");
+        task.setVertexLabel("vote");
         task.addInputField("s_text").addInputField("t_text");
         task.addOutputField("vsm_out");
         task.addOutputField("lda_out");

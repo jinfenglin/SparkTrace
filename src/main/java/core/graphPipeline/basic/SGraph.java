@@ -48,8 +48,8 @@ public class SGraph extends Vertex implements SDFInterface {
         edges = new HashSet<>();
         sourceNode = new SNode(new SGraphIOStage());
         sinkNode = new SNode(new SGraphIOStage());
-        sourceNode.setId(String.format("%s-%s", "SourceNode", sourceNode.vertexId));
-        sinkNode.setId(String.format("%s-%s", "SinkNode", sinkNode.vertexId));
+        sourceNode.setVertexLabel("SourceNode");
+        sinkNode.setVertexLabel("SinkNode");
         sourceNode.setContext(this);
         sinkNode.setContext(this);
         nodes.put(sourceNode.vertexId, sourceNode);
@@ -64,8 +64,8 @@ public class SGraph extends Vertex implements SDFInterface {
         edges = new HashSet<>();
         sourceNode = new SNode(new SGraphIOStage());
         sinkNode = new SNode(new SGraphIOStage());
-        sourceNode.setId(String.format("%s-%s", "SourceNode", sourceNode.vertexId));
-        sinkNode.setId(String.format("%s-%s", "SinkNode", sinkNode.vertexId));
+        sourceNode.setVertexLabel("SourceNode");
+        sinkNode.setVertexLabel("SinkNode");
         sourceNode.setContext(this);
         sinkNode.setContext(this);
         nodes.put(sourceNode.vertexId, sourceNode);
@@ -475,22 +475,14 @@ public class SGraph extends Vertex implements SDFInterface {
     }
 
     public MutableGraph getVizGraph() {
-        String vertexPath = getVertexPath();
-        MutableGraph g = mutGraph(vertexPath).setDirected(true).setCluster(true);
-        g.graphAttrs().add(Label.of(getVertexId()));
+        String vertexId = getVertexId();
+        MutableGraph g = mutGraph(vertexId).setDirected(true).setCluster(true);
+        g.graphAttrs().add(Label.of(getVertexLabel()));
         for (Vertex vertex : this.getNodes()) {
             if (vertex instanceof SNode) {
                 SNode v = (SNode) vertex;
-                String nodeTitle = v.getVertexId();
-                //Simplify the node name
-                if (nodeTitle.startsWith("SourceNode")) {
-                    nodeTitle = "SourceNode";
-                } else if (nodeTitle.startsWith("SinkNode")) {
-                    nodeTitle = "SinkNode";
-                } else if (nodeTitle.startsWith("Infusion")) {
-                    nodeTitle = "Infusion";
-                }
-                MutableNode vNode = mutNode(v.getVertexPath()).add(Label.of(nodeTitle));
+                String nodeTitle = v.getVertexLabel();
+                MutableNode vNode = mutNode(v.getVertexId()).add(Label.of(nodeTitle));
                 for (Vertex outputNode : v.getOutputVertices()) { //note: sink node have no outputVertices, parent graph hold this information
                     vNode = createVizEdge(vNode, outputNode);
                 }
@@ -499,7 +491,7 @@ public class SGraph extends Vertex implements SDFInterface {
                 SGraph v = (SGraph) vertex;
                 MutableGraph subGraph = v.getVizGraph();
                 Vertex sinkNode = v.sinkNode;
-                MutableNode innerSink = mutNode(sinkNode.getVertexPath()).add(Label.of("SinkNode"));
+                MutableNode innerSink = mutNode(sinkNode.getVertexId()).add(Label.of("SinkNode"));
                 for (Vertex outputNode : vertex.getOutputVertices()) {
                     innerSink = createVizEdge(innerSink, outputNode);
                 }
@@ -511,12 +503,12 @@ public class SGraph extends Vertex implements SDFInterface {
 
     private MutableNode createVizEdge(MutableNode vizFromNode, Vertex outputNode) {
         if (outputNode instanceof SNode) {
-            vizFromNode = vizFromNode.addLink(outputNode.getVertexPath());
+            vizFromNode = vizFromNode.addLink(outputNode.getVertexId());
         } else {
             SGraph subGraph = (SGraph) outputNode;
             SNode innerSource = subGraph.sourceNode;
             MutableGraph innerGraph = subGraph.getVizGraph();// create inner graph, this graph is implicitly added to the parent
-            vizFromNode = vizFromNode.addLink(innerSource.getVertexPath());
+            vizFromNode = vizFromNode.addLink(innerSource.getVertexId());
         }
         return vizFromNode;
     }

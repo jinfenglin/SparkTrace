@@ -1,5 +1,3 @@
-import buildingBlocks.preprocessor.EnglishPreprocess;
-import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
 import core.graphPipeline.basic.*;
 import core.pipelineOptimizer.*;
 import examples.TestBase;
@@ -15,11 +13,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Assert;
 import org.junit.Test;
-import visualization.graphvizapi.Graph;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -39,7 +34,7 @@ public class SGraphTest extends TestBase {
         IDF idf = new IDF();
 
         SGraph g1 = new SGraph();
-        g1.setId("graph");
+        g1.setVertexLabel("graph");
         g1.addInputField("sentence");
         g1.addOutputField("output_idf");
 
@@ -122,7 +117,7 @@ public class SGraphTest extends TestBase {
     @Test
     public void penetrationTest() throws Exception {
         SGraph globalGraph = new SGraph();
-        globalGraph.setId("top_graph");
+        globalGraph.setVertexLabel("top_graph");
         globalGraph.addInputField("sentence");
 
         globalGraph.addOutputField("output_idf");

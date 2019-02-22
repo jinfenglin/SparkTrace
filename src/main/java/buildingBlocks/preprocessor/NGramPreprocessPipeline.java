@@ -17,7 +17,7 @@ public class NGramPreprocessPipeline {
         SGraph prep1 = EnglishPreprocess.getGraph("preprocess");//text - cleanTokens
 
         NGram ngramStage = new NGram().setN(2);
-        SNode ngramNode = new SNode(new NullRemoverModelSingleIO(ngramStage));
+        SNode ngramNode = new SNode(new NullRemoverModelSingleIO(ngramStage), "ngram");
         ngramNode.addInputField("tokens");
         ngramNode.addOutputField("ngrams");
 
