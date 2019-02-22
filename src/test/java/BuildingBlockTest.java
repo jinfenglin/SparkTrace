@@ -23,6 +23,7 @@ import traceability.components.maven.MavenLink;
 import java.util.HashMap;
 import java.util.Map;
 
+
 public class BuildingBlockTest extends TestBase {
     private static final String masterUrl = "local";
     Dataset<MavenCommit> commits;
@@ -35,9 +36,9 @@ public class BuildingBlockTest extends TestBase {
 
     @Before
     public void runSparkTestWithMavenData() {
-        String commitPath = "src/main/resources/maven_sample/commits.csv";
-        String improvementPath = "src/main/resources/maven_sample/improvement.csv";
-        String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
+        String commitPath = "src/main/resources/maven_mini/commits.csv";
+        String improvementPath = "src/main/resources/maven_mini/improvement.csv";
+        String linkPath = "src/main/resources/maven_mini/improvementCommitLinks.csv";
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
         links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);
@@ -134,6 +135,7 @@ public class BuildingBlockTest extends TestBase {
         voteTask.showGraph("votingSystem_after_optimize");
 
         voteTask.train(commits, improvements, null);
+        System.out.print("Training is finished...");
         Dataset<Row> result = voteTask.trace(commits, improvements);
         result.show();
     }

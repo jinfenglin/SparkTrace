@@ -225,7 +225,7 @@ public class SGraph extends Vertex implements SDFInterface {
 
     @Override
     public Pipeline toPipeline() throws Exception {
-        boolean cleanColumns = true;
+        boolean cleanColumns = false;
         syncSymbolValues(this);
 
         //Config the SGraphIOStage to parse the InputTable which translate the Symbols to real column names
@@ -244,6 +244,8 @@ public class SGraph extends Vertex implements SDFInterface {
         List<PipelineStage> stages = new ArrayList<>();
         Map<String, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
+            if(node == sinkNode || node == sourceNode)
+                continue;
             stages.addAll(Arrays.asList(node.toPipeline().getStages()));
             //Add column clean stages
             if (!node.equals(sinkNode) && cleanColumns) {
