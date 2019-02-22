@@ -8,6 +8,7 @@ import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.feature.StopWordsRemover;
 import org.apache.spark.ml.param.Param;
+import org.apache.spark.ml.param.Params;
 import org.apache.spark.ml.param.shared.HasInputCol;
 import org.apache.spark.ml.param.shared.HasInputCols;
 import org.apache.spark.ml.param.shared.HasOutputCol;
@@ -105,21 +106,30 @@ public class SNode extends Vertex {
         return snodeStr;
     }
 
+    private void removeParam(List<Param> params, Param param) {
+        String paramName = param.name();
+        for (Param p : new ArrayList<>(params)) {
+            if (p.name().equals(paramName)) {
+                params.remove(p);
+            }
+        }
+    }
+
     private List<String> getNonIOParamsValue(PipelineStage stage) {
-        if(stage instanceof StopWordsRemover || stage instanceof NullRemoverModelSingleIO) {
+        if (stage instanceof StopWordsRemover || stage instanceof NullRemoverModelSingleIO) {
             int i = 0;
         }
         List<Param> params = new ArrayList<>(Arrays.asList(stage.params()));
         List<String> paramValues = new ArrayList<>();
         if (stage instanceof HasInputCols) {
-            params.remove(((HasInputCols) stage).inputCols());
+            removeParam(params, ((HasInputCols) stage).inputCols());
         } else if (stage instanceof HasInputCol) {
-            params.remove(((HasInputCol) stage).inputCol());
+            removeParam(params, ((HasInputCol) stage).inputCol());
         }
         if (stage instanceof HasOutputCol) {
-            params.remove(((HasOutputCol) stage).outputCol());
+            removeParam(params, ((HasOutputCol) stage).outputCol());
         } else if (stage instanceof HasOutputCols) {
-            params.remove(((HasOutputCols) stage).outputCols());
+            removeParam(params, ((HasOutputCols) stage).outputCols());
         }
         for (Param param : params) {
             paramValues.add(stage.get(param).toString());

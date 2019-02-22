@@ -10,6 +10,7 @@ import buildingBlocks.traceTasks.VoteTraceBuilder;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 import examples.TestBase;
+import featurePipelineStages.cacheStage.CacheStage;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Before;
