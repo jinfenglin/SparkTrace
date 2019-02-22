@@ -9,11 +9,13 @@ import core.graphPipeline.basic.SGraph;
 public class VoteTraceBuilder implements TraceTaskBuilder {
     @Override
     public SGraph createSDF() throws Exception {
-        SGraph sdf = new SGraph();
+        SGraph sdf = new SGraph("Vote_SDF");
         sdf.addInputField("s_text");
         sdf.addInputField("t_text");
         sdf.addOutputField("s_text_out");
         sdf.addOutputField("t_text_out");
+        sdf.assignTypeToOutputField("s_text_out", SGraph.SDFType.SOURCE_SDF);
+        sdf.assignTypeToOutputField("t_text_out", SGraph.SDFType.TARGET_SDF);
 
         sdf.connect(sdf.sourceNode, "s_text", sdf.sinkNode, "s_text_out");
         sdf.connect(sdf.sourceNode, "t_text", sdf.sinkNode, "t_text_out");
@@ -22,7 +24,7 @@ public class VoteTraceBuilder implements TraceTaskBuilder {
 
     @Override
     public SGraph createDDF() throws Exception {
-        SGraph ddf = new SGraph();
+        SGraph ddf = new SGraph("Vote_DDF");
         ddf.addInputField("s_text");
         ddf.addInputField("t_text");
         ddf.addOutputField("vsm_out");

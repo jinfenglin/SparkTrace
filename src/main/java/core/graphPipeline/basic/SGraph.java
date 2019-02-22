@@ -243,11 +243,7 @@ public class SGraph extends Vertex implements SDFInterface {
         List<PipelineStage> stages = new ArrayList<>();
         Map<IOTableCell, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
-            //stages.add(node.toPipeline());
             stages.addAll(Arrays.asList(node.toPipeline().getStages()));
-            if (node.getOutputVertices().size() >= 2 && node != sourceNode && node != sinkNode) {
-                stages.add(new CacheStage());
-            }
             //Add column clean stages
             if (!node.equals(sinkNode) && cleanColumns) {
                 for (IOTableCell targetCell : node.getInputTable().getCells()) {

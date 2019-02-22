@@ -132,5 +132,9 @@ public class BuildingBlockTest extends TestBase {
         voteTask.infuse();
         voteTask.optimize(voteTask);
         voteTask.showGraph("votingSystem_after_optimize");
+
+        voteTask.train(commits, improvements, null);
+        Dataset<Row> result = voteTask.trace(commits, improvements);
+        result.show();
     }
 }

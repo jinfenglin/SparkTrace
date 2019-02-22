@@ -17,6 +17,7 @@ import scala.collection.Seq;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.apache.spark.sql.functions.col;
@@ -103,10 +104,12 @@ public class InfusionStage extends Transformer implements InfusionStageParam {
 
     @Override
     public StructType transformSchema(StructType structType) {
-        Set<String> sourceSDFCols = sdfGraph.getSourceSDFOutput();
-        Set<String> targetSDFCols = sdfGraph.getTargetSDFOutputs();
+
         //ensure all output field have been assigned with a type
-        assert sourceSDFCols.size() + targetSDFCols.size() == sdfGraph.getOutputTable().getCells().size();
+        Map<String, SGraph.SDFType> outputTypeMap = sdfGraph.getOutputTypeMap();
+        for (String outputFieldName : sdfGraph.getOutputTypeMap().keySet()) {
+            assert outputTypeMap.get(outputFieldName) != null;
+        }
         //TODO fix the mismatch between real schema and return schema
         return structType;
     }

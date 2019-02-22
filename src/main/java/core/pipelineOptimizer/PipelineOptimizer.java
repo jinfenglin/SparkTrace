@@ -5,6 +5,7 @@ import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
 import featurePipelineStages.SGraphIOStage;
 import javafx.util.Pair;
+import org.apache.spark.ml.feature.Tokenizer;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -237,6 +238,7 @@ public class PipelineOptimizer {
             GraphHierarchyTree treeNode = ght.findNode(node);
             treeNodes.add(treeNode);
         }
+
         GraphHierarchyTree lcaTreeNode = ght.LCA(treeNodes.toArray(new GraphHierarchyTree[0]));
         List<Pair<Vertex, SNode>> parentVertices = new ArrayList<>();
         for (SNode node : nodes) {

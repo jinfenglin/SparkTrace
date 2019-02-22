@@ -34,7 +34,7 @@ public class Symbol {
 
     @Override
     public String toString() {
-        return scope.getVertexId() + "." + symbolName;
+        return scope.getVertexLabel() + "." + symbolName;
     }
 
     @Override
