@@ -1,6 +1,6 @@
 package buildingBlocks.text2TFIDF;
 
-import buildingBlocks.preprocessor.EnglishPreprocess;
+import buildingBlocks.preprocessor.CleanTokens;
 import buildingBlocks.vectorize.TFIDFPipeline;
 import core.graphPipeline.basic.SGraph;
 
@@ -15,8 +15,8 @@ public class Text2TFIDFPipeline {
         graph.addOutputField("tf-idf1");
         graph.addOutputField("tf-idf2");
 
-        SGraph prep1 = EnglishPreprocess.getGraph("prep1");//text - cleanTokens
-        SGraph prep2 = EnglishPreprocess.getGraph("prep2");
+        SGraph prep1 = CleanTokens.getGraph("prep1");//text - cleanTokens
+        SGraph prep2 = CleanTokens.getGraph("prep2");
         SGraph tfidfPipe = TFIDFPipeline.getGraph("TFIDF"); //"tokens1,2"   - "tf-idf1,2"
 
         graph.addNode(prep1);

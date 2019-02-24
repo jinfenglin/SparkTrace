@@ -54,25 +54,27 @@ public class VoteTraceBuilder implements TraceTaskBuilder {
 
     @Override
     public SparkTraceTask connectTask(SparkTraceTask task) throws Exception {
-        task.connect(task.sourceNode, "s_text", task.getSdfGraph(), "s_text");
-        task.connect(task.sourceNode, "t_text", task.getSdfGraph(), "t_text");
-        task.connect(task.getSdfGraph(), "s_text_out", task.getDdfGraph(), "s_text");
-        task.connect(task.getSdfGraph(), "t_text_out", task.getDdfGraph(), "t_text");
-        task.connect(task.getDdfGraph(), "vsm_out", task.sinkNode, "vsm_out");
-        task.connect(task.getDdfGraph(), "lda_out", task.sinkNode, "lda_out");
-        task.connect(task.getDdfGraph(), "ngram_out", task.sinkNode, "ngram_out");
-        return task;
+//        task.connect(task.sourceNode, "s_text", task.getSdfGraph(), "s_text");
+//        task.connect(task.sourceNode, "t_text", task.getSdfGraph(), "t_text");
+//        task.connect(task.getSdfGraph(), "s_text_out", task.getDdfGraph(), "s_text");
+//        task.connect(task.getSdfGraph(), "t_text_out", task.getDdfGraph(), "t_text");
+//        task.connect(task.getDdfGraph(), "vsm_out", task.sinkNode, "vsm_out");
+//        task.connect(task.getDdfGraph(), "lda_out", task.sinkNode, "lda_out");
+//        task.connect(task.getDdfGraph(), "ngram_out", task.sinkNode, "ngram_out");
+//        return task;
+        return null;
     }
 
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
-        SparkTraceTask task = new SparkTraceTask(createSDF(), createDDF(), sourceId, targetId);
-        task.setVertexLabel("vote");
-        task.addInputField("s_text").addInputField("t_text");
-        task.addOutputField("vsm_out");
-        task.addOutputField("lda_out");
-        task.addOutputField("ngram_out");
-        connectTask(task);
-        return task;
+//        SparkTraceTask task = new SparkTraceTask(createSDF(), createDDF(), sourceId, targetId);
+//        task.setVertexLabel("vote");
+//        task.addInputField("s_text").addInputField("t_text");
+//        task.addOutputField("vsm_out");
+//        task.addOutputField("lda_out");
+//        task.addOutputField("ngram_out");
+//        connectTask(task);
+//        return task;
+        return null;
     }
 }

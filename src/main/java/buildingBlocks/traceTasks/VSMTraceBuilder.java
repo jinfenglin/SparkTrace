@@ -1,6 +1,8 @@
 package buildingBlocks.traceTasks;
 
-import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
+import buildingBlocks.preprocessor.CleanTokens;
+import buildingBlocks.preprocessor.SimpleWordCount;
+import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
@@ -9,12 +11,21 @@ import core.graphPipeline.basic.SGraph;
  *
  */
 public class VSMTraceBuilder implements TraceTaskBuilder {
+    public static String INPUT_TEXT1 = "s_text";
+    public static String INPUT_TEXT2 = "t_text";
+    public static String OUTPUT = "vsm_sim";
+
     @Override
     public SGraph createSDF() throws Exception {
-        SGraph graph = Text2TFIDFPipeline.getGraph("VSM_SDF");//text1,2 = "tf-idf1,2"
-        graph.assignTypeToOutputField("tf-idf1", SGraph.SDFType.SOURCE_SDF);
-        graph.assignTypeToOutputField("tf-idf2", SGraph.SDFType.TARGET_SDF);
-        return graph;
+        return null;
+    }
+
+    public SGraph createSSDF() throws Exception {
+        return SimpleWordCount.getGraph("VSM_SSDF");//text1,2 = "htf"
+    }
+
+    public SGraph createTSDF() throws Exception {
+        return SimpleWordCount.getGraph("VSM_TSDF");//text = "htf"
     }
 
     @Override
@@ -24,20 +35,23 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
 
     @Override
     public SparkTraceTask connectTask(SparkTraceTask task) throws Exception {
-        task.connect(task.sourceNode, "s_text", task.getSdfGraph(), "text1");
-        task.connect(task.sourceNode, "t_text", task.getSdfGraph(), "text2");
-        task.connect(task.getSdfGraph(), "tf-idf1", task.getDdfGraph(), "vec1");
-        task.connect(task.getSdfGraph(), "tf-idf2", task.getDdfGraph(), "vec2");
-        task.connect(task.getDdfGraph(), "cosin_sim", task.sinkNode, "vsm_sim");
+        task.connect(task.sourceNode, INPUT_TEXT1, task.getSourceSDFSdfGraph(), SimpleWordCount.INPUT_TEXT_COL);
+        task.connect(task.sourceNode, INPUT_TEXT2, task.getTargetSDFSdfGraph(), SimpleWordCount.INPUT_TEXT_COL);
+        task.connect(task.getSourceSDFSdfGraph(), SimpleWordCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph(), IDFGraphPipeline.INPUT1);
+        task.connect(task.getTargetSDFSdfGraph(), SimpleWordCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph(), IDFGraphPipeline.INPUT2);
+        task.connect(task.getUnsupervisedLearnGraph(), IDFGraphPipeline.OUTPUT1, task.getDdfGraph(), SparseCosinSimilarityPipeline.INPUT1);
+        task.connect(task.getUnsupervisedLearnGraph(), IDFGraphPipeline.OUTPUT2, task.getDdfGraph(), SparseCosinSimilarityPipeline.INPUT2);
+        task.connect(task.getDdfGraph(), SparseCosinSimilarityPipeline.OUTPUT, task.sinkNode, OUTPUT);
         return task;
     }
 
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
-        SparkTraceTask task = new SparkTraceTask(createSDF(), createDDF(), sourceId, targetId);
+        SGraph unsupervised = IDFGraphPipeline.getGraph("SharedIDF");
+        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), unsupervised, createDDF(), sourceId, targetId);
         task.setVertexLabel("VSM");
-        task.addInputField("s_text").addInputField("t_text");
-        task.addOutputField("vsm_sim");
+        task.addInputField(INPUT_TEXT1).addInputField(INPUT_TEXT2);
+        task.addOutputField(OUTPUT);
         connectTask(task);
         return task;
     }

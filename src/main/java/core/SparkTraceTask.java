@@ -4,17 +4,19 @@ import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import core.pipelineOptimizer.*;
-import featurePipelineStages.InfusionStage.InfusionStage;
-import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.clustering.LDAModel;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import traceability.components.abstractComponents.TraceArtifact;
 import traceability.components.abstractComponents.TraceLink;
 
 import java.util.*;
-
-import static org.apache.spark.sql.functions.lit;
 
 
 /**
@@ -31,53 +33,32 @@ public class SparkTraceTask extends SGraph {
     //Symbol name for id column which can be configured in different places.
     private String sourceIdCol, targetIdCol;
 
-    private SGraph sdfGraph;
+    private SGraph sourceSDF, targetSDF;
+    private SGraph unsupervisedLearnGraph;
     private SGraph ddfGraph;
-    private TransparentSNode infusionNode;
-    private PipelineModel taskModel;
+
+    private PipelineModel sourceSDFModel, targetSDFModel, unsupervisedModel, ddfModel;
 
 
-    public SparkTraceTask(SGraph sdfGraph, SGraph ddfGraph, String sourceIdCol, String targetIdCol) {
+    public SparkTraceTask(SGraph sourceSDF, SGraph targetSDF, SGraph unsupervisedLearnGraph, SGraph ddfGraph, String sourceIdCol, String targetIdCol) {
         super();
-        this.sdfGraph = sdfGraph;
+        this.sourceSDF = sourceSDF;
+        this.targetSDF = targetSDF;
+        this.unsupervisedLearnGraph = unsupervisedLearnGraph;
         this.ddfGraph = ddfGraph;
-        this.infusionNode = new TransparentSNode(new InfusionStage(sdfGraph, ddfGraph), "Infusion");
-        addNode(sdfGraph);
+        addNode(sourceSDF);
+        addNode(targetSDF);
+        addNode(unsupervisedLearnGraph);
         addNode(ddfGraph);
-        addNode(this.infusionNode);
+
         this.sourceIdCol = sourceIdCol;
         this.targetIdCol = targetIdCol;
     }
 
-    /**
-     * Connect the SDF and DDF. (for one sub STT)
-     * 1. Add all the symbols to the DDF input fields that the sub STT have created in SDF
-     * 2. Connect the addedSDFSymbols in SDF to the newly created DDF symbols.
-     *
-     * @param addedSDFSymbols
-     * @param SDF
-     * @param DDF
-     * @param SDFSymbolMap
-     * @return
-     * @throws Exception
-     */
-    private List<String> connectSDFToDDF(List<Symbol> addedSDFSymbols, SGraph SDF, SGraph DDF, Map<String, String> SDFSymbolMap) throws Exception {
-        List<String> addedDDFSymbolNames = new ArrayList<>();
-        for (Symbol SDFAddedField : addedSDFSymbols) {
-            String fromSymbolName = SDFAddedField.getSymbolName();
-            String toSymbolName = SDFAddedField.getSymbolName();
 
-            DDF.addInputField(toSymbolName);
-            this.connect(SDF, fromSymbolName, DDF, toSymbolName);//TODO toSymbolName should be unique name
-            addedDDFSymbolNames.add(SDFAddedField.getSymbolName());
-            SDFSymbolMap.put(toSymbolName, fromSymbolName);
-        }
-        return addedDDFSymbolNames;
-    }
-
-    private void mergeSubTask(SparkTraceTask childTask, List<GraphHierarchyTree> path) throws Exception {
-        SGraph parentSDF = this.sdfGraph;
-        SGraph childSDF = childTask.sdfGraph;
+    //TODO merge the unsupervised stage as well
+    private void mergeSubTask(SGraph parentSDF, SGraph childSDF, List<GraphHierarchyTree> path) throws Exception {
+        SparkTraceTask childTask = (SparkTraceTask) childSDF.getContext();
         SGraph parentDDF = this.ddfGraph;
         SGraph childDDF = childTask.ddfGraph;
         parentSDF.addNode(childSDF);
@@ -121,33 +102,8 @@ public class SparkTraceTask extends SGraph {
             }
         }
         childTask.removeNodeWithoutCleanRelations(childSDF);
-        childTask.sdfGraph = null;
     }
 
-
-    /**
-     * Modify the infusion node to connectSymbol the sdf and ddf.
-     */
-    public void infuse() throws Exception {
-        if (infusionNode == null) {
-            return;
-        }
-        for (IOTableCell sdfOut : sdfGraph.getOutputTable().getCells()) {
-            if (sdfOut.getOutputTarget().size() == 0) {
-                continue;        //If this field is not used
-            }
-            Symbol infusionIn = new Symbol(infusionNode, sdfOut.getFieldSymbol().getSymbolName() + "_in");
-            Symbol infusionOut = new Symbol(infusionNode, sdfOut.getFieldSymbol().getSymbolName() + "_out");
-            infusionNode.addInputField(infusionIn);
-            infusionNode.addOutputField(infusionOut);
-            for (IOTableCell ddfReceiver : new ArrayList<>(sdfOut.getOutputTarget())) {
-                connect(infusionOut, ddfReceiver.getFieldSymbol());
-                disconnect(sdfOut.getFieldSymbol(), ddfReceiver.getFieldSymbol());
-            }
-            sdfOut.setRemovable(false);
-            this.connect(sdfOut.getFieldSymbol(), infusionIn);
-        }
-    }
 
     /**
      * Collect SDFs from child STTs by scanning the nodes with BFS. If a STT found then register it; if
@@ -164,61 +120,18 @@ public class SparkTraceTask extends SGraph {
                     SparkTraceTask subTask = (SparkTraceTask) node;
                     //Make sure the child STT have merged all inner STTs
                     subTask.initSTT();
-                    subTask.infusionNode = null;
-
                     //Find a path from parent STT's DDF graph to subTask in GHT, the first node in path is parent DDF
                     GraphHierarchyTree subTaskDDFTreeNode = ght.findNode(subTask.ddfGraph);
                     GraphHierarchyTree parentDDFTreeNode = ght.findNode(ddfGraph);
                     List<GraphHierarchyTree> path = new ArrayList<>();
                     ght.findPath(parentDDFTreeNode, subTaskDDFTreeNode, path);
                     //Merge the childSTT to the parent STT
-                    mergeSubTask(subTask, path);
+                    mergeSubTask(getSourceSDFSdfGraph(), subTask.getSourceSDFSdfGraph(), path);
+                    mergeSubTask(getTargetSDFSdfGraph(), subTask.getTargetSDFSdfGraph(), path);
                 }
             }
         }
     }
-
-    @Override
-    public Pipeline toPipeline() throws Exception {
-        if (infusionNode != null) {
-            ((InfusionStage) infusionNode.getSparkPipelineStage()).setSourceIdCol(getSourceIdCol());
-            ((InfusionStage) infusionNode.getSparkPipelineStage()).setTargetIdCol(getTargetIdCol());
-        }
-        return super.toPipeline();
-    }
-
-    /**
-     * Combine the schema of given dataset together, add null to the field which have no value;
-     * If source and target have columns with same name then the columns will be regarded as same column and union
-     * together.
-     *
-     * @param sourceArtifacts
-     * @param targetArtifacts
-     * @return
-     */
-    private Dataset<Row> UnionSourceAndTarget(Dataset<? extends TraceArtifact> sourceArtifacts,
-                                              Dataset<? extends TraceArtifact> targetArtifacts) {
-        List<String> sourceCols = Arrays.asList(sourceArtifacts.columns());
-        List<String> targetCols = Arrays.asList(targetArtifacts.columns());
-
-        //ensure no duplicated column name in input
-        Set<String> intersect1 = new HashSet<>(sourceCols);
-        Set<String> intersect2 = new HashSet<>(targetCols);
-        intersect1.retainAll(intersect2);
-        assert intersect1.size() == 0;
-
-        Dataset<Row> sourceDF = sourceArtifacts.toDF();
-        Dataset<Row> targetDF = targetArtifacts.toDF();
-        for (String sourceCol : sourceCols) {
-            targetDF = targetDF.withColumn(sourceCol, lit(null));
-        }
-        for (String targetCol : targetCols) {
-            sourceDF = sourceDF.withColumn(targetCol, lit(null));
-        }
-        Dataset<Row> mixed = sourceDF.unionByName(targetDF);
-        return mixed;
-    }
-
 
     /**
      * Execute this STT as a top level STT.
@@ -226,31 +139,124 @@ public class SparkTraceTask extends SGraph {
     public void train(Dataset<? extends TraceArtifact> sourceArtifacts,
                       Dataset<? extends TraceArtifact> targetArtifacts,
                       Dataset<? extends TraceLink> goldenLinks) throws Exception {
-        Dataset<Row> combinedDataset = UnionSourceAndTarget(sourceArtifacts, targetArtifacts);
-        setTrainingFlag(true);
-        if (goldenLinks != null) {
-            setGoldenLinks(goldenLinks.toDF());
+        PipelineModel sourceSDFModel = this.getSourceSDFSdfGraph().toPipeline().fit(sourceArtifacts);
+        PipelineModel targetSDFModel = this.getTargetSDFSdfGraph().toPipeline().fit(targetArtifacts);
+        this.sourceSDFModel = sourceSDFModel;
+        this.targetSDFModel = targetSDFModel;
+        Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
+        Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
+
+
+        String inputColParam = "inputCol";
+        String outputColParam = "outputCol";
+
+        //unsupervised stage
+        this.unsupervisedModel = unsupervisedLeanring(sourceSDFeatureVecs, targetSDFeatureVecs);
+
+        if (this.unsupervisedModel.stages()[0] instanceof LDAModel) {
+            inputColParam = "featuresCol";
+            outputColParam = "topicDistributionCol";
         }
-        taskModel = this.toPipeline().fit(combinedDataset);
+        this.unsupervisedModel.stages()[0].set(inputColParam, this.unsupervisedLearnGraph.getInputTable().getCells().get(0).getFieldSymbol().getSymbolValue());
+        this.unsupervisedModel.stages()[0].set(outputColParam, this.unsupervisedLearnGraph.getOutputTable().getCells().get(0).getFieldSymbol().getSymbolValue());
+        sourceSDFeatureVecs = this.unsupervisedModel.transform(sourceSDFeatureVecs);
+
+        this.unsupervisedModel.stages()[0].set(inputColParam, this.unsupervisedLearnGraph.getInputTable().getCells().get(1).getFieldSymbol().getSymbolValue());
+        this.unsupervisedModel.stages()[0].set(outputColParam, this.unsupervisedLearnGraph.getOutputTable().getCells().get(1).getFieldSymbol().getSymbolValue());
+        targetSDFeatureVecs = this.unsupervisedModel.transform(targetSDFeatureVecs);
+
+        Dataset<Row> candidateLinks;
+        if (goldenLinks == null) {
+            candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
+        } else {
+            candidateLinks = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
+        }
+
+        PipelineModel ddfModel = ddfGraph.toPipeline().fit(candidateLinks);
+        this.ddfModel = ddfModel;
+    }
+
+    private PipelineModel unsupervisedLeanring(Dataset<Row> sourceSDFeatureVecs, Dataset<Row> targetSDFFeatreusVecs) throws Exception {
+        Set<String> sourceColNames = new HashSet<>(Arrays.asList(sourceSDFeatureVecs.columns()));
+        Set<String> targetColNames = new HashSet<>(Arrays.asList(targetSDFFeatreusVecs.columns()));
+        //todo: this is just a temporal solution. When SNode and stage have mismatch on input number, defaulty will take the first filed as input
+        String mixedInputCol = unsupervisedLearnGraph.getInputTable().getCells().get(0).getFieldSymbol().getSymbolValue();
+        String fieldName = unsupervisedLearnGraph.getInputTable().getCells().get(0).getFieldSymbol().getSymbolValue();
+
+        DataType columnDataType = null;
+        for (StructField sf : sourceSDFeatureVecs.schema().fields()) {
+            if (sf.name().equals(fieldName)) {
+                columnDataType = sf.dataType();
+            }
+        }
+        StructField field = DataTypes.createStructField(mixedInputCol, columnDataType, false);
+        StructType st = new StructType(new StructField[]{field});
+        Dataset<Row> trainingData = sourceSDFeatureVecs.sparkSession().createDataFrame(new ArrayList<>(), st);
+
+        for (IOTableCell inputCell : unsupervisedLearnGraph.getInputTable().getCells()) {
+            String fieldValue = inputCell.getFieldSymbol().getSymbolValue();
+            Dataset<Row> columnData = null;
+            if (sourceColNames.contains(fieldValue)) {
+                columnData = sourceSDFeatureVecs.select(fieldValue);
+            } else if (targetColNames.contains(fieldValue)) {
+                columnData = targetSDFFeatreusVecs.select(fieldValue);
+            }
+            trainingData = trainingData.union(columnData);
+        }
+        return unsupervisedLearnGraph.toPipeline().fit(trainingData);
+    }
+
+    private Dataset<Row> appendFeaturesToLinks(Dataset<Row> links, Dataset<Row> sourceFeatures, Dataset<Row> targetFeatures) {
+        String sourceIDColName = getSourceIdCol();
+        String targetIDColName = getTargetIdCol();
+        Column sourceArtifactIdCol = sourceFeatures.col(sourceIDColName);
+        Column targetArtifactIdCol = targetFeatures.col(targetIDColName);
+
+        Column linkSourceIdCol = links.col(sourceIDColName);
+        Column linkTargetIdCol = links.col(targetIDColName);
+
+        Dataset<Row> linksWithFeatureVec = links.join(sourceFeatures, sourceArtifactIdCol.equalTo(linkSourceIdCol));
+        linksWithFeatureVec = linksWithFeatureVec.join(targetFeatures, targetArtifactIdCol.equalTo(linkTargetIdCol));
+        linksWithFeatureVec = linksWithFeatureVec.drop(sourceArtifactIdCol).drop(targetArtifactIdCol);
+        return linksWithFeatureVec;
     }
 
     public Dataset<Row> trace(Dataset<? extends TraceArtifact> sourceArtifacts,
                               Dataset<? extends TraceArtifact> targetArtifacts) {
-        Dataset<Row> combinedDataset = UnionSourceAndTarget(sourceArtifacts, targetArtifacts);
-        setTrainingFlag(false);
-        Dataset<Row> result = taskModel.transform(combinedDataset);
-        return result;
+        Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
+        Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
+
+
+        String inputColParam = "inputCol";
+        String outputColParam = "outputCol";
+        if (this.unsupervisedModel.stages()[0] instanceof LDAModel) {
+            inputColParam = "featuresCol";
+            outputColParam = "topicDistributionCol";
+        }
+        this.unsupervisedModel.stages()[0].set(inputColParam, this.unsupervisedLearnGraph.getInputTable().getCells().get(0).getFieldSymbol().getSymbolValue());
+        this.unsupervisedModel.stages()[0].set(outputColParam, this.unsupervisedLearnGraph.getOutputTable().getCells().get(0).getFieldSymbol().getSymbolValue());
+        sourceSDFeatureVecs = this.unsupervisedModel.transform(sourceSDFeatureVecs);
+        this.unsupervisedModel.stages()[0].set(inputColParam, this.unsupervisedLearnGraph.getInputTable().getCells().get(1).getFieldSymbol().getSymbolValue());
+        this.unsupervisedModel.stages()[0].set(outputColParam, this.unsupervisedLearnGraph.getOutputTable().getCells().get(1).getFieldSymbol().getSymbolValue());
+
+        targetSDFeatureVecs = this.unsupervisedModel.transform(targetSDFeatureVecs);
+        Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
+        return this.ddfModel.transform(candidateLinks);
     }
 
-    public SGraph getSdfGraph() {
-        return sdfGraph;
+    public SGraph getSourceSDFSdfGraph() {
+        return sourceSDF;
     }
 
-    public void setSdfGraph(SGraph sdfGraph) throws Exception {
-        removeNode(getSdfGraph());
-        this.sdfGraph = sdfGraph;
-        addNode(sdfGraph);
+    public SGraph getTargetSDFSdfGraph() {
+        return targetSDF;
     }
+
+
+    public SGraph getUnsupervisedLearnGraph() {
+        return unsupervisedLearnGraph;
+    }
+
 
     public SGraph getDdfGraph() {
         return ddfGraph;
@@ -260,22 +266,6 @@ public class SparkTraceTask extends SGraph {
         removeNode(getDdfGraph());
         this.ddfGraph = ddfGraph;
         addNode(getDdfGraph());
-    }
-
-    private Map<String, String> reverseMapKeyValue(Map<String, String> inputMap) {
-        HashMap<String, String> reversedHashMap = new HashMap<>();
-        for (String key : inputMap.keySet()) {
-            reversedHashMap.put(inputMap.get(key), key);
-        }
-        return reversedHashMap;
-    }
-
-    private void setTrainingFlag(boolean flag) {
-        ((InfusionStage) infusionNode.getSparkPipelineStage()).setTrainingFlag(flag);
-    }
-
-    private void setGoldenLinks(Dataset<Row> goldenLinks) {
-        ((InfusionStage) infusionNode.getSparkPipelineStage()).setGoldenLinks(goldenLinks);
     }
 
     public String getSourceIdCol() {

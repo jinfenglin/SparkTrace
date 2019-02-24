@@ -1,7 +1,7 @@
 import core.graphPipeline.basic.*;
-import core.pipelineOptimizer.*;
+import core.pipelineOptimizer.GraphHierarchyTree;
+import core.pipelineOptimizer.PipelineOptimizer;
 import examples.TestBase;
-import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import featurePipelineStages.SGraphColumnRemovalStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
@@ -154,20 +154,6 @@ public class SGraphTest extends TestBase {
         removalStage.setInputCols(new String[]{"sentence", "label"});
         dataset = removalStage.transform(dataset);
         Assert.assertEquals(0, dataset.columns().length);
-    }
-
-
-    @Test
-    public void nestPipelineTest() {
-        Dataset<Row> dataset = getSentenceLabelDataset();
-        NullRemoverModelSingleIO tk = new NullRemoverModelSingleIO(new Tokenizer().setInputCol("sentence"));
-
-        HashingTF htf = new HashingTF().setInputCol(tk.getOutputCol());
-
-        Pipeline p2 = makePipeline(tk, new NullRemoverModelSingleIO(htf));
-        IDF idf = new IDF().setInputCol(htf.getOutputCol());
-        Pipeline p3 = makePipeline(p2, idf);
-        p3.fit(dataset);
     }
 
     private Pipeline makePipeline(PipelineStage... stage) {

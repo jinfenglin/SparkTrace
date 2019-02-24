@@ -1,14 +1,9 @@
 package core.graphPipeline.basic;
 
-import featurePipelineStages.NullRemoveWrapper.HasInnerStage;
-import featurePipelineStages.NullRemoveWrapper.InnerStageImplementHasInputCol;
-import featurePipelineStages.NullRemoveWrapper.InnerStageImplementHasOutputCol;
-import featurePipelineStages.NullRemoveWrapper.NullRemoverModelSingleIO;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.feature.StopWordsRemover;
 import org.apache.spark.ml.param.Param;
-import org.apache.spark.ml.param.Params;
 import org.apache.spark.ml.param.shared.HasInputCol;
 import org.apache.spark.ml.param.shared.HasInputCols;
 import org.apache.spark.ml.param.shared.HasOutputCol;
@@ -53,11 +48,9 @@ public class SNode extends Vertex {
             }
             HasInputCol hasInputColStage = (HasInputCol) sparkPipelineStage;
             String inputColName = inputCells.get(0).getFieldSymbol().getSymbolValue();
-            if (hasInputColStage instanceof InnerStageImplementHasInputCol) {
-                ((InnerStageImplementHasInputCol) hasInputColStage).setInputCol(inputColName);
-            } else {
-                hasInputColStage.set(hasInputColStage.inputCol(), inputColName);
-            }
+
+            hasInputColStage.set(hasInputColStage.inputCol(), inputColName);
+
         } else if (sparkPipelineStage instanceof HasInputCols) {
             HasInputCols hasInputCols = (HasInputCols) sparkPipelineStage;
             List<String> inputColNames = new ArrayList<>();
@@ -74,11 +67,9 @@ public class SNode extends Vertex {
             }
             HasOutputCol hasOutputCol = (HasOutputCol) sparkPipelineStage;
             String outputColName = outputCells.get(0).getFieldSymbol().getSymbolValue();
-            if (hasOutputCol instanceof InnerStageImplementHasOutputCol) {
-                ((InnerStageImplementHasOutputCol) hasOutputCol).setOutputCol(outputColName);
-            } else {
-                hasOutputCol.set(hasOutputCol.outputCol(), outputColName);
-            }
+
+            hasOutputCol.set(hasOutputCol.outputCol(), outputColName);
+
 
         } else if (sparkPipelineStage instanceof HasOutputCols) {
             HasOutputCols hasOutputCols = (HasOutputCols) sparkPipelineStage;
@@ -116,9 +107,6 @@ public class SNode extends Vertex {
     }
 
     private List<String> getNonIOParamsValue(PipelineStage stage) {
-        if (stage instanceof StopWordsRemover || stage instanceof NullRemoverModelSingleIO) {
-            int i = 0;
-        }
         List<Param> params = new ArrayList<>(Arrays.asList(stage.params()));
         List<String> paramValues = new ArrayList<>();
         if (stage instanceof HasInputCols) {
@@ -134,20 +122,12 @@ public class SNode extends Vertex {
         for (Param param : params) {
             paramValues.add(stage.get(param).toString());
         }
-        if (stage instanceof HasInnerStage) {
-            List<String> innerParamValues = getNonIOParamsValue(((HasInnerStage) stage).getInnerStage());
-            paramValues.addAll(innerParamValues);
-        }
         return paramValues;
     }
 
     private List<String> getStageTypes(PipelineStage stage) {
         List<String> stageIds = new ArrayList<>();
         stageIds.add(stage.getClass().getSimpleName());
-        if (stage instanceof HasInnerStage) {
-            List<String> innerIds = getStageTypes(((HasInnerStage) stage).getInnerStage());
-            stageIds.addAll(innerIds);
-        }
         return stageIds;
     }
 

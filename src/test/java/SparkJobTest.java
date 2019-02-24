@@ -15,9 +15,13 @@ import traceability.components.maven.MavenImprovement;
 import traceability.components.maven.MavenLink;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static core.graphPipeline.basic.SGraph.syncSymbolValues;
 
 public class SparkJobTest extends TestBase {
-    private static String masterUrl = "local";
+    private static String masterUrl = "local[1]";
 
     public SparkJobTest() {
         super(masterUrl);
@@ -58,74 +62,58 @@ public class SparkJobTest extends TestBase {
     }
 
     @Test
-    public void singleSparkTaskTest() throws Exception {
-        SparkTraceTask vsmTask = new VSMTraceBuilder().getTask("s_id","t_id");
-        Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
-        vsmTask.setConfig(vsmTaskInputConfig);
-        vsmTask.showGraph("singleSparkTaskTest_before");
-        vsmTask.initSTT();
-        vsmTask.infuse();
-        vsmTask.optimize(vsmTask);
-        vsmTask.showGraph("singleSparkTaskTest_after");
-        vsmTask.train(commits, improvements, null);
-        Dataset<Row> result = vsmTask.trace(commits, improvements);
-        result.show();
-        System.out.print(String.format("Total link num: %s are processed...", result.count()));
-    }
-
-    @Test
     public void TaskMergeTest() throws Exception {
-        SparkTraceTask t1 = new VSMTraceBuilder().getTask("s_id","t_id");
-        SGraph sdf = new SGraph();
-        sdf.setVertexLabel("ParentTask_SDF");
-        sdf.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
-        sdf.addOutputField("s_text_out", SGraph.SDFType.SOURCE_SDF);
-        sdf.addOutputField("t_text_out", SGraph.SDFType.TARGET_SDF);
-        sdf.addOutputField("s_id_out", SGraph.SDFType.SOURCE_SDF);
-        sdf.addOutputField("t_id_out", SGraph.SDFType.TARGET_SDF);
-
-        sdf.connect(sdf.sourceNode, "s_text", sdf.sinkNode, "s_text_out");
-        sdf.connect(sdf.sourceNode, "t_text", sdf.sinkNode, "t_text_out");
-        sdf.connect(sdf.sourceNode, "t_id", sdf.sinkNode, "t_id_out");
-        sdf.connect(sdf.sourceNode, "s_id", sdf.sinkNode, "s_id_out");
-
-        SGraph ddf = new SGraph();
-        ddf.addInputField("s_text").addInputField("s_id");
-        ddf.addInputField("t_text").addInputField("t_id");
-        ddf.addOutputField("vsm_cosin_sim_score");
-        ddf.setVertexLabel("ParentTask_DDF");
-
-        ddf.addNode(t1);
-        ddf.connect(ddf.sourceNode, "s_text", t1, "s_text");
-        ddf.connect(ddf.sourceNode, "t_text", t1, "t_text");
-        ddf.connect(ddf.sourceNode, "s_id", t1, "s_id");
-        ddf.connect(ddf.sourceNode, "t_id", t1, "t_id");
-        ddf.connect(t1, "vsm_score", ddf.sinkNode, "vsm_cosin_sim_score");
-
-        SparkTraceTask context = new SparkTraceTask(sdf, ddf, "s_id", "t_id");
-        context.setVertexLabel("ContextTask");
-        context.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
-        context.addOutputField("vsm_score");
-        context.connect(context.sourceNode, "s_id", sdf, "s_id");
-        context.connect(context.sourceNode, "t_id", sdf, "t_id");
-        context.connect(context.sourceNode, "s_text", sdf, "s_text");
-        context.connect(context.sourceNode, "t_text", sdf, "t_text");
-
-        context.connect(context.getSdfGraph(), "s_text_out", context.getDdfGraph(), "s_text");
-        context.connect(context.getSdfGraph(), "t_text_out", context.getDdfGraph(), "t_text");
-        context.connect(context.getSdfGraph(), "s_id_out", context.getDdfGraph(), "s_id");
-        context.connect(context.getSdfGraph(), "t_id_out", context.getDdfGraph(), "t_id");
-        context.connect(context.getDdfGraph(), "vsm_cosin_sim_score", context.sinkNode, "vsm_score");
-
-        context.showGraph("TaskMergeTest_before_optimize");
-        context.initSTT();
-        context.infuse();
-        context.optimize(context);
-        context.showGraph("TaskMergeTest_after_optimize");
-        context.setConfig(getVSMTaskConfig());
-
-        context.train(commits, improvements, null);
-        Dataset<Row> result = context.trace(commits, improvements);
-        result.show();
+//        SparkTraceTask t1 = new VSMTraceBuilder().getTask("s_id","t_id");
+//        SGraph sdf = new SGraph();
+//        sdf.setVertexLabel("ParentTask_SDF");
+//        sdf.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
+//        sdf.addOutputField("s_text_out", SGraph.SDFType.SOURCE_SDF);
+//        sdf.addOutputField("t_text_out", SGraph.SDFType.TARGET_SDF);
+//        sdf.addOutputField("s_id_out", SGraph.SDFType.SOURCE_SDF);
+//        sdf.addOutputField("t_id_out", SGraph.SDFType.TARGET_SDF);
+//
+//        sdf.connect(sdf.sourceNode, "s_text", sdf.sinkNode, "s_text_out");
+//        sdf.connect(sdf.sourceNode, "t_text", sdf.sinkNode, "t_text_out");
+//        sdf.connect(sdf.sourceNode, "t_id", sdf.sinkNode, "t_id_out");
+//        sdf.connect(sdf.sourceNode, "s_id", sdf.sinkNode, "s_id_out");
+//
+//        SGraph ddf = new SGraph();
+//        ddf.addInputField("s_text").addInputField("s_id");
+//        ddf.addInputField("t_text").addInputField("t_id");
+//        ddf.addOutputField("vsm_cosin_sim_score");
+//        ddf.setVertexLabel("ParentTask_DDF");
+//
+//        ddf.addNode(t1);
+//        ddf.connect(ddf.sourceNode, "s_text", t1, "s_text");
+//        ddf.connect(ddf.sourceNode, "t_text", t1, "t_text");
+//        ddf.connect(ddf.sourceNode, "s_id", t1, "s_id");
+//        ddf.connect(ddf.sourceNode, "t_id", t1, "t_id");
+//        ddf.connect(t1, "vsm_score", ddf.sinkNode, "vsm_cosin_sim_score");
+//
+//        SparkTraceTask context = new SparkTraceTask(sdf, ddf, "s_id", "t_id");
+//        context.setVertexLabel("ContextTask");
+//        context.addInputField("s_id").addInputField("t_id").addInputField("s_text").addInputField("t_text");
+//        context.addOutputField("vsm_score");
+//        context.connect(context.sourceNode, "s_id", sdf, "s_id");
+//        context.connect(context.sourceNode, "t_id", sdf, "t_id");
+//        context.connect(context.sourceNode, "s_text", sdf, "s_text");
+//        context.connect(context.sourceNode, "t_text", sdf, "t_text");
+//
+//        context.connect(context.getSdfGraph(), "s_text_out", context.getDdfGraph(), "s_text");
+//        context.connect(context.getSdfGraph(), "t_text_out", context.getDdfGraph(), "t_text");
+//        context.connect(context.getSdfGraph(), "s_id_out", context.getDdfGraph(), "s_id");
+//        context.connect(context.getSdfGraph(), "t_id_out", context.getDdfGraph(), "t_id");
+//        context.connect(context.getDdfGraph(), "vsm_cosin_sim_score", context.sinkNode, "vsm_score");
+//
+//        context.showGraph("TaskMergeTest_before_optimize");
+//        context.initSTT();
+//        context.infuse();
+//        context.optimize(context);
+//        context.showGraph("TaskMergeTest_after_optimize");
+//        context.setConfig(getVSMTaskConfig());
+//
+//        context.train(commits, improvements, null);
+//        Dataset<Row> result = context.trace(commits, improvements);
+//        result.show();
     }
 }

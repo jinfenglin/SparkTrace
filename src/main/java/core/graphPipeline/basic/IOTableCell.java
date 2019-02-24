@@ -1,7 +1,6 @@
 package core.graphPipeline.basic;
 
 import core.graphPipeline.graphSymbol.Symbol;
-import featurePipelineStages.InfusionStage.InfusionStage;
 import featurePipelineStages.SGraphIOStage;
 import org.apache.spark.ml.PipelineStage;
 
@@ -148,10 +147,6 @@ public class IOTableCell {
                 contextGraph = (SGraph) providerVertex.getContext();
                 IOTableCell graphInputField = contextGraph.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
                 return graphInputField.traceToSource(clearPath, topContext);
-            } else if (providerStage instanceof InfusionStage) {
-                //bypass the infusion node to find the real input source in SDF
-                IOTableCell infusionInput = ((TransparentSNode) providerVertex).getRelativeInputFiled(inputSourceCell);
-                return infusionInput.traceToSource(clearPath, topContext);
             } else {
                 return inputSourceCell;
             }

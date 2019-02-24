@@ -1,5 +1,5 @@
-import buildingBlocks.preprocessor.EnglishPreprocess;
-import buildingBlocks.preprocessor.NGramPreprocessPipeline;
+import buildingBlocks.preprocessor.CleanTokens;
+import buildingBlocks.preprocessor.NGramTokenizer;
 import buildingBlocks.text2TFIDF.Text2LDAPipeline;
 import buildingBlocks.text2TFIDF.Text2NGramTFIDFPipeline;
 import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
@@ -10,7 +10,6 @@ import buildingBlocks.traceTasks.VoteTraceBuilder;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 import examples.TestBase;
-import featurePipelineStages.cacheStage.CacheStage;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Before;
@@ -23,9 +22,11 @@ import traceability.components.maven.MavenLink;
 import java.util.HashMap;
 import java.util.Map;
 
+import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+
 
 public class BuildingBlockTest extends TestBase {
-    private static final String masterUrl = "local";
+    private static final String masterUrl = "local[4]";
     Dataset<MavenCommit> commits;
     Dataset<MavenImprovement> improvements;
     Dataset<MavenLink> links;
@@ -45,82 +46,40 @@ public class BuildingBlockTest extends TestBase {
     }
 
     @Test
-    public void EnglishPreprocessingPipelineTest() throws Exception {
-        SGraph graph = EnglishPreprocess.getGraph("");
-        Map config = new HashMap<>();
-        config.put("text", "commit_content");
-        graph.setConfig(config);
-        graph.toPipeline().fit(commits).transform(commits).show(false);
+    public void VSMTaskTest() throws Exception {
+        SparkTraceTask vsmTask = new VSMTraceBuilder().getTask("s_id", "t_id");
+        Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
+        vsmTask.setConfig(vsmTaskInputConfig);
+        vsmTask.showGraph("singleSparkTaskTest_before");
+        syncSymbolValues(vsmTask);
+        long startTime = System.currentTimeMillis();
+        vsmTask.train(commits, improvements, null);
+        Dataset<Row> result = vsmTask.trace(commits, improvements);
+        result.count();
+        long estimatedTime = System.currentTimeMillis() - startTime;
+        System.out.print(String.format("running time = %s\n", estimatedTime));
     }
 
     @Test
-    public void NgramPipeline() throws Exception {
-        SGraph graph = NGramPreprocessPipeline.getGraph("ngram");
-        Map config = new HashMap<>();
-        config.put("text", "sentence");
-        graph.setConfig(config);
-        Dataset<Row> dataset = graph.toPipeline().fit(getSentenceLabelDataset()).transform(getSentenceLabelDataset());
-        dataset.show();
-    }
-
-    @Test
-    public void TFIDFPipelineTest() throws Exception {
-        SGraph graph = Text2TFIDFPipeline.getGraph("tfidf");
-        Map config = new HashMap<>();
-        config.put("text1", "text1");
-        config.put("text2", "text2");
-        config.put("tf-idf1", "tf-idf1");
-        config.put("tf-idf2", "tf-idf2");
-        graph.setConfig(config);
-        graph.toPipeline().fit(getMultiSentenceRowData()).transform(getMultiSentenceRowData());
-    }
-
-    @Test
-    public void NgramTFIDF() throws Exception {
-        SGraph graph = Text2NGramTFIDFPipeline.getGraph("tfidf");
-        Map config = new HashMap<>();
-        config.put("text1", "text1");
-        config.put("text2", "text2");
-        config.put("ngram-tf-idf1", "ngram-tf-idf1");
-        config.put("ngram-tf-idf2", "ngram-tf-idf2");
-        graph.setConfig(config);
-        graph.toPipeline().fit(getMultiSentenceRowData()).transform(getMultiSentenceRowData()).show();
-    }
-
-    @Test
-    public void LDAPipelineTest() throws Exception {
-        SGraph graph = Text2LDAPipeline.getGraph("ldaTest");
-        Map config = new HashMap<>();
-        config.put("text1", "text1");
-        config.put("text2", "text2");
-        graph.setConfig(config);
-        graph.toPipeline().fit(getMultiSentenceRowData()).transform(getMultiSentenceRowData()).show(false);
-    }
-
-    @Test
-    public void ngramVSMTask() throws Exception {
+    public void ngramVSMTaskTest() throws Exception {
         SparkTraceTask vsmTask = new NGramVSMTraceTask().getTask("s_id", "t_id");
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         vsmTask.setConfig(vsmTaskInputConfig);
-        vsmTask.initSTT();
-        vsmTask.infuse();
-        vsmTask.optimize(vsmTask);
+        syncSymbolValues(vsmTask);
         vsmTask.train(commits, improvements, null);
         Dataset<Row> result = vsmTask.trace(commits, improvements);
-        result.show();
+        result.count();
     }
 
     @Test
-    public void LDATask() throws Exception {
+    public void LDATaskTest() throws Exception {
         SparkTraceTask ldaTask = new LDATraceBuilder().getTask("s_id", "t_id");
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         ldaTask.setConfig(vsmTaskInputConfig);
-        ldaTask.initSTT();
-        ldaTask.infuse();
-        ldaTask.optimize(ldaTask);
+        syncSymbolValues(ldaTask);
         ldaTask.train(commits, improvements, null);
         Dataset<Row> result = ldaTask.trace(commits, improvements);
-        result.show();
+        result.count();
     }
 
     @Test
@@ -130,13 +89,12 @@ public class BuildingBlockTest extends TestBase {
         voteTask.setConfig(vsmTaskInputConfig);
         voteTask.showGraph("votingSystem_before_optimize");
         voteTask.initSTT();
-        voteTask.infuse();
         voteTask.optimize(voteTask);
         voteTask.showGraph("votingSystem_after_optimize");
 
         voteTask.train(commits, improvements, null);
         System.out.print("Training is finished...");
         Dataset<Row> result = voteTask.trace(commits, improvements);
-        result.show();
+        result.collectAsList();
     }
 }

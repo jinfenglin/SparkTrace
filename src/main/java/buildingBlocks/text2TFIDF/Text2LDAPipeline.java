@@ -1,6 +1,6 @@
 package buildingBlocks.text2TFIDF;
 
-import buildingBlocks.preprocessor.EnglishPreprocess;
+import buildingBlocks.preprocessor.CleanTokens;
 import buildingBlocks.vectorize.LDAPipeline;
 import core.graphPipeline.basic.SGraph;
 
@@ -15,8 +15,8 @@ public class Text2LDAPipeline {
         graph.addOutputField("topics1");
         graph.addOutputField("topics2");
 
-        SGraph p1 = EnglishPreprocess.getGraph("preprocess1"); // text - clean_tokens
-        SGraph p2 = EnglishPreprocess.getGraph("preprocess2");
+        SGraph p1 = CleanTokens.getGraph("preprocess1"); // text - clean_tokens
+        SGraph p2 = CleanTokens.getGraph("preprocess2");
         SGraph ldaPipe = LDAPipeline.getGraph("ldaPipeline"); //tokens1
 
         graph.addNode(p1);

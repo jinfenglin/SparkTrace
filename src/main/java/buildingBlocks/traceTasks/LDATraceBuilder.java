@@ -1,20 +1,29 @@
 package buildingBlocks.traceTasks;
 
-import buildingBlocks.text2TFIDF.Text2LDAPipeline;
+import buildingBlocks.preprocessor.SimpleWordCount;
+import buildingBlocks.unsupervisedLearn.LDAGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.DenseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 
-/**
- *
- */
 public class LDATraceBuilder implements TraceTaskBuilder {
+    public static String INPUT1 = "s_text", INPUT2 = "t_text";
+    public static String OUTPUT = "lda_sim";
+
+    public SGraph createSSDF() throws Exception {
+        SGraph graph = SimpleWordCount.getGraph("LDA_SSDF");//text1,2 = "topics1,2"
+        return graph;
+    }
+
+
+    public SGraph createTSDF() throws Exception {
+        SGraph graph = SimpleWordCount.getGraph("LDA_TSDF");//text1,2 = "topics1,2"
+        return graph;
+    }
+
     @Override
     public SGraph createSDF() throws Exception {
-        SGraph graph = Text2LDAPipeline.getGraph("LDA_SDF");//text1,2 = "topics1,2"
-        graph.assignTypeToOutputField("topics1", SGraph.SDFType.SOURCE_SDF);
-        graph.assignTypeToOutputField("topics2", SGraph.SDFType.TARGET_SDF);
-        return graph;
+        return null;
     }
 
     @Override
@@ -24,17 +33,20 @@ public class LDATraceBuilder implements TraceTaskBuilder {
 
     @Override
     public SparkTraceTask connectTask(SparkTraceTask task) throws Exception {
-        task.connect(task.sourceNode, "s_text", task.getSdfGraph(), "text1");
-        task.connect(task.sourceNode, "t_text", task.getSdfGraph(), "text2");
-        task.connect(task.getSdfGraph(), "topics1", task.getDdfGraph(), "vec1");
-        task.connect(task.getSdfGraph(), "topics2", task.getDdfGraph(), "vec2");
-        task.connect(task.getDdfGraph(), "cosin_sim", task.sinkNode, "lda_sim");
+        task.connect(task.sourceNode, INPUT1, task.getSourceSDFSdfGraph(), SimpleWordCount.INPUT_TEXT_COL);
+        task.connect(task.sourceNode, INPUT2, task.getTargetSDFSdfGraph(), SimpleWordCount.INPUT_TEXT_COL);
+        task.connect(task.getSourceSDFSdfGraph(), SimpleWordCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph(), LDAGraphPipeline.INPUT1);
+        task.connect(task.getTargetSDFSdfGraph(), SimpleWordCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph(), LDAGraphPipeline.INPUT2);
+        task.connect(task.getUnsupervisedLearnGraph(), LDAGraphPipeline.OUTPUT1, task.getDdfGraph(), DenseCosinSimilarityPipeline.INPUT1);
+        task.connect(task.getUnsupervisedLearnGraph(), LDAGraphPipeline.OUTPUT2, task.getDdfGraph(), DenseCosinSimilarityPipeline.INPUT2);
+        task.connect(task.getDdfGraph(), DenseCosinSimilarityPipeline.OUTPUT, task.sinkNode, OUTPUT);
         return task;
     }
 
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
-        SparkTraceTask task = new SparkTraceTask(createSDF(), createDDF(), sourceId, targetId);
+        SGraph unsupervised = LDAGraphPipeline.getGraph("SharedLDA");
+        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), unsupervised, createDDF(), sourceId, targetId);
         task.setVertexLabel("LDA");
         task.addInputField("s_text").addInputField("t_text");
         task.addOutputField("lda_sim");

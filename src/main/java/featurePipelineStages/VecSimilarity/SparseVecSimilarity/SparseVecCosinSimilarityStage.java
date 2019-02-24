@@ -16,6 +16,8 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
+import java.util.logging.Logger;
+
 import static org.apache.spark.sql.functions.callUDF;
 
 public class SparseVecCosinSimilarityStage extends VecSimilarityTransformer {
@@ -61,6 +63,7 @@ public class SparseVecCosinSimilarityStage extends VecSimilarityTransformer {
             }
             return productScore / (Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum));
         }, DataTypes.DoubleType);
+        Logger.getLogger(this.getClass().getName()).info(String.format("finished sparseVecsim with "));
         return getSimilarityScore(dataset, COSIN_SIMILAIRY_UDF);
     }
 

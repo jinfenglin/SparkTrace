@@ -121,7 +121,7 @@ public class SGraph extends Vertex implements SDFInterface {
     /**
      * Let the connected symbols share same value. The final output table's column name can be renamed by a renaming stage
      */
-    private static void syncSymbolValues(SGraph graph) throws Exception {
+    public static void syncSymbolValues(SGraph graph) throws Exception {
         //SourceNode and SinkNode are special in the graph. The sourceNode don't have connection on its InputTable,
         //Instead, it consume graph's InputTable directly. However, the consumption is through parameters thus no explicit
         //connections are specified between graph.inputTable and sourceNode.outputTable (And inputTable should receive and have no out going links)
@@ -225,7 +225,7 @@ public class SGraph extends Vertex implements SDFInterface {
 
     @Override
     public Pipeline toPipeline() throws Exception {
-        boolean cleanColumns = false;
+        boolean cleanColumns =  true;
         syncSymbolValues(this);
 
         //Config the SGraphIOStage to parse the InputTable which translate the Symbols to real column names
@@ -244,7 +244,7 @@ public class SGraph extends Vertex implements SDFInterface {
         List<PipelineStage> stages = new ArrayList<>();
         Map<String, Integer> demandTable = getDemandTable();
         for (Vertex node : topSortNodes) {
-            if(node == sinkNode || node == sourceNode)
+            if (node == sinkNode || node == sourceNode)
                 continue;
             stages.addAll(Arrays.asList(node.toPipeline().getStages()));
             //Add column clean stages
@@ -356,6 +356,15 @@ public class SGraph extends Vertex implements SDFInterface {
 
     public Vertex getNode(String vertexId) {
         return nodes.get(vertexId);
+    }
+
+    public Vertex getNodeByLabel(String vertexLable) {
+        for (String nodeId : nodes.keySet()) {
+            if (nodes.get(nodeId).getVertexLabel().equals(vertexLable)) {
+                return nodes.get(nodeId);
+            }
+        }
+        return null;
     }
 
     public List<SEdge> getEdges() {

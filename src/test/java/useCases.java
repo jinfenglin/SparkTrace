@@ -12,6 +12,8 @@ import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenImprovement;
 import traceability.components.maven.MavenLink;
 
+import static org.apache.spark.sql.functions.*;
+
 /**
  *
  */
@@ -85,6 +87,19 @@ public class useCases extends TestBase {
     }
 
 
+    @Test
+    public void experiment() {
+        Dataset<Row> d0 = getSentenceLabelDataset();
+        Dataset<Row> d2 = d0.withColumn("words", split(col("sentence"), "\\s+"));
+        Dataset<Row> d3 = d0.withColumnRenamed("label", "label1").withColumnRenamed("sentence","sentence1");
+
+        Dataset<Row> d4 = d2.crossJoin(d3);
+        d4.cache();
+        Dataset<Row> d5 = d4.select("words");
+        Dataset<Row> d6 = d4.select("label");
+        d5.explain();
+        d6.explain();
+    }
 
 
 }

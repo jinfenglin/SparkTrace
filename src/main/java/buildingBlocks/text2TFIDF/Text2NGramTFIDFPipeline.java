@@ -1,6 +1,6 @@
 package buildingBlocks.text2TFIDF;
 
-import buildingBlocks.preprocessor.NGramPreprocessPipeline;
+import buildingBlocks.preprocessor.NGramTokenizer;
 import buildingBlocks.vectorize.TFIDFPipeline;
 import core.graphPipeline.basic.SGraph;
 
@@ -15,8 +15,8 @@ public class Text2NGramTFIDFPipeline {
         graph.addOutputField("ngram-tf-idf1");
         graph.addOutputField("ngram-tf-idf2");
 
-        SGraph ngramPreprocessPipe1 = NGramPreprocessPipeline.getGraph("ngram1"); // text - ngram_tokens
-        SGraph ngramPreprocessPipe2 = NGramPreprocessPipeline.getGraph("ngram2"); // text - ngram_tokens
+        SGraph ngramPreprocessPipe1 = NGramTokenizer.getGraph("ngram1"); // text - ngram_tokens
+        SGraph ngramPreprocessPipe2 = NGramTokenizer.getGraph("ngram2"); // text - ngram_tokens
         SGraph tfidfPipe = TFIDFPipeline.getGraph("tf-idfPipe"); //tokens1 - "tf-idf1"
 
         graph.addNode(ngramPreprocessPipe1);
