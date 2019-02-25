@@ -30,6 +30,8 @@ import static guru.nidi.graphviz.model.Factory.*;
  * 5. Call toPipeline to create a fully configured and runnable pipeline
  */
 public class SGraph extends Vertex implements SDFInterface {
+    private boolean cleanColumns;
+
     public enum SDFType {
         SOURCE_SDF,
         TARGET_SDF,
@@ -55,6 +57,7 @@ public class SGraph extends Vertex implements SDFInterface {
         nodes.put(sinkNode.vertexId, sinkNode);
         config = new HashMap<>();
         outputTypeMap = new HashMap<>();
+        cleanColumns = true;
     }
 
     public SGraph(String graphId) {
@@ -71,6 +74,7 @@ public class SGraph extends Vertex implements SDFInterface {
         nodes.put(sinkNode.vertexId, sinkNode);
         config = new HashMap<>();
         outputTypeMap = new HashMap<>();
+        cleanColumns = true;
     }
 
     public void setConfig(Map<String, String> symbolValueMap) {
@@ -222,9 +226,20 @@ public class SGraph extends Vertex implements SDFInterface {
         }
     }
 
+    /**
+     * Make sure the edges which contains deleted nodes are also deleted.
+     */
+    private void clearEdge() {
+        for (SEdge edge : new ArrayList<>(edges)) {
+            if (!nodes.values().contains(edge.getFrom()) || !nodes.values().contains(edge.getTo())) {
+                edges.remove(edge);
+            }
+        }
+    }
+
     @Override
     public Pipeline toPipeline() throws Exception {
-        boolean cleanColumns = true;
+        clearEdge();
         syncSymbolValues(this);
 
         //Config the SGraphIOStage to parse the InputTable which translate the Symbols to real column names
@@ -254,7 +269,7 @@ public class SGraph extends Vertex implements SDFInterface {
                             continue; //Source node contains the fields that belong to parent graph
                         }
                         String sourceCellSymbolValue = sourceCell.getFieldSymbol().getSymbolValue();
-                        if(demandTable.get(sourceCellSymbolValue) == null) {
+                        if (demandTable.get(sourceCellSymbolValue) == null) {
                             continue;
                         }
                         int remainDemand = demandTable.get(sourceCellSymbolValue) - 1;
@@ -435,7 +450,6 @@ public class SGraph extends Vertex implements SDFInterface {
         IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
         if (fromCell != null && toCell != null) {
             fromCell.removeOutputTo(toCell);
-            toCell.removeInputFrom(fromCell);
         } else {
             throw new Exception(String.format(" %s not found", getMissingSymbolInfo(from, to)));
         }
@@ -578,5 +592,12 @@ public class SGraph extends Vertex implements SDFInterface {
         return this;
     }
 
+    public boolean isCleanColumns() {
+        return cleanColumns;
+    }
+
+    public void setCleanColumns(boolean cleanColumns) {
+        this.cleanColumns = cleanColumns;
+    }
 
 }

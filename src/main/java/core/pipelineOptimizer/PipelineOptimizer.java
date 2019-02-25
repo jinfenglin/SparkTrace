@@ -218,7 +218,11 @@ public class PipelineOptimizer {
                 if (impactNode.getSparkPipelineStage() instanceof SGraphIOStage) {
                     for (Vertex sinkRelatedVertex : impactNode.getContext().getOutputVertices()) {
                         if (sinkRelatedVertex instanceof SNode) {
-                            impNodes.addAll(traceImpactedNodes((SNode) sinkRelatedVertex));
+                            if (((SNode) sinkRelatedVertex).getSparkPipelineStage() instanceof SGraphIOStage) {
+                                impNodes.addAll(traceImpactedNodes((SNode) sinkRelatedVertex));
+                            } else {
+                                impNodes.add((SNode) sinkRelatedVertex);
+                            }
                         } else {
                             impNodes.addAll(traceImpactedNodes(((SGraph) sinkRelatedVertex).sourceNode));
                         }

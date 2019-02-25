@@ -47,7 +47,7 @@ public class IOTableCell {
     }
 
     public void removeInputFrom(IOTableCell inputCell) {
-        inputSource.add(inputCell);
+        inputSource.remove(inputCell);
         inputCell.getOutputTarget().remove(this);
     }
 

@@ -2,20 +2,24 @@ import buildingBlocks.traceTasks.LDATraceBuilder;
 import buildingBlocks.traceTasks.NGramVSMTraceTask;
 import buildingBlocks.traceTasks.VSMTraceBuilder;
 import buildingBlocks.traceTasks.OptimizedVoteTraceBuilder;
+import buildingBlocks.unsupervisedLearn.LDAGraphPipeline;
 import core.SparkTraceTask;
 import examples.TestBase;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Before;
 import org.junit.Test;
+import scala.collection.Seq;
 import traceability.TraceDatasetFactory;
 import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenImprovement;
 import traceability.components.maven.MavenLink;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+import static org.apache.spark.sql.functions.col;
 
 
 public class BuildingBlockTest extends TestBase {
@@ -30,9 +34,9 @@ public class BuildingBlockTest extends TestBase {
 
     @Before
     public void runSparkTestWithMavenData() {
-        String commitPath = "src/main/resources/maven_mini/commits.csv";
-        String improvementPath = "src/main/resources/maven_mini/improvement.csv";
-        String linkPath = "src/main/resources/maven_mini/improvementCommitLinks.csv";
+        String commitPath = "src/main/resources/maven_sample/commits.csv";
+        String improvementPath = "src/main/resources/maven_sample/improvement.csv";
+        String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
         links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);
@@ -77,16 +81,73 @@ public class BuildingBlockTest extends TestBase {
 
     @Test
     public void voteTaskTest() throws Exception {
-        SparkTraceTask voteTask = new OptimizedVoteTraceBuilder().getTask("s_id", "t_id");
+        String sourceId = "s_id", targetId = "t_id";
+        SparkTraceTask voteTask = new OptimizedVoteTraceBuilder().getTask(sourceId, targetId);
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         voteTask.setConfig(vsmTaskInputConfig);
         voteTask.showGraph("votingSystem_before_optimize_new");
         voteTask.getSourceSDFSdfGraph().optimize(voteTask.getSourceSDFSdfGraph());
+        voteTask.getTargetSDFSdfGraph().optimize(voteTask.getTargetSDFSdfGraph());
         voteTask.showGraph("votingSystem_after_optimize_new");
         syncSymbolValues(voteTask);
         voteTask.train(commits, improvements, null);
         System.out.print("Training is finished...");
         Dataset<Row> result = voteTask.trace(commits, improvements);
-        result.show((int)result.count());
+
+        String vsmScoreCol = voteTask.getOutputField(OptimizedVoteTraceBuilder.VSM_SCORE).getFieldSymbol().getSymbolValue();
+        String ngramVsmScoreCol = voteTask.getOutputField(OptimizedVoteTraceBuilder.NGRAM_SCORE).getFieldSymbol().getSymbolValue();
+        String ldaScoreCol = voteTask.getOutputField(OptimizedVoteTraceBuilder.LDA_SCORE).getFieldSymbol().getSymbolValue();
+
+        result.select(vsmTaskInputConfig.get(sourceId), vsmTaskInputConfig.get(targetId), vsmScoreCol, ngramVsmScoreCol, ldaScoreCol).write()
+                .format("com.databricks.spark.csv")
+                .option("header", "true").mode("overwrite")
+                .save("results/voteResult.csv");
     }
+
+    @Test
+    public void voteTaskTestNotOptimized() throws Exception {
+        String sourceId = "s_id", targetId = "t_id";
+
+        SparkTraceTask vsmTask = new VSMTraceBuilder().getTask(sourceId, targetId);
+        vsmTask.setCleanColumns(false);
+        Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
+        String s_id_col_name = vsmTaskInputConfig.get(sourceId);
+        String t_id_col_name = vsmTaskInputConfig.get(targetId);
+
+        vsmTask.setConfig(vsmTaskInputConfig);
+        syncSymbolValues(vsmTask);
+
+        vsmTask.train(commits, improvements, null);
+        Dataset<Row> result1 = vsmTask.trace(commits, improvements);
+
+        SparkTraceTask ngramTask = new NGramVSMTraceTask().getTask(sourceId, targetId);
+        ngramTask.setCleanColumns(false);
+        ngramTask.setConfig(vsmTaskInputConfig);
+        syncSymbolValues(ngramTask);
+        ngramTask.train(commits, improvements, null);
+        Dataset<Row> result2 = ngramTask.trace(commits, improvements);
+
+        SparkTraceTask ldaTask = new LDATraceBuilder().getTask(sourceId, targetId);
+        ldaTask.setCleanColumns(false);
+        ldaTask.setConfig(vsmTaskInputConfig);
+        syncSymbolValues(ldaTask);
+        ldaTask.train(commits, improvements, null);
+        Dataset<Row> result3 = ldaTask.trace(commits, improvements);
+
+        String vsmScoreCol = vsmTask.getOutputField(VSMTraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
+        String ngramVsmScoreCol = ngramTask.getOutputField(NGramVSMTraceTask.OUTPUT).getFieldSymbol().getSymbolValue();
+        String ldaScoreCol = ldaTask.getOutputField(LDATraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
+
+        Seq<String> colNames = scala.collection.JavaConverters.asScalaIteratorConverter(
+                Arrays.asList(s_id_col_name, t_id_col_name).iterator()
+        ).asScala().toSeq();
+        Dataset<Row> result = result1.join(result2, colNames);
+        result = result.join(result3, colNames);
+
+        result.select(vsmTaskInputConfig.get(sourceId), vsmTaskInputConfig.get(targetId), vsmScoreCol, ngramVsmScoreCol, ldaScoreCol).write()
+                .format("com.databricks.spark.csv")
+                .option("header", "true").mode("overwrite")
+                .save("results/voteResult.csv");
+    }
+
 }

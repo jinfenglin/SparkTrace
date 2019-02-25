@@ -63,53 +63,53 @@ public class SparkTraceTask extends SGraph {
     }
 
 
-    //
-    private void mergeSubTask(SGraph parentSDF, SGraph childSDF, List<GraphHierarchyTree> path) throws Exception {
-        SparkTraceTask childTask = (SparkTraceTask) childSDF.getContext();
-        SGraph parentDDF = this.ddfGraph;
-        SGraph childDDF = childTask.ddfGraph;
-        parentSDF.addNode(childSDF);
-
-        for (IOTableCell inputCell : childSDF.getInputTable().getCells()) {
-            IOTableCell inputSource = inputCell.traceToSource(false, parentSDF);
-            assert inputSource != inputCell; //SDF must have input
-            childTask.disconnect(inputCell.getInputSource().get(0).getFieldSymbol(), inputCell.getFieldSymbol());//disconnect it from sourceNode
-            parentSDF.connect(inputSource.getFieldSymbol(), inputCell.getFieldSymbol());
-        }
-
-        for (IOTableCell outputCell : childSDF.getOutputTable().getCells()) {
-            List<IOTableCell> targetCells = outputCell.getOutputTarget();
-            for (IOTableCell targetCell : new ArrayList<>(targetCells)) {
-                String targetSymbolName = targetCell.getFieldSymbol().getSymbolName();
-                String parentSDFNewOutputFieldName = targetSymbolName + "_" + UUID.randomUUID();
-                String parentDDFNewInputFieldName = targetSymbolName + "_" + UUID.randomUUID();
-                SGraph.SDFType type = childSDF.getOutputSymbolType(outputCell.getFieldSymbol().getSymbolName());
-                parentSDF.addOutputField(parentSDFNewOutputFieldName, type);
-                parentDDF.addInputField(parentDDFNewInputFieldName);
-                parentSDF.connect(childSDF, outputCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, parentSDFNewOutputFieldName); //connect childSDF to parentSDF
-                connect(parentSDF, parentSDFNewOutputFieldName, parentDDF, parentDDFNewInputFieldName);//connect new added field from parentSDF to parentDDF
-                int pathIndex = path.size() - 1;
-                if (path.size() > 2) {
-                    pathIndex -= 1; //remove the graph where parentDDF reside (this task) and take parentDDF as context graph (because subtask must in parentDDF)
-                    SGraph contextGraph = path.get(pathIndex).getNodeContent();
-                    String penetrationOutputFiledName = parentDDFNewInputFieldName;
-                    while (pathIndex > 0) {
-                        //Connect the new added output to inner graph's added input field
-                        String penetrationInputFiledName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
-                        pathIndex -= 1;
-                        SGraph innerSGraph = path.get(pathIndex).getNodeContent();
-                        innerSGraph.addInputField(penetrationInputFiledName);
-                        contextGraph.connect(contextGraph.sourceNode, penetrationOutputFiledName, innerSGraph, penetrationInputFiledName);
-                        contextGraph = innerSGraph;
-                        penetrationOutputFiledName = penetrationInputFiledName;
-                    }
-                    contextGraph.connect(contextGraph.sourceNode, penetrationOutputFiledName, childDDF, targetCell.getFieldSymbol().getSymbolName());
-                    childTask.disconnect(childSDF, outputCell.getFieldSymbol().getSymbolName(), childDDF, targetCell.getFieldSymbol().getSymbolName());
-                }
-            }
-        }
-        childTask.removeNodeWithoutCleanRelations(childSDF);
-    }
+//    //
+//    private void mergeSubTask(SGraph parentSDF, SGraph childSDF, List<GraphHierarchyTree> path) throws Exception {
+//        SparkTraceTask childTask = (SparkTraceTask) childSDF.getContext();
+//        SGraph parentDDF = this.ddfGraph;
+//        SGraph childDDF = childTask.ddfGraph;
+//        parentSDF.addNode(childSDF);
+//
+//        for (IOTableCell inputCell : childSDF.getInputTable().getCells()) {
+//            IOTableCell inputSource = inputCell.traceToSource(false, parentSDF);
+//            assert inputSource != inputCell; //SDF must have input
+//            childTask.disconnect(inputCell.getInputSource().get(0).getFieldSymbol(), inputCell.getFieldSymbol());//disconnect it from sourceNode
+//            parentSDF.connect(inputSource.getFieldSymbol(), inputCell.getFieldSymbol());
+//        }
+//
+//        for (IOTableCell outputCell : childSDF.getOutputTable().getCells()) {
+//            List<IOTableCell> targetCells = outputCell.getOutputTarget();
+//            for (IOTableCell targetCell : new ArrayList<>(targetCells)) {
+//                String targetSymbolName = targetCell.getFieldSymbol().getSymbolName();
+//                String parentSDFNewOutputFieldName = targetSymbolName + "_" + UUID.randomUUID();
+//                String parentDDFNewInputFieldName = targetSymbolName + "_" + UUID.randomUUID();
+//                SGraph.SDFType type = childSDF.getOutputSymbolType(outputCell.getFieldSymbol().getSymbolName());
+//                parentSDF.addOutputField(parentSDFNewOutputFieldName, type);
+//                parentDDF.addInputField(parentDDFNewInputFieldName);
+//                parentSDF.connect(childSDF, outputCell.getFieldSymbol().getSymbolName(), parentSDF.sinkNode, parentSDFNewOutputFieldName); //connect childSDF to parentSDF
+//                connect(parentSDF, parentSDFNewOutputFieldName, parentDDF, parentDDFNewInputFieldName);//connect new added field from parentSDF to parentDDF
+//                int pathIndex = path.size() - 1;
+//                if (path.size() > 2) {
+//                    pathIndex -= 1; //remove the graph where parentDDF reside (this task) and take parentDDF as context graph (because subtask must in parentDDF)
+//                    SGraph contextGraph = path.get(pathIndex).getNodeContent();
+//                    String penetrationOutputFiledName = parentDDFNewInputFieldName;
+//                    while (pathIndex > 0) {
+//                        //Connect the new added output to inner graph's added input field
+//                        String penetrationInputFiledName = targetCell.getFieldSymbol().getSymbolName() + "_" + UUID.randomUUID();
+//                        pathIndex -= 1;
+//                        SGraph innerSGraph = path.get(pathIndex).getNodeContent();
+//                        innerSGraph.addInputField(penetrationInputFiledName);
+//                        contextGraph.connect(contextGraph.sourceNode, penetrationOutputFiledName, innerSGraph, penetrationInputFiledName);
+//                        contextGraph = innerSGraph;
+//                        penetrationOutputFiledName = penetrationInputFiledName;
+//                    }
+//                    contextGraph.connect(contextGraph.sourceNode, penetrationOutputFiledName, childDDF, targetCell.getFieldSymbol().getSymbolName());
+//                    childTask.disconnect(childSDF, outputCell.getFieldSymbol().getSymbolName(), childDDF, targetCell.getFieldSymbol().getSymbolName());
+//                }
+//            }
+//        }
+//        childTask.removeNodeWithoutCleanRelations(childSDF);
+//    }
 
 
     /**
@@ -133,8 +133,8 @@ public class SparkTraceTask extends SGraph {
                     List<GraphHierarchyTree> path = new ArrayList<>();
                     ght.findPath(parentDDFTreeNode, subTaskDDFTreeNode, path);
                     //Merge the childSTT to the parent STT
-                    mergeSubTask(getSourceSDFSdfGraph(), subTask.getSourceSDFSdfGraph(), path);
-                    mergeSubTask(getTargetSDFSdfGraph(), subTask.getTargetSDFSdfGraph(), path);
+//                    mergeSubTask(getSourceSDFSdfGraph(), subTask.getSourceSDFSdfGraph(), path);
+//                    mergeSubTask(getTargetSDFSdfGraph(), subTask.getTargetSDFSdfGraph(), path);
                 }
             }
         }
