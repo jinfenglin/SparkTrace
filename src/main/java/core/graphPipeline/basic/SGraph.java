@@ -5,7 +5,6 @@ import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import featurePipelineStages.SGraphColumnRemovalStage;
 import featurePipelineStages.SGraphIOStage;
-import featurePipelineStages.cacheStage.CacheStage;
 import guru.nidi.graphviz.attribute.Label;
 import guru.nidi.graphviz.engine.Format;
 import guru.nidi.graphviz.engine.Graphviz;
@@ -225,7 +224,7 @@ public class SGraph extends Vertex implements SDFInterface {
 
     @Override
     public Pipeline toPipeline() throws Exception {
-        boolean cleanColumns =  true;
+        boolean cleanColumns = true;
         syncSymbolValues(this);
 
         //Config the SGraphIOStage to parse the InputTable which translate the Symbols to real column names
@@ -255,6 +254,9 @@ public class SGraph extends Vertex implements SDFInterface {
                             continue; //Source node contains the fields that belong to parent graph
                         }
                         String sourceCellSymbolValue = sourceCell.getFieldSymbol().getSymbolValue();
+                        if(demandTable.get(sourceCellSymbolValue) == null) {
+                            continue;
+                        }
                         int remainDemand = demandTable.get(sourceCellSymbolValue) - 1;
                         demandTable.put(sourceCellSymbolValue, remainDemand);
                         if (remainDemand == 0 && sourceCell.isRemovable()) {
@@ -310,12 +312,10 @@ public class SGraph extends Vertex implements SDFInterface {
         }
         for (SEdge edge : edges) {
             Vertex to = edge.getTo();
-            if (to == null) {
+            if (to == null || inDegreeMap.get(to) == null) {
                 int i = 0;
             }
             inDegreeMap.put(to, inDegreeMap.get(to) + 1);
-
-
         }
         return inDegreeMap;
     }
@@ -435,6 +435,7 @@ public class SGraph extends Vertex implements SDFInterface {
         IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
         if (fromCell != null && toCell != null) {
             fromCell.removeOutputTo(toCell);
+            toCell.removeInputFrom(fromCell);
         } else {
             throw new Exception(String.format(" %s not found", getMissingSymbolInfo(from, to)));
         }

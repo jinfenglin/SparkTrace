@@ -6,6 +6,9 @@ import buildingBlocks.vecSimilarityPipeline.DenseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class LDATraceBuilder implements TraceTaskBuilder {
     public static String INPUT1 = "s_text", INPUT2 = "t_text";
     public static String OUTPUT = "lda_sim";
@@ -35,10 +38,10 @@ public class LDATraceBuilder implements TraceTaskBuilder {
     public SparkTraceTask connectTask(SparkTraceTask task) throws Exception {
         task.connect(task.sourceNode, INPUT1, task.getSourceSDFSdfGraph(), SimpleWordCount.INPUT_TEXT_COL);
         task.connect(task.sourceNode, INPUT2, task.getTargetSDFSdfGraph(), SimpleWordCount.INPUT_TEXT_COL);
-        task.connect(task.getSourceSDFSdfGraph(), SimpleWordCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph(), LDAGraphPipeline.INPUT1);
-        task.connect(task.getTargetSDFSdfGraph(), SimpleWordCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph(), LDAGraphPipeline.INPUT2);
-        task.connect(task.getUnsupervisedLearnGraph(), LDAGraphPipeline.OUTPUT1, task.getDdfGraph(), DenseCosinSimilarityPipeline.INPUT1);
-        task.connect(task.getUnsupervisedLearnGraph(), LDAGraphPipeline.OUTPUT2, task.getDdfGraph(), DenseCosinSimilarityPipeline.INPUT2);
+        task.connect(task.getSourceSDFSdfGraph(), SimpleWordCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph().get(0), LDAGraphPipeline.INPUT1);
+        task.connect(task.getTargetSDFSdfGraph(), SimpleWordCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph().get(0), LDAGraphPipeline.INPUT2);
+        task.connect(task.getUnsupervisedLearnGraph().get(0), LDAGraphPipeline.OUTPUT1, task.getDdfGraph(), DenseCosinSimilarityPipeline.INPUT1);
+        task.connect(task.getUnsupervisedLearnGraph().get(0), LDAGraphPipeline.OUTPUT2, task.getDdfGraph(), DenseCosinSimilarityPipeline.INPUT2);
         task.connect(task.getDdfGraph(), DenseCosinSimilarityPipeline.OUTPUT, task.sinkNode, OUTPUT);
         return task;
     }
@@ -49,7 +52,7 @@ public class LDATraceBuilder implements TraceTaskBuilder {
 
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
-        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), createUnsupervise(), createDDF(), sourceId, targetId);
+        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), Arrays.asList(createUnsupervise()), createDDF(), sourceId, targetId);
         task.setVertexLabel("LDA");
         task.addInputField("s_text").addInputField("t_text");
         task.addOutputField("lda_sim");

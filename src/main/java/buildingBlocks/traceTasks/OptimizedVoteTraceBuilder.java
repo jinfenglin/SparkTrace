@@ -9,6 +9,9 @@ import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  *
  */
@@ -86,78 +89,36 @@ public class OptimizedVoteTraceBuilder {
         ddf.addNode(LDA_DDF);
 
         ddf.connect(ddf.sourceNode, s_vsm_idf, vsm_DDF, SparseCosinSimilarityPipeline.INPUT1);
-        ddf.connect(ddf.sourceNode, s_vsm_idf, ngram_DDF, SparseCosinSimilarityPipeline.INPUT1);
-        ddf.connect(ddf.sourceNode, s_vsm_idf, LDA_DDF, DenseCosinSimilarityPipeline.INPUT1);
+        ddf.connect(ddf.sourceNode, s_ngram_idf, ngram_DDF, SparseCosinSimilarityPipeline.INPUT1);
+        ddf.connect(ddf.sourceNode, s_lda_idf, LDA_DDF, DenseCosinSimilarityPipeline.INPUT1);
         ddf.connect(ddf.sourceNode, t_vsm_idf, vsm_DDF, SparseCosinSimilarityPipeline.INPUT2);
-        ddf.connect(ddf.sourceNode, t_vsm_idf, ngram_DDF, SparseCosinSimilarityPipeline.INPUT2);
-        ddf.connect(ddf.sourceNode, t_vsm_idf, LDA_DDF, DenseCosinSimilarityPipeline.INPUT2);
+        ddf.connect(ddf.sourceNode, t_ngram_idf, ngram_DDF, SparseCosinSimilarityPipeline.INPUT2);
+        ddf.connect(ddf.sourceNode, t_lda_idf, LDA_DDF, DenseCosinSimilarityPipeline.INPUT2);
 
         ddf.connect(vsm_DDF, SparseCosinSimilarityPipeline.OUTPUT, ddf.sinkNode, VSM_SCORE);
-        ddf.connect(LDA_DDF, DenseCosinSimilarityPipeline.OUTPUT, ddf.sinkNode, LDA_SCORE);
         ddf.connect(ngram_DDF, SparseCosinSimilarityPipeline.OUTPUT, ddf.sinkNode, NGRAM_SCORE);
+        ddf.connect(LDA_DDF, DenseCosinSimilarityPipeline.OUTPUT, ddf.sinkNode, LDA_SCORE);
         return ddf;
-    }
-
-
-    public SGraph createUnsupervisedGraph(SGraph vsm, SGraph nvsm, SGraph lda) throws Exception {
-        SGraph unsupervised = new SGraph("Vote_Unsupervised");
-        //SSDF_OUT1 = "s_vsm_idf", SSDF_OUT2 = "s_ngram_out", SSDF_OUT3 = "s_lda_out"
-        unsupervised.addInputField(SSDF_OUT1);
-        unsupervised.addInputField(SSDF_OUT2);
-        unsupervised.addInputField(SSDF_OUT3);
-
-        unsupervised.addInputField(TSDF_OUT1);
-        unsupervised.addInputField(TSDF_OUT2);
-        unsupervised.addInputField(TSDF_OUT3);
-
-        unsupervised.addOutputField(s_vsm_idf);
-        unsupervised.addOutputField(s_ngram_idf);
-        unsupervised.addOutputField(s_lda_idf);
-
-        unsupervised.addOutputField(t_vsm_idf);
-        unsupervised.addOutputField(t_ngram_idf);
-        unsupervised.addOutputField(t_lda_idf);
-
-
-        unsupervised.addNode(vsm);
-        unsupervised.addNode(nvsm);
-        unsupervised.addNode(lda);
-
-        unsupervised.connect(unsupervised.sourceNode, SSDF_OUT1, vsm, IDFGraphPipeline.INPUT1);
-        unsupervised.connect(unsupervised.sourceNode, SSDF_OUT2, nvsm, IDFGraphPipeline.INPUT1);
-        unsupervised.connect(unsupervised.sourceNode, SSDF_OUT3, lda, LDAGraphPipeline.INPUT1);
-
-        unsupervised.connect(unsupervised.sourceNode, TSDF_OUT1, vsm, IDFGraphPipeline.INPUT2);
-        unsupervised.connect(unsupervised.sourceNode, TSDF_OUT2, nvsm, IDFGraphPipeline.INPUT2);
-        unsupervised.connect(unsupervised.sourceNode, TSDF_OUT3, lda, LDAGraphPipeline.INPUT2);
-
-        unsupervised.connect(vsm, IDFGraphPipeline.OUTPUT1, unsupervised.sinkNode, s_vsm_idf);
-        unsupervised.connect(nvsm, IDFGraphPipeline.OUTPUT1, unsupervised.sinkNode, s_ngram_idf);
-        unsupervised.connect(lda, LDAGraphPipeline.OUTPUT1, unsupervised.sinkNode, s_lda_idf);
-
-        unsupervised.connect(vsm, IDFGraphPipeline.OUTPUT2, unsupervised.sinkNode, t_vsm_idf);
-        unsupervised.connect(nvsm, IDFGraphPipeline.OUTPUT2, unsupervised.sinkNode, t_ngram_idf);
-        unsupervised.connect(lda, LDAGraphPipeline.OUTPUT2, unsupervised.sinkNode, t_lda_idf);
-        return unsupervised;
     }
 
     public SparkTraceTask connectTask(SparkTraceTask task) throws Exception {
         task.connect(task.sourceNode, VOTE_IN1, task.getSourceSDFSdfGraph(), SSDF_IN1);
         task.connect(task.sourceNode, VOTE_IN2, task.getTargetSDFSdfGraph(), TSDF_IN1);
-        task.connect(task.getSourceSDFSdfGraph(), SSDF_OUT1, task.getUnsupervisedLearnGraph(), SSDF_OUT1);
-        task.connect(task.getSourceSDFSdfGraph(), SSDF_OUT2, task.getUnsupervisedLearnGraph(), SSDF_OUT2);
-        task.connect(task.getSourceSDFSdfGraph(), SSDF_OUT3, task.getUnsupervisedLearnGraph(), SSDF_OUT3);
+        task.connect(task.getSourceSDFSdfGraph(), SSDF_OUT1, task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.INPUT1);
+        task.connect(task.getSourceSDFSdfGraph(), SSDF_OUT2, task.getUnsupervisedLearnGraph().get(1), IDFGraphPipeline.INPUT1);
+        task.connect(task.getSourceSDFSdfGraph(), SSDF_OUT3, task.getUnsupervisedLearnGraph().get(2), LDAGraphPipeline.INPUT1);
 
-        task.connect(task.getTargetSDFSdfGraph(), TSDF_OUT1, task.getUnsupervisedLearnGraph(), TSDF_OUT1);
-        task.connect(task.getTargetSDFSdfGraph(), TSDF_OUT2, task.getUnsupervisedLearnGraph(), TSDF_OUT2);
-        task.connect(task.getTargetSDFSdfGraph(), TSDF_OUT3, task.getUnsupervisedLearnGraph(), TSDF_OUT3);
+        task.connect(task.getTargetSDFSdfGraph(), TSDF_OUT1, task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.INPUT2);
+        task.connect(task.getTargetSDFSdfGraph(), TSDF_OUT2, task.getUnsupervisedLearnGraph().get(1), IDFGraphPipeline.INPUT2);
+        task.connect(task.getTargetSDFSdfGraph(), TSDF_OUT3, task.getUnsupervisedLearnGraph().get(2), LDAGraphPipeline.INPUT2);
 
-        task.connect(task.getUnsupervisedLearnGraph(), s_vsm_idf, task.getDdfGraph(), s_vsm_idf);
-        task.connect(task.getUnsupervisedLearnGraph(), s_ngram_idf, task.getDdfGraph(), s_ngram_idf);
-        task.connect(task.getUnsupervisedLearnGraph(), s_lda_idf, task.getDdfGraph(), s_lda_idf);
-        task.connect(task.getUnsupervisedLearnGraph(), t_vsm_idf, task.getDdfGraph(), t_vsm_idf);
-        task.connect(task.getUnsupervisedLearnGraph(), t_ngram_idf, task.getDdfGraph(), t_ngram_idf);
-        task.connect(task.getUnsupervisedLearnGraph(), t_lda_idf, task.getDdfGraph(), t_lda_idf);
+        task.connect(task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.OUTPUT1, task.getDdfGraph(), s_vsm_idf);
+        task.connect(task.getUnsupervisedLearnGraph().get(1), IDFGraphPipeline.OUTPUT1, task.getDdfGraph(), s_ngram_idf);
+        task.connect(task.getUnsupervisedLearnGraph().get(2), LDAGraphPipeline.OUTPUT1, task.getDdfGraph(), s_lda_idf);
+
+        task.connect(task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.OUTPUT2, task.getDdfGraph(), t_vsm_idf);
+        task.connect(task.getUnsupervisedLearnGraph().get(1), IDFGraphPipeline.OUTPUT2, task.getDdfGraph(), t_ngram_idf);
+        task.connect(task.getUnsupervisedLearnGraph().get(2), LDAGraphPipeline.OUTPUT2, task.getDdfGraph(), t_lda_idf);
 
         task.connect(task.getDdfGraph(), VSM_SCORE, task.sinkNode, VSM_SCORE);
         task.connect(task.getDdfGraph(), LDA_SCORE, task.sinkNode, LDA_SCORE);
@@ -172,7 +133,7 @@ public class OptimizedVoteTraceBuilder {
         SGraph ssdf = createSSDF(vsmBuilder.createSSDF(), ngram_vsmBuilder.createSSDF(), ldaBuilder.createSSDF());
         SGraph tsdf = createTSDF(vsmBuilder.createTSDF(), ngram_vsmBuilder.createTSDF(), ldaBuilder.createTSDF());
         SGraph ddf = createDDF(vsmBuilder.createDDF(), ngram_vsmBuilder.createDDF(), ldaBuilder.createDDF());
-        SGraph unsueprvised = createUnsupervisedGraph(vsmBuilder.createUnsupervised(), ngram_vsmBuilder.createUnsupervise(), ldaBuilder.createUnsupervise());
+        List<SGraph> unsueprvised = Arrays.asList(new SGraph[]{vsmBuilder.createUnsupervised(), ngram_vsmBuilder.createUnsupervise(), ldaBuilder.createUnsupervise()});
         SparkTraceTask task = new SparkTraceTask(ssdf, tsdf, unsueprvised, ddf, sourceId, targetId);
 
         task.setVertexLabel("vote");

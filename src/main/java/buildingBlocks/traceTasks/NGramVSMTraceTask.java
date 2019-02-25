@@ -6,6 +6,8 @@ import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 
+import java.util.Arrays;
+
 /**
  *
  */
@@ -37,10 +39,10 @@ public class NGramVSMTraceTask implements TraceTaskBuilder {
     public SparkTraceTask connectTask(SparkTraceTask task) throws Exception {
         task.connect(task.sourceNode, INPUT1, task.getSourceSDFSdfGraph(), NGramCount.INPUT_TEXT_COL);
         task.connect(task.sourceNode, INPUT2, task.getTargetSDFSdfGraph(), NGramCount.INPUT_TEXT_COL);
-        task.connect(task.getSourceSDFSdfGraph(), NGramCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph(), IDFGraphPipeline.INPUT1);
-        task.connect(task.getTargetSDFSdfGraph(), NGramCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph(), IDFGraphPipeline.INPUT2);
-        task.connect(task.getUnsupervisedLearnGraph(), IDFGraphPipeline.OUTPUT1, task.getDdfGraph(), SparseCosinSimilarityPipeline.INPUT1);
-        task.connect(task.getUnsupervisedLearnGraph(), IDFGraphPipeline.OUTPUT2, task.getDdfGraph(), SparseCosinSimilarityPipeline.INPUT2);
+        task.connect(task.getSourceSDFSdfGraph(), NGramCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.INPUT1);
+        task.connect(task.getTargetSDFSdfGraph(), NGramCount.OUTPUT_HTF, task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.INPUT2);
+        task.connect(task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.OUTPUT1, task.getDdfGraph(), SparseCosinSimilarityPipeline.INPUT1);
+        task.connect(task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.OUTPUT2, task.getDdfGraph(), SparseCosinSimilarityPipeline.INPUT2);
         task.connect(task.getDdfGraph(), SparseCosinSimilarityPipeline.OUTPUT, task.sinkNode, OUTPUT);
         return task;
     }
@@ -51,7 +53,7 @@ public class NGramVSMTraceTask implements TraceTaskBuilder {
 
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
-        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), createUnsupervise(), createDDF(), sourceId, targetId);
+        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), Arrays.asList(createUnsupervise()), createDDF(), sourceId, targetId);
         task.setVertexLabel("NGramVSM");
         task.addInputField(INPUT1).addInputField(INPUT2);
         task.addOutputField(OUTPUT);

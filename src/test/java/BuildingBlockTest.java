@@ -81,12 +81,12 @@ public class BuildingBlockTest extends TestBase {
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         voteTask.setConfig(vsmTaskInputConfig);
         voteTask.showGraph("votingSystem_before_optimize_new");
-        //voteTask.getSourceSDFSdfGraph().optimize(voteTask.getSourceSDFSdfGraph());
+        voteTask.getSourceSDFSdfGraph().optimize(voteTask.getSourceSDFSdfGraph());
         voteTask.showGraph("votingSystem_after_optimize_new");
         syncSymbolValues(voteTask);
         voteTask.train(commits, improvements, null);
         System.out.print("Training is finished...");
         Dataset<Row> result = voteTask.trace(commits, improvements);
-        result.collectAsList();
+        result.show((int)result.count());
     }
 }
