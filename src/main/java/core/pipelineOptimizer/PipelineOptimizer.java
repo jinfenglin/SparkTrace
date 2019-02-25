@@ -193,10 +193,11 @@ public class PipelineOptimizer {
         for (List<SNode> nodeGroup : identicalNodeGroups) {
             if (nodeGroup.size() > 1) {
                 SNode master = selectMaster(nodeGroup, treeRoot, topoOrderMap); //Select the node whose topological index is lower as master
-                impactedNode.addAll(traceImpactedNodes(master));
+                for (SNode node : nodeGroup) {
+                    impactedNode.addAll(traceImpactedNodes(node));
+                }
                 for (SNode node : nodeGroup) {
                     if (node != master) {
-                        impactedNode.addAll(traceImpactedNodes(node));
                         penetrate(master, node, treeRoot);
                     }
                 }

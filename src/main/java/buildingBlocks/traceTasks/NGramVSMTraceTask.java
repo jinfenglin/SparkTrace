@@ -45,10 +45,13 @@ public class NGramVSMTraceTask implements TraceTaskBuilder {
         return task;
     }
 
+    public SGraph createUnsupervise() throws Exception {
+        return IDFGraphPipeline.getGraph("SharedIDF");
+    }
+
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
-        SGraph unsupervised = IDFGraphPipeline.getGraph("SharedIDF");
-        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), unsupervised, createDDF(), sourceId, targetId);
+        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), createUnsupervise(), createDDF(), sourceId, targetId);
         task.setVertexLabel("NGramVSM");
         task.addInputField(INPUT1).addInputField(INPUT2);
         task.addOutputField(OUTPUT);

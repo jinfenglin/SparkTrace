@@ -1,14 +1,8 @@
-import buildingBlocks.preprocessor.CleanTokens;
-import buildingBlocks.preprocessor.NGramTokenizer;
-import buildingBlocks.text2TFIDF.Text2LDAPipeline;
-import buildingBlocks.text2TFIDF.Text2NGramTFIDFPipeline;
-import buildingBlocks.text2TFIDF.Text2TFIDFPipeline;
 import buildingBlocks.traceTasks.LDATraceBuilder;
 import buildingBlocks.traceTasks.NGramVSMTraceTask;
 import buildingBlocks.traceTasks.VSMTraceBuilder;
-import buildingBlocks.traceTasks.VoteTraceBuilder;
+import buildingBlocks.traceTasks.OptimizedVoteTraceBuilder;
 import core.SparkTraceTask;
-import core.graphPipeline.basic.SGraph;
 import examples.TestBase;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -19,7 +13,6 @@ import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenImprovement;
 import traceability.components.maven.MavenLink;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
@@ -84,14 +77,13 @@ public class BuildingBlockTest extends TestBase {
 
     @Test
     public void voteTaskTest() throws Exception {
-        SparkTraceTask voteTask = new VoteTraceBuilder().getTask("s_id", "t_id");
+        SparkTraceTask voteTask = new OptimizedVoteTraceBuilder().getTask("s_id", "t_id");
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         voteTask.setConfig(vsmTaskInputConfig);
-        voteTask.showGraph("votingSystem_before_optimize");
-        voteTask.initSTT();
-        voteTask.optimize(voteTask);
-        voteTask.showGraph("votingSystem_after_optimize");
-
+        voteTask.showGraph("votingSystem_before_optimize_new");
+        //voteTask.getSourceSDFSdfGraph().optimize(voteTask.getSourceSDFSdfGraph());
+        voteTask.showGraph("votingSystem_after_optimize_new");
+        syncSymbolValues(voteTask);
         voteTask.train(commits, improvements, null);
         System.out.print("Training is finished...");
         Dataset<Row> result = voteTask.trace(commits, improvements);

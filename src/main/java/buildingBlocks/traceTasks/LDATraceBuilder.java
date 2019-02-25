@@ -43,10 +43,13 @@ public class LDATraceBuilder implements TraceTaskBuilder {
         return task;
     }
 
+    public SGraph createUnsupervise() throws Exception {
+        return LDAGraphPipeline.getGraph("SharedLDA");
+    }
+
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
-        SGraph unsupervised = LDAGraphPipeline.getGraph("SharedLDA");
-        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), unsupervised, createDDF(), sourceId, targetId);
+        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), createUnsupervise(), createDDF(), sourceId, targetId);
         task.setVertexLabel("LDA");
         task.addInputField("s_text").addInputField("t_text");
         task.addOutputField("lda_sim");

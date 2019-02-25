@@ -45,10 +45,13 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
         return task;
     }
 
+    public SGraph createUnsupervised() throws Exception {
+        return IDFGraphPipeline.getGraph("SharedIDF");
+    }
+
     @Override
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
-        SGraph unsupervised = IDFGraphPipeline.getGraph("SharedIDF");
-        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), unsupervised, createDDF(), sourceId, targetId);
+        SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), createUnsupervised(), createDDF(), sourceId, targetId);
         task.setVertexLabel("VSM");
         task.addInputField(INPUT_TEXT1).addInputField(INPUT_TEXT2);
         task.addOutputField(OUTPUT);

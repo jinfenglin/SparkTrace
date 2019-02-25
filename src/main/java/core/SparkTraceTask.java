@@ -4,7 +4,9 @@ import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import core.pipelineOptimizer.*;
+import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.clustering.LDAModel;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
@@ -147,12 +149,11 @@ public class SparkTraceTask extends SGraph {
         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
 
 
-        String inputColParam = "inputCol";
-        String outputColParam = "outputCol";
-
         //unsupervised stage
         this.unsupervisedModel = unsupervisedLeanring(sourceSDFeatureVecs, targetSDFeatureVecs);
 
+        String inputColParam = "inputCol";
+        String outputColParam = "outputCol";
         if (this.unsupervisedModel.stages()[0] instanceof LDAModel) {
             inputColParam = "featuresCol";
             outputColParam = "topicDistributionCol";
@@ -179,8 +180,7 @@ public class SparkTraceTask extends SGraph {
     private PipelineModel unsupervisedLeanring(Dataset<Row> sourceSDFeatureVecs, Dataset<Row> targetSDFFeatreusVecs) throws Exception {
         Set<String> sourceColNames = new HashSet<>(Arrays.asList(sourceSDFeatureVecs.columns()));
         Set<String> targetColNames = new HashSet<>(Arrays.asList(targetSDFFeatreusVecs.columns()));
-        //todo: this is just a temporal solution. When SNode and stage have mismatch on input number, defaulty will take the first filed as input
-        String mixedInputCol = unsupervisedLearnGraph.getInputTable().getCells().get(0).getFieldSymbol().getSymbolValue();
+        String mixedInputCol = "tmpMixedCol";
         String fieldName = unsupervisedLearnGraph.getInputTable().getCells().get(0).getFieldSymbol().getSymbolValue();
 
         DataType columnDataType = null;
@@ -203,7 +203,17 @@ public class SparkTraceTask extends SGraph {
             }
             trainingData = trainingData.union(columnData);
         }
-        return unsupervisedLearnGraph.toPipeline().fit(trainingData);
+
+        //TODO: currently assume only one stage inside. This should be modified
+        Pipeline unsupervisePipe = unsupervisedLearnGraph.toPipeline();
+        PipelineStage innerStage = unsupervisePipe.getStages()[0];
+        String inputColParam = "inputCol";
+        if (innerStage instanceof LDAModel) {
+            inputColParam = "featuresCol";
+        }
+        innerStage.set(inputColParam, mixedInputCol);
+        unsupervisePipe.setStages(new PipelineStage[]{innerStage});
+        return unsupervisePipe.fit(trainingData);
     }
 
     private Dataset<Row> appendFeaturesToLinks(Dataset<Row> links, Dataset<Row> sourceFeatures, Dataset<Row> targetFeatures) {
