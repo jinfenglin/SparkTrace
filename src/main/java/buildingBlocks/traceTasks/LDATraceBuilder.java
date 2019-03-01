@@ -6,7 +6,6 @@ import buildingBlocks.vecSimilarityPipeline.DenseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class LDATraceBuilder implements TraceTaskBuilder {

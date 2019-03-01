@@ -149,5 +149,4 @@ public class BuildingBlockTest extends TestBase {
                 .option("header", "true").mode("overwrite")
                 .save("results/voteResult.csv");
     }
-
 }

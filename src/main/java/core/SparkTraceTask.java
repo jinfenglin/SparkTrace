@@ -143,9 +143,9 @@ public class SparkTraceTask extends SGraph {
     /**
      * Execute this STT as a top level STT.
      */
-    public void train(Dataset<? extends TraceArtifact> sourceArtifacts,
-                      Dataset<? extends TraceArtifact> targetArtifacts,
-                      Dataset<? extends TraceLink> goldenLinks) throws Exception {
+    public void train(Dataset<?> sourceArtifacts,
+                      Dataset<?> targetArtifacts,
+                      Dataset<?> goldenLinks) throws Exception {
         PipelineModel sourceSDFModel = this.getSourceSDFSdfGraph().toPipeline().fit(sourceArtifacts);
         PipelineModel targetSDFModel = this.getTargetSDFSdfGraph().toPipeline().fit(targetArtifacts);
         this.sourceSDFModel = sourceSDFModel;
@@ -239,8 +239,8 @@ public class SparkTraceTask extends SGraph {
         return linksWithFeatureVec;
     }
 
-    public Dataset<Row> trace(Dataset<? extends TraceArtifact> sourceArtifacts,
-                              Dataset<? extends TraceArtifact> targetArtifacts) {
+    public Dataset<Row> trace(Dataset<?> sourceArtifacts,
+                              Dataset<?> targetArtifacts) {
         Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
 

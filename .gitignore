@@ -32,3 +32,4 @@ hs_err_pid*
 Mydir/
 target/
 results/
+src/main/resources/git_projects
