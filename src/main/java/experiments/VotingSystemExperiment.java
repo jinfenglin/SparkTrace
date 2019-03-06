@@ -113,8 +113,8 @@ public class VotingSystemExperiment extends SparkTraceJob {
 
     public static void main(String[] args) throws Exception {
         //System.setProperty("hadoop.home.dir", "G:\\tools\\spark-2.4.0-bin-hadoop2.7");
-        String dataDirRoot = args[0];
-        String outputDir = args[1];
+        String dataDirRoot = args[0]; //"src/main/resources/git_projects"
+        String outputDir = args[1]; // "results"
         List<String> projects = new ArrayList<>();
         for (int i = 2; i < args.length; i++) {
             projects.add(args[i]);

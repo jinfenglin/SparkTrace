@@ -2,7 +2,6 @@ import buildingBlocks.traceTasks.LDATraceBuilder;
 import buildingBlocks.traceTasks.NGramVSMTraceTask;
 import buildingBlocks.traceTasks.VSMTraceBuilder;
 import buildingBlocks.traceTasks.OptimizedVoteTraceBuilder;
-import buildingBlocks.unsupervisedLearn.LDAGraphPipeline;
 import core.SparkTraceTask;
 import examples.TestBase;
 import org.apache.spark.sql.Dataset;
@@ -19,9 +18,10 @@ import java.util.Arrays;
 import java.util.Map;
 
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
-import static org.apache.spark.sql.functions.col;
 
-
+/**
+ * BuildingBlocks test and voting system test on Maven commit-improvement
+ */
 public class BuildingBlockTest extends TestBase {
     private static final String masterUrl = "local[4]";
     Dataset<MavenCommit> commits;
@@ -34,9 +34,9 @@ public class BuildingBlockTest extends TestBase {
 
     @Before
     public void runSparkTestWithMavenData() {
-        String commitPath = "src/main/resources/maven_sample/commits.csv";
-        String improvementPath = "src/main/resources/maven_sample/improvement.csv";
-        String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
+        String commitPath = "src/main/resources/maven/commits.csv";
+        String improvementPath = "src/main/resources/maven/improvement.csv";
+        String linkPath = "src/main/resources/maven/improvementCommitLinks.csv";
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
         links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);

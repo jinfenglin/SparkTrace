@@ -5,7 +5,6 @@ import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
 import featurePipelineStages.SGraphIOStage;
 import javafx.util.Pair;
-import org.apache.spark.ml.feature.Tokenizer;
 
 import java.util.*;
 import java.util.stream.Collectors;

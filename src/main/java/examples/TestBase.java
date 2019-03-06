@@ -22,6 +22,7 @@ public class TestBase {
         SparkConf conf = new SparkConf();
         conf.setMaster(masterUrl);
         conf.setAppName(jobName);
+
         sparkSession = SparkSession.builder().config(conf).getOrCreate();
 
     }
