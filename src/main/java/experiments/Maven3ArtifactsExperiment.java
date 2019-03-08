@@ -1,28 +1,31 @@
 package experiments;
 
-import buildingBlocks.preprocessor.SimpleWordCount;
+import buildingBlocks.preprocessor.NGramCount;
+import buildingBlocks.traceTasks.NGramVSMTraceTask;
 import buildingBlocks.traceTasks.VSMTraceBuilder;
 import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceJob;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.linalg.VectorUDT;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.*;
 
-import javax.xml.crypto.Data;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
 import static org.apache.spark.sql.functions.col;
@@ -34,8 +37,8 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
     Dataset<Row> code, bug, commit;
     String CODE_ID = "code_id", BUG_ID = "bug_id", COMMIT_ID = "commit_id";
     String codeContent = "code_content", commitContent = "commit_content", bugContent = "bug_content";
-    String codeContentHTF = "code_htf", commitContentHTF1 = "commit_htf1", commitContentHTF2 = "commit_htf2", bugContentHTF = "bug_htf";
-
+    String codeContentHTF = "code_htf", commitContentHTF = "commit_htf", bugContentHTF = "bug_htf";
+    String outputDir = "tmp";
     SGraph bugPreprocess, codePreprocess, commitPreprocess;
 
     public Maven3ArtifactsExperiment(String codeFilePath, String bugPath, String commitPath, String sourceCodeRootDir) throws IOException {
@@ -72,17 +75,17 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
     //step 1
     private List<Dataset> preprocess(Dataset code, Dataset commit, Dataset bug) throws Exception {
         List<Dataset> dataSets = new ArrayList<>();
-        bugPreprocess = SimpleWordCount.getGraph("commit_preprocess");
-        codePreprocess = SimpleWordCount.getGraph("code_preprocess");
-        commitPreprocess = SimpleWordCount.getGraph("commit_process");
+        bugPreprocess = NGramCount.getGraph("commit_preprocess");
+        codePreprocess = NGramCount.getGraph("code_preprocess");
+        commitPreprocess = NGramCount.getGraph("commit_process");
 
         Map<String, String> codeConfig = new HashMap<>();
         Map<String, String> bugConfig = new HashMap<>();
         Map<String, String> commitConfig = new HashMap<>();
 
-        codeConfig.put(SimpleWordCount.INPUT_TEXT_COL, codeContent);
-        commitConfig.put(SimpleWordCount.INPUT_TEXT_COL, commitContent);
-        bugConfig.put(SimpleWordCount.INPUT_TEXT_COL, bugContent);
+        codeConfig.put(NGramCount.INPUT_TEXT_COL, codeContent);
+        commitConfig.put(NGramCount.INPUT_TEXT_COL, commitContent);
+        bugConfig.put(NGramCount.INPUT_TEXT_COL, bugContent);
 
 
         bugPreprocess.optimize(bugPreprocess);
@@ -111,25 +114,23 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
     private List<PipelineModel> unsupervisedLearn(Dataset code, Dataset commit, Dataset bug) throws Exception {
         SGraph idf1 = IDFGraphPipeline.getGraph("code-commit");
         SGraph idf2 = IDFGraphPipeline.getGraph("commit-bug");
+        SGraph idf3 = IDFGraphPipeline.getGraph("code-bug");
+
         String mixedInputCol = "tmpMixedCol";
         StructField field = DataTypes.createStructField(mixedInputCol, new VectorUDT(), false);
         StructType st = new StructType(new StructField[]{field});
         Dataset<Row> trainingData1 = code.sparkSession().createDataFrame(new ArrayList<>(), st);
         Dataset<Row> trainingData2 = code.sparkSession().createDataFrame(new ArrayList<>(), st);
 
-        Dataset<Row> codeHtf = code.select(codePreprocess.getOutputField(SimpleWordCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
-        Dataset<Row> commitHtf = commit.select(commitPreprocess.getOutputField(SimpleWordCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
-        Dataset<Row> bugHtf = bug.select(bugPreprocess.getOutputField(SimpleWordCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
+        Dataset<Row> commitHtf = commit.select(commitPreprocess.getOutputField(NGramCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
+        Dataset<Row> bugHtf = bug.select(bugPreprocess.getOutputField(NGramCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
 
-        trainingData1 = trainingData1.union(codeHtf);
         trainingData1 = trainingData1.union(commitHtf);
-        trainingData2 = trainingData2.union(commitHtf);
         trainingData2 = trainingData2.union(bugHtf);
 
         Pipeline pipe1 = idf1.toPipeline();
         Pipeline pipe2 = idf2.toPipeline();
         List<PipelineModel> models = new ArrayList<>();
-
 
         PipelineStage innerStage = pipe1.getStages()[0];
         String inputColParam = "inputCol";
@@ -158,98 +159,128 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
 
         List<Dataset> step1 = preprocess(code, commit, bug);
         List<PipelineModel> models = unsupervisedLearn(step1.get(0), step1.get(1), step1.get(2));
-        PipelineModel codeCommitModel = models.get(0);
-        PipelineModel commitBugModel = models.get(1);
+        PipelineModel commitIndexModel = models.get(0);
+        PipelineModel bugIndexModel = models.get(1);
+
         String inputColParam = "inputCol";
         String outputColParam = "outputCol";
 
-        codeCommitModel.stages()[0].set(inputColParam, codePreprocess.getOutputField(SimpleWordCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
-        codeCommitModel.stages()[0].set(outputColParam, codeContentHTF);
-        Dataset codeFeatureVec = codeCommitModel.transform(step1.get(0)); //code-commit-bug
+        commitIndexModel.stages()[0].set(inputColParam, codePreprocess.getOutputField(NGramCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
+        commitIndexModel.stages()[0].set(outputColParam, codeContentHTF);
+        Dataset codeFeatureVec1 = commitIndexModel.transform(step1.get(0)); // code-commit
 
-        codeCommitModel.stages()[0].set(inputColParam, commitPreprocess.getOutputField(SimpleWordCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
-        codeCommitModel.stages()[0].set(outputColParam, commitContentHTF1);
-        Dataset commitFeatureVec1 = codeCommitModel.transform(step1.get(1));
+        bugIndexModel.stages()[0].set(inputColParam, codePreprocess.getOutputField(NGramCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
+        bugIndexModel.stages()[0].set(outputColParam, codeContentHTF);
+        Dataset codeFeatureVec2 = bugIndexModel.transform(step1.get(0)); // code-bug
 
-        commitBugModel.stages()[0].set(inputColParam, commitPreprocess.getOutputField(SimpleWordCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
-        commitBugModel.stages()[0].set(outputColParam, commitContentHTF2);
-        Dataset commitFeatureVec2 = commitBugModel.transform(step1.get(1));
+        commitIndexModel.stages()[0].set(inputColParam, commitPreprocess.getOutputField(NGramCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
+        commitIndexModel.stages()[0].set(outputColParam, commitContentHTF);
+        Dataset commitFeatureVec = commitIndexModel.transform(step1.get(1));
 
-        commitBugModel.stages()[0].set(inputColParam, bugPreprocess.getOutputField(SimpleWordCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
-        commitBugModel.stages()[0].set(outputColParam, bugContentHTF);
-        Dataset bugFeatureVec = commitBugModel.transform(step1.get(2));
+        bugIndexModel.stages()[0].set(inputColParam, bugPreprocess.getOutputField(NGramCount.OUTPUT_HTF).getFieldSymbol().getSymbolValue());
+        bugIndexModel.stages()[0].set(outputColParam, bugContentHTF);
+        Dataset bugFeatureVec = bugIndexModel.transform(step1.get(2));
 
-
-        Dataset codeCommitFeatureVec = joinArtifacts(codeFeatureVec, commitFeatureVec1);
-        Dataset commitBugFeatureVec = joinArtifacts(commitFeatureVec2, bugFeatureVec);
 
         SGraph cosin1 = SparseCosinSimilarityPipeline.getGraph("code-commit-cosin");
         SGraph cosin2 = SparseCosinSimilarityPipeline.getGraph("commit-bug-cosin");
+        SGraph cosin3 = SparseCosinSimilarityPipeline.getGraph("code-bug-cosin");
+
+        Dataset codeCommitFeatureVec = joinArtifacts(codeFeatureVec1, commitFeatureVec);
+        Dataset commitBugFeatureVec = joinArtifacts(commitFeatureVec, bugFeatureVec);
+        Dataset codeBugFeatureVec = joinArtifacts(codeFeatureVec2, bugFeatureVec);
 
         Map<String, String> codeCommitLinkConfig = new HashMap<>();
         codeCommitLinkConfig.put(SparseCosinSimilarityPipeline.INPUT1, codeContentHTF);
-        codeCommitLinkConfig.put(SparseCosinSimilarityPipeline.INPUT2, commitContentHTF1);
+        codeCommitLinkConfig.put(SparseCosinSimilarityPipeline.INPUT2, commitContentHTF);
         Map<String, String> commitBugConfig = new HashMap<>();
-        commitBugConfig.put(SparseCosinSimilarityPipeline.INPUT1, commitContentHTF2);
+        commitBugConfig.put(SparseCosinSimilarityPipeline.INPUT1, commitContentHTF);
         commitBugConfig.put(SparseCosinSimilarityPipeline.INPUT2, bugContentHTF);
-        cosin1.setConfig(codeCommitLinkConfig);
-        Dataset res1 = cosin1.toPipeline().fit(codeCommitFeatureVec).transform(codeCommitFeatureVec);
+        Map<String, String> codeBugConfig = new HashMap<>();
+        codeBugConfig.put(SparseCosinSimilarityPipeline.INPUT1, codeContentHTF);
+        codeBugConfig.put(SparseCosinSimilarityPipeline.INPUT2, bugContentHTF);
 
+        cosin1.setConfig(codeCommitLinkConfig);
         cosin2.setConfig(commitBugConfig);
+        cosin3.setConfig(codeBugConfig);
+
+        Dataset res1 = cosin1.toPipeline().fit(codeCommitFeatureVec).transform(codeCommitFeatureVec);
         Dataset res2 = cosin2.toPipeline().fit(commitBugFeatureVec).transform(commitBugFeatureVec);
+        Dataset res3 = cosin3.toPipeline().fit(codeBugFeatureVec).transform(codeBugFeatureVec);
+
         res1.count();
         res2.count();
+        res3.count();
         return System.currentTimeMillis() - startTime;
     }
 
     public long runUnOptimizedSystem() throws Exception {
         long startTime = System.currentTimeMillis();
 
-        SparkTraceTask job1 = new VSMTraceBuilder().getTask(CODE_ID, COMMIT_ID);
+        SparkTraceTask job1 = new NGramVSMTraceTask().getTask(CODE_ID, COMMIT_ID);
         job1.setCleanColumns(false);
+        job1.indexOn = 1; //index on the target artifacts
         Map<String, String> codeCommitConfig = new HashMap<>();
-        codeCommitConfig.put(VSMTraceBuilder.INPUT_TEXT1, codeContent);
-        codeCommitConfig.put(VSMTraceBuilder.INPUT_TEXT2, commitContent);
+        codeCommitConfig.put(NGramVSMTraceTask.INPUT1, codeContent);
+        codeCommitConfig.put(NGramVSMTraceTask.INPUT2, commitContent);
         job1.setConfig(codeCommitConfig);
         syncSymbolValues(job1);
         job1.train(code, commit, null);
         Dataset<Row> result1 = job1.trace(code, commit);
         result1.count();
+        long job1Finished = System.currentTimeMillis();
+        long job1Time = job1Finished - startTime;
 
         SparkTraceTask job2 = new VSMTraceBuilder().getTask(COMMIT_ID, BUG_ID);
+        job2.indexOn = 1;
         job2.setCleanColumns(false);
         Map<String, String> commitBugConfig = new HashMap<>();
-        commitBugConfig.put(VSMTraceBuilder.INPUT_TEXT1, commitContent);
-        commitBugConfig.put(VSMTraceBuilder.INPUT_TEXT2, bugContent);
+        commitBugConfig.put(NGramVSMTraceTask.INPUT1, commitContent);
+        commitBugConfig.put(NGramVSMTraceTask.INPUT2, bugContent);
         job2.setConfig(commitBugConfig);
         syncSymbolValues(job2);
         job2.train(commit, bug, null);
         Dataset<Row> result2 = job2.trace(commit, bug);
         result2.count();
 
-        return System.currentTimeMillis() - startTime;
+        SparkTraceTask job3 = new VSMTraceBuilder().getTask(CODE_ID, BUG_ID);
+        job2.indexOn = 1;
+        job3.setCleanColumns(false);
+        Map<String, String> codeBugConfig = new HashMap<>();
+        codeBugConfig.put(NGramVSMTraceTask.INPUT1, codeContent);
+        codeBugConfig.put(NGramVSMTraceTask.INPUT2, bugContent);
+        job3.setConfig(codeBugConfig);
+        syncSymbolValues(job3);
+        job3.train(code, bug, null);
+        Dataset<Row> result3 = job3.trace(code, bug);
+        result3.count();
+
+        long job2Time = System.currentTimeMillis() - job1Finished;
+        return job1Time + job2Time;
+    }
+
+    private void writeResult(Dataset result, String[] cols) {
+        String outputFile = RandomStringUtils.randomAlphabetic(5);
+        List<Column> columns = (Arrays.asList(cols)).stream().map(name -> col(name)).collect(Collectors.toList());
+        result.select(columns.toArray(new Column[0])).write()
+                .format("com.databricks.spark.csv")
+                .option("header", "true").mode("overwrite")
+                .save(outputDir + "/%s.csv".format(outputFile));
     }
 
     public static void main(String[] args) throws Exception {
-        System.setProperty("hadoop.home.dir", "G:\\tools\\spark-2.4.0-bin-hadoop2.7");
         String outputDir = "results"; // "results"
-
         String codePath = "src/main/resources/maven_sample/code.csv";
         String bugPath = "src/main/resources/maven_sample/bug.csv";
         String commitPath = "src/main/resources/maven_sample/commits.csv";
         String sourceCodeRootDir = "src/main/resources/maven_sample";
         Maven3ArtifactsExperiment exp = new Maven3ArtifactsExperiment(codePath, bugPath, commitPath, sourceCodeRootDir);
         long opTime = exp.runOptimizedSystem();
-        long unOpTime = exp.runUnOptimizedSystem();
-
-        org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/Maven3ArtifactResult.csv");
+        org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/Maven3ArtifactResultOp.csv");
         OutputStream out = outputPath.getFileSystem(new Configuration()).create(outputPath);
         String opTimeLine = "Op time = " + String.valueOf(opTime) + "\n";
-        String unOpTimeLine = "Unop Time = " + String.valueOf(unOpTime) + "\n";
         out.write(opTimeLine.getBytes());
-        out.write(unOpTimeLine.getBytes());
         out.close();
-        System.out.println(opTime);
-        System.out.println(unOpTime);
+        System.out.println(opTimeLine);
     }
 }

@@ -16,10 +16,11 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import traceability.components.abstractComponents.TraceArtifact;
-import traceability.components.abstractComponents.TraceLink;
 
 import java.util.*;
+
+import static experiments.DirtyBitExperiment.DIRTY_BIT_COL;
+import static org.apache.spark.sql.functions.col;
 
 
 /**
@@ -33,6 +34,7 @@ import java.util.*;
  */
 public class SparkTraceTask extends SGraph {
     private boolean isInitialed = false; //record whether the task is init or not
+    private boolean useDirtyBit = false;
     //Symbol name for id column which can be configured in different places.
     private String sourceIdCol, targetIdCol;
 
@@ -42,6 +44,7 @@ public class SparkTraceTask extends SGraph {
 
     private PipelineModel sourceSDFModel, targetSDFModel, ddfModel;
     private List<PipelineModel> unsupervisedModels;
+    public int indexOn = 0; // -1 index on source 0 index on both 1 index on target
 
 
     public SparkTraceTask(SGraph sourceSDF, SGraph targetSDF, List<SGraph> unsupervisedLearnGraphs, SGraph ddfGraph, String sourceIdCol, String targetIdCol) {
@@ -206,11 +209,17 @@ public class SparkTraceTask extends SGraph {
                 Dataset<Row> columnData = null;
                 if (sourceColNames.contains(fieldValue)) {
                     columnData = sourceSDFeatureVecs.select(fieldValue);
+                    if (indexOn <= 0) {
+                        trainingData = trainingData.union(columnData);
+                    }
                 } else if (targetColNames.contains(fieldValue)) {
                     columnData = targetSDFFeatreusVecs.select(fieldValue);
+                    if (indexOn >= 0) {
+                        trainingData = trainingData.union(columnData);
+                    }
                 }
-                trainingData = trainingData.union(columnData);
-                //TODO: currently assume only one stage inside. This should be modified
+
+
             }
             Pipeline unsupervisePipe = unsupervisedLearnGraph.toPipeline();
             PipelineStage innerStage = unsupervisePipe.getStages()[0];
@@ -261,8 +270,23 @@ public class SparkTraceTask extends SGraph {
             targetSDFeatureVecs = unsupervisedModel.transform(targetSDFeatureVecs);
             i++;
         }
-        Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
+        Dataset<Row> candidateLinks = createCandidateLink(sourceSDFeatureVecs, targetSDFeatureVecs);
+        //Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
         return this.ddfModel.transform(candidateLinks);
+    }
+
+    private Dataset createCandidateLink(Dataset sourceSDFVec, Dataset targetSDFVec) {
+        Dataset<Row> candidateLinks;
+        if (useDirtyBit) {
+            Dataset dirtySource = sourceSDFVec.select("*").where(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
+            Dataset dirtyTarget = targetSDFVec.select("*").where(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
+            Dataset d1 = dirtySource.crossJoin(targetSDFVec);
+            Dataset d2 = dirtyTarget.crossJoin(sourceSDFVec);
+            candidateLinks = d1.unionByName(d2).distinct();
+        } else {
+            candidateLinks = sourceSDFVec.crossJoin(targetSDFVec); //Cross join
+        }
+        return candidateLinks;
     }
 
     public SGraph getSourceSDFSdfGraph() {
@@ -295,5 +319,13 @@ public class SparkTraceTask extends SGraph {
 
     public String getTargetIdCol() {
         return SymbolTable.getSymbolValue(new Symbol(this, targetIdCol));
+    }
+
+    public boolean isUseDirtyBit() {
+        return useDirtyBit;
+    }
+
+    public void setUseDirtyBit(boolean useDirtyBit) {
+        this.useDirtyBit = useDirtyBit;
     }
 }
