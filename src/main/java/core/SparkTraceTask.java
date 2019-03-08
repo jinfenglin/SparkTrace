@@ -277,12 +277,14 @@ public class SparkTraceTask extends SGraph {
 
     private Dataset createCandidateLink(Dataset sourceSDFVec, Dataset targetSDFVec) {
         Dataset<Row> candidateLinks;
+        sourceSDFVec.cache();
+        targetSDFVec.cache();
         if (useDirtyBit) {
             Dataset dirtySource = sourceSDFVec.select("*").where(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
             Dataset dirtyTarget = targetSDFVec.select("*").where(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
             Dataset d1 = dirtySource.crossJoin(targetSDFVec);
             Dataset d2 = dirtyTarget.crossJoin(sourceSDFVec);
-            candidateLinks = d1.unionByName(d2).distinct();
+            candidateLinks = d1.unionByName(d2).distinct().cache();
         } else {
             candidateLinks = sourceSDFVec.crossJoin(targetSDFVec); //Cross join
         }

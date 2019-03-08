@@ -35,13 +35,14 @@ public class DirtyBitExperiment extends SparkTraceJob {
         targetDataset = sparkSession.read().option("header", "true").csv(targetPath); //issue
         sourceDataset.select(sourceIdCol, new String[]{"commit_content"});
         targetDataset.select(targetIdCol, new String[]{"issue_content"});
-        sourceDataset = prepareData(sourceDataset, sourceIdCol, sourceDirtPercent).checkpoint();
-        targetDataset = prepareData(targetDataset, targetIdCol, targetDirtPercent).checkpoint();
+        sourceDataset = prepareData(sourceDataset, sourceIdCol, sourceDirtPercent).cache();
+        targetDataset = prepareData(targetDataset, targetIdCol, targetDirtPercent).cache();
     }
 
     private Dataset prepareData(Dataset dataset, String datasetIdCol, double dirtyPercent) {
+        long size = dataset.count();
         dataset = dataset.orderBy(rand());
-        Dataset selectedRows = dataset.select(datasetIdCol).limit((int) (dataset.count() * dirtyPercent)).withColumn(DIRTY_BIT_COL, lit(true));
+        Dataset selectedRows = dataset.select(datasetIdCol).limit((int) (size * dirtyPercent)).withColumn(DIRTY_BIT_COL, lit(true));
         dataset = dataset.orderBy(rand());
         Seq<String> colNames = scala.collection.JavaConverters.asScalaIteratorConverter(
                 Arrays.asList(datasetIdCol).iterator()
@@ -52,16 +53,17 @@ public class DirtyBitExperiment extends SparkTraceJob {
     }
 
     public long run() throws Exception {
-        long startTime = System.currentTimeMillis();
         SparkTraceTask vsmTask = new VSMTraceBuilder().getTask(sourceIdCol, targetIdCol);
-        vsmTask.setUseDirtyBit(false);
+        vsmTask.setUseDirtyBit(true);
         Map<String, String> config = new HashMap<>();
         config.put(VSMTraceBuilder.INPUT_TEXT1, "commit_content");
         config.put(VSMTraceBuilder.INPUT_TEXT2, "issue_content");
         vsmTask.setConfig(config);
         syncSymbolValues(vsmTask);
         vsmTask.train(sourceDataset, targetDataset, null);
-        vsmTask.trace(sourceDataset, targetDataset);
+        long startTime = System.currentTimeMillis();
+        Dataset result = vsmTask.trace(sourceDataset, targetDataset);
+        result.count();
         return System.currentTimeMillis() - startTime;
     }
 
@@ -71,6 +73,5 @@ public class DirtyBitExperiment extends SparkTraceJob {
         DirtyBitExperiment exp = new DirtyBitExperiment(sourcePath, targetPath, 0.2, 0.1);
         long runtime = exp.run();
         System.out.println(String.format("Running Time = %d", runtime));
-
     }
 }
