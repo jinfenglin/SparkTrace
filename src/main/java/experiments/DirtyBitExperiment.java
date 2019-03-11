@@ -4,20 +4,11 @@ package experiments;
 import buildingBlocks.traceTasks.VSMTraceBuilder;
 import core.SparkTraceJob;
 import core.SparkTraceTask;
-import core.graphPipeline.basic.SGraph;
-import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.expressions.UserDefinedFunction;
-import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.BooleanType;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.*;
 import scala.collection.Seq;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
 import static org.apache.spark.sql.functions.*;
@@ -28,7 +19,7 @@ public class DirtyBitExperiment extends SparkTraceJob {
     String sourceIdCol = "commit_id";
     String targetIdCol = "issue_id";
 
-    public DirtyBitExperiment(String sourcePath, String targetPath, double sourceDirtPercent, double targetDirtPercent) {
+    public DirtyBitExperiment(String sourcePath, String targetPath, double sourceDirtPercent, double targetDirtPercent) throws IOException {
         super("local[4]", "DirtyBit Experiment");//commit - issue
         sparkSession.sparkContext().setCheckpointDir("tmp");
         sourceDataset = sparkSession.read().option("header", "true").csv(sourcePath); //commit
