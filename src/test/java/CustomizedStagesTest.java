@@ -1,6 +1,9 @@
 import examples.TestBase;
 import featurePipelineStages.VecSimilarity.DenseVecSimilarity.DenseVecSimilarity;
 import featurePipelineStages.VecSimilarity.SparseVecSimilarity.SparseVecCosinSimilarityStage;
+import featurePipelineStages.sameColumnStage.SameAuthorStage;
+import featurePipelineStages.temporalRelations.CompareThreshold;
+import featurePipelineStages.temporalRelations.TimeDiff;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
@@ -12,6 +15,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Test;
 
+import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -100,6 +104,38 @@ public class CustomizedStagesTest extends TestBase {
         cosin.setInputCols("vec1", "vec2");
         cosin.setOutputCol("score");
         cosin.transform(dPair).show(false);
+    }
+
+    @Test
+    public void sameUserIdStage() {
+        String[] s1 = new String[]{"name1", "name2", ""};
+        String[] s2 = new String[]{"name2"};
+        Dataset<Row> d1 = getSentenceDataset(Arrays.asList(s1)).withColumnRenamed("text", "text1");
+        Dataset<Row> d2 = getSentenceDataset(Arrays.asList(s2)).withColumnRenamed("text", "text2");
+        Dataset dataset = d1.crossJoin(d2);
+        SameAuthorStage stage = new SameAuthorStage();
+        stage.set(stage.inputCols(), new String[]{"text1", "text2"});
+        stage.set(stage.outputCol(), "sameUser");
+        stage.transform(dataset).show();
+    }
+
+    @Test
+    public void timeDiffTest() {
+        String[] s1 = new String[]{"Sun Apr 30 00:00:00 EDT 2006", "Mon Apr 10 00:00:00 EDT 2006", "Mon Apr 10 00:00:00 EDT 2006"};
+        String[] s2 = new String[]{"Mon Apr 03 00:00:00 EDT 2006", "Sat Apr 01 00:00:00 EST 2006"};
+        Dataset<Row> d1 = getSentenceDataset(Arrays.asList(s1)).withColumnRenamed("text", "time1");
+        Dataset<Row> d2 = getSentenceDataset(Arrays.asList(s2)).withColumnRenamed("text", "time2");
+        Dataset dataset = d1.crossJoin(d2);
+        TimeDiff timeDiff = new TimeDiff();
+        timeDiff.set(timeDiff.inputCols(), new String[]{"time1", "time2"});
+        timeDiff.set(timeDiff.outputCol(), "timeDiff");
+        dataset = timeDiff.transform(dataset);
+
+        CompareThreshold ct = new CompareThreshold();
+        ct.set(ct.getParam("threshold"), 10.0);
+        ct.set(ct.inputCol(), "timeDiff");
+        ct.set(ct.outputCol(), "thresholdCompare");
+        ct.transform(dataset).show();
     }
 
 }

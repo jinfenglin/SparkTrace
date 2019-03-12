@@ -5,9 +5,11 @@ import buildingBlocks.traceTasks.VSMTraceBuilder;
 import core.SparkTraceJob;
 import core.SparkTraceTask;
 import org.apache.spark.sql.*;
-import scala.collection.Seq;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
@@ -22,47 +24,49 @@ public class DirtyBitExperiment extends SparkTraceJob {
     public DirtyBitExperiment(String sourcePath, String targetPath, double sourceDirtPercent, double targetDirtPercent) throws IOException {
         super("local[4]", "DirtyBit Experiment");//commit - issue
         sparkSession.sparkContext().setCheckpointDir("tmp");
-        sourceDataset = sparkSession.read().option("header", "true").csv(sourcePath); //commit
-        targetDataset = sparkSession.read().option("header", "true").csv(targetPath); //issue
-        sourceDataset.select(sourceIdCol, new String[]{"commit_content"});
-        targetDataset.select(targetIdCol, new String[]{"issue_content"});
-        sourceDataset = prepareData(sourceDataset, sourceIdCol, sourceDirtPercent).cache();
-        targetDataset = prepareData(targetDataset, targetIdCol, targetDirtPercent).cache();
+        sourceDataset = prepareData(sourcePath, sourceDirtPercent).cache();
+        targetDataset = prepareData(targetPath, targetDirtPercent).cache();
     }
 
-    private Dataset prepareData(Dataset dataset, String datasetIdCol, double dirtyPercent) {
-        long size = dataset.count();
-        dataset = dataset.orderBy(rand());
-        Dataset selectedRows = dataset.select(datasetIdCol).limit((int) (size * dirtyPercent)).withColumn(DIRTY_BIT_COL, lit(true));
-        dataset = dataset.orderBy(rand());
-        Seq<String> colNames = scala.collection.JavaConverters.asScalaIteratorConverter(
-                Arrays.asList(datasetIdCol).iterator()
-        ).asScala().toSeq();
-        dataset = dataset.join(selectedRows, colNames, "left_outer");
-        dataset = dataset.na().fill(false, new String[]{DIRTY_BIT_COL});
+    private Dataset<Row> prepareData(String filePath, double dirtyPercent) throws IOException {
+        List<String> lines = Files.readAllLines(Paths.get(filePath));
+        Path outPath = Paths.get("tmp", UUID.randomUUID().toString());
+        List<String> appendedRows = new ArrayList<>();
+        long dirtyRowNum = (long) (lines.size() * dirtyPercent);
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if(i==0) {
+                line+= String.format(",%s", DIRTY_BIT_COL);
+            }else{
+                boolean isDirty = i<dirtyRowNum;
+                line+= String.format(",%s", String.valueOf(isDirty));
+            }
+            appendedRows.add(line);
+        }
+        Files.write(outPath, appendedRows);
+        Dataset dataset =  sparkSession.read().option("header", "true").csv(outPath.toString());
         return dataset;
     }
 
-    public long run() throws Exception {
+    public long run(boolean useDirtyBit) throws Exception {
+        long startTime = System.currentTimeMillis();
         SparkTraceTask vsmTask = new VSMTraceBuilder().getTask(sourceIdCol, targetIdCol);
-        vsmTask.setUseDirtyBit(true);
+        vsmTask.setUseDirtyBit(useDirtyBit);
         Map<String, String> config = new HashMap<>();
         config.put(VSMTraceBuilder.INPUT_TEXT1, "commit_content");
         config.put(VSMTraceBuilder.INPUT_TEXT2, "issue_content");
         vsmTask.setConfig(config);
         syncSymbolValues(vsmTask);
         vsmTask.train(sourceDataset, targetDataset, null);
-        long startTime = System.currentTimeMillis();
-        Dataset result = vsmTask.trace(sourceDataset, targetDataset);
-        result.count();
+        vsmTask.trace(sourceDataset, targetDataset).count();
         return System.currentTimeMillis() - startTime;
     }
 
     public static void main(String[] args) throws Exception {
         String sourcePath = "src/main/resources/maven_sample/commits.csv";
         String targetPath = "src/main/resources/maven_sample/improvement.csv";
-        DirtyBitExperiment exp = new DirtyBitExperiment(sourcePath, targetPath, 0.2, 0.1);
-        long runtime = exp.run();
-        System.out.println(String.format("Running Time = %d", runtime));
+        DirtyBitExperiment exp = new DirtyBitExperiment(sourcePath, targetPath, 1, 1);
+        long nonDirtyBitRuntime = exp.run(true);
+        System.out.println(String.format("DirtyBit Running Time = %d", nonDirtyBitRuntime));
     }
 }

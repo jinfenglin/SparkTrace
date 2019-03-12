@@ -271,7 +271,6 @@ public class SparkTraceTask extends SGraph {
             i++;
         }
         Dataset<Row> candidateLinks = createCandidateLink(sourceSDFeatureVecs, targetSDFeatureVecs);
-        //Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
         return this.ddfModel.transform(candidateLinks);
     }
 
@@ -280,11 +279,14 @@ public class SparkTraceTask extends SGraph {
         sourceSDFVec.cache();
         targetSDFVec.cache();
         if (useDirtyBit) {
-            Dataset dirtySource = sourceSDFVec.select("*").where(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
-            Dataset dirtyTarget = targetSDFVec.select("*").where(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
-            Dataset d1 = dirtySource.crossJoin(targetSDFVec);
-            Dataset d2 = dirtyTarget.crossJoin(sourceSDFVec);
-            candidateLinks = d1.unionByName(d2).distinct().cache();
+            Dataset dirtySource = sourceSDFVec.filter(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
+            Dataset cleanSource = sourceSDFVec.filter(col(DIRTY_BIT_COL).equalTo(false)).drop(DIRTY_BIT_COL);
+            Dataset dirtyTarget = targetSDFVec.filter(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
+            Dataset cleanTarget = targetSDFVec.filter(col(DIRTY_BIT_COL).equalTo(false)).drop(DIRTY_BIT_COL);
+            Dataset d1 = dirtySource.crossJoin(cleanTarget);
+            Dataset d3 = dirtySource.crossJoin(dirtyTarget);
+            Dataset d2 = dirtyTarget.crossJoin(cleanSource);
+            candidateLinks = d1.unionByName(d2).unionByName(d3);
         } else {
             candidateLinks = sourceSDFVec.crossJoin(targetSDFVec); //Cross join
         }
