@@ -28,6 +28,11 @@ public class InTimeRange extends Transformer implements HasInputCols, HasOutputC
     StringArrayParam inputCols;
     Param<String> outputCol;
 
+    public InTimeRange() {
+        inputCols = initInputCols();
+        outputCol = initOutputCol();
+    }
+
     public StringArrayParam initInputCols() {
         return new StringArrayParam(this, "inputCols", "3 columns of datatime for comparision. including lowerBound, givenTime, upperBound");
     }

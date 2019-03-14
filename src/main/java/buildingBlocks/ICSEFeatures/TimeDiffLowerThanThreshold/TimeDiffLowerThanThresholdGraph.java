@@ -9,8 +9,8 @@ import featurePipelineStages.temporalRelations.TimeDiff;
  *
  */
 public class TimeDiffLowerThanThresholdGraph {
-    public static String COMMIT_TIME = "commit_time", ISSUE_RESOLVE = "issue_resolve";
-    public static String TIME_DIFF = "time_diff", OUTPUT = "output";
+    public static String COMMIT_TIME = "COMMIT_TIME", ISSUE_RESOLVE = "ISSUE_RESOLVE";
+    public static String TIME_DIFF = "TIME_DIFF", OUTPUT = "OUTPUT";
 
     public static SGraph getGraph(String graphName) throws Exception {
         SGraph graph = new SGraph(graphName);
@@ -33,8 +33,8 @@ public class TimeDiffLowerThanThresholdGraph {
         graph.addNode(tillIssueResolveNode);
         graph.addNode(lowerThanThreshold);
 
-        graph.connect(graph.sinkNode, COMMIT_TIME, tillIssueResolveNode, COMMIT_TIME);
-        graph.connect(graph.sinkNode, ISSUE_RESOLVE, tillIssueResolveNode, ISSUE_RESOLVE);
+        graph.connect(graph.sourceNode, COMMIT_TIME, tillIssueResolveNode, COMMIT_TIME);
+        graph.connect(graph.sourceNode, ISSUE_RESOLVE, tillIssueResolveNode, ISSUE_RESOLVE);
         graph.connect(tillIssueResolveNode, TIME_DIFF, lowerThanThreshold, TIME_DIFF);
         graph.connect(lowerThanThreshold, OUTPUT, graph.sinkNode, OUTPUT);
         return graph;

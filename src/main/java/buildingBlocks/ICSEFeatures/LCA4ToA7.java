@@ -15,6 +15,7 @@ public class LCA4ToA7 {
         graph.addInputField(COMMIT_TIME);
         graph.addInputField(ISSUE_CREATE);
         graph.addInputField(ISSUE_RESOLVE);
+        graph.addOutputField(A4);
         graph.addOutputField(A5);
         graph.addOutputField(A6);
         graph.addOutputField(A7);
