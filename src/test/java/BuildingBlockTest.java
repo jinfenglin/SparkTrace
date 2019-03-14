@@ -1,7 +1,7 @@
-import buildingBlocks.traceTasks.LDATraceBuilder;
-import buildingBlocks.traceTasks.NGramVSMTraceTask;
-import buildingBlocks.traceTasks.VSMTraceBuilder;
-import buildingBlocks.traceTasks.OptimizedVoteTraceBuilder;
+import traceTasks.LDATraceBuilder;
+import traceTasks.NGramVSMTraceTaskBuilder;
+import traceTasks.VSMTraceBuilder;
+import traceTasks.OptimizedVoteTraceBuilder;
 import core.SparkTraceTask;
 import examples.TestBase;
 import org.apache.spark.sql.Dataset;
@@ -12,7 +12,7 @@ import scala.collection.Seq;
 import traceability.TraceDatasetFactory;
 import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenImprovement;
-import traceability.components.maven.MavenLink;
+import traceability.components.maven.MavenICLink;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -26,7 +26,7 @@ public class BuildingBlockTest extends TestBase {
     private static final String masterUrl = "local[4]";
     Dataset<MavenCommit> commits;
     Dataset<MavenImprovement> improvements;
-    Dataset<MavenLink> links;
+    Dataset<MavenICLink> links;
 
     public BuildingBlockTest() {
         super(masterUrl);
@@ -39,7 +39,7 @@ public class BuildingBlockTest extends TestBase {
         String linkPath = "src/main/resources/maven/improvementCommitLinks.csv";
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
-        links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);
+        links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenICLink.class);
     }
 
     @Test
@@ -59,7 +59,7 @@ public class BuildingBlockTest extends TestBase {
 
     @Test
     public void ngramVSMTaskTest() throws Exception {
-        SparkTraceTask vsmTask = new NGramVSMTraceTask().getTask("s_id", "t_id");
+        SparkTraceTask vsmTask = new NGramVSMTraceTaskBuilder().getTask("s_id", "t_id");
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         vsmTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(vsmTask);
@@ -120,7 +120,7 @@ public class BuildingBlockTest extends TestBase {
         vsmTask.train(commits, improvements, null);
         Dataset<Row> result1 = vsmTask.trace(commits, improvements);
 
-        SparkTraceTask ngramTask = new NGramVSMTraceTask().getTask(sourceId, targetId);
+        SparkTraceTask ngramTask = new NGramVSMTraceTaskBuilder().getTask(sourceId, targetId);
         ngramTask.setCleanColumns(false);
         ngramTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(ngramTask);
@@ -135,7 +135,7 @@ public class BuildingBlockTest extends TestBase {
         Dataset<Row> result3 = ldaTask.trace(commits, improvements);
 
         String vsmScoreCol = vsmTask.getOutputField(VSMTraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
-        String ngramVsmScoreCol = ngramTask.getOutputField(NGramVSMTraceTask.OUTPUT).getFieldSymbol().getSymbolValue();
+        String ngramVsmScoreCol = ngramTask.getOutputField(NGramVSMTraceTaskBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
         String ldaScoreCol = ldaTask.getOutputField(LDATraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
 
         Seq<String> colNames = scala.collection.JavaConverters.asScalaIteratorConverter(

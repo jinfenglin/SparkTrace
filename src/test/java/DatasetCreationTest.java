@@ -4,11 +4,10 @@ import org.junit.Test;
 
 import traceability.TraceDatasetFactory;
 import traceability.components.abstractComponents.TraceComponent;
-import traceability.components.basic.BasicTraceArtifact;
 import traceability.components.basic.BasicTraceLink;
 import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenImprovement;
-import traceability.components.maven.MavenLink;
+import traceability.components.maven.MavenICLink;
 
 import java.util.List;
 
@@ -46,7 +45,7 @@ public class DatasetCreationTest extends TestBase {
         readCSVDataAndVerifyNum(improvementPath, MAVEN_IMPROVEMENT_NUM, MavenImprovement.class);
 
         String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
-        readCSVDataAndVerifyNum(linkPath, MAVEN_LINK_NUM, MavenLink.class);
+        readCSVDataAndVerifyNum(linkPath, MAVEN_LINK_NUM, MavenICLink.class);
     }
 
     @Test

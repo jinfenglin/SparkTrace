@@ -1,8 +1,8 @@
 package experiments;
 
 import buildingBlocks.preprocessor.NGramCount;
-import buildingBlocks.traceTasks.NGramVSMTraceTask;
-import buildingBlocks.traceTasks.VSMTraceBuilder;
+import traceTasks.NGramVSMTraceTaskBuilder;
+import traceTasks.VSMTraceBuilder;
 import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceJob;
@@ -217,12 +217,12 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
     public long runUnOptimizedSystem() throws Exception {
         long startTime = System.currentTimeMillis();
 
-        SparkTraceTask job1 = new NGramVSMTraceTask().getTask(CODE_ID, COMMIT_ID);
+        SparkTraceTask job1 = new NGramVSMTraceTaskBuilder().getTask(CODE_ID, COMMIT_ID);
         job1.setCleanColumns(false);
         job1.indexOn = 1; //index on the target artifacts
         Map<String, String> codeCommitConfig = new HashMap<>();
-        codeCommitConfig.put(NGramVSMTraceTask.INPUT1, codeContent);
-        codeCommitConfig.put(NGramVSMTraceTask.INPUT2, commitContent);
+        codeCommitConfig.put(NGramVSMTraceTaskBuilder.INPUT1, codeContent);
+        codeCommitConfig.put(NGramVSMTraceTaskBuilder.INPUT2, commitContent);
         job1.setConfig(codeCommitConfig);
         syncSymbolValues(job1);
         job1.train(code, commit, null);
@@ -235,8 +235,8 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         job2.indexOn = 1;
         job2.setCleanColumns(false);
         Map<String, String> commitBugConfig = new HashMap<>();
-        commitBugConfig.put(NGramVSMTraceTask.INPUT1, commitContent);
-        commitBugConfig.put(NGramVSMTraceTask.INPUT2, bugContent);
+        commitBugConfig.put(NGramVSMTraceTaskBuilder.INPUT1, commitContent);
+        commitBugConfig.put(NGramVSMTraceTaskBuilder.INPUT2, bugContent);
         job2.setConfig(commitBugConfig);
         syncSymbolValues(job2);
         job2.train(commit, bug, null);
@@ -247,8 +247,8 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         job2.indexOn = 1;
         job3.setCleanColumns(false);
         Map<String, String> codeBugConfig = new HashMap<>();
-        codeBugConfig.put(NGramVSMTraceTask.INPUT1, codeContent);
-        codeBugConfig.put(NGramVSMTraceTask.INPUT2, bugContent);
+        codeBugConfig.put(NGramVSMTraceTaskBuilder.INPUT1, codeContent);
+        codeBugConfig.put(NGramVSMTraceTaskBuilder.INPUT2, bugContent);
         job3.setConfig(codeBugConfig);
         syncSymbolValues(job3);
         job3.train(code, bug, null);

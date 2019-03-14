@@ -1,4 +1,4 @@
-package buildingBlocks.traceTasks;
+package traceTasks;
 
 import buildingBlocks.preprocessor.NGramCount;
 import buildingBlocks.preprocessor.SimpleWordCount;
@@ -129,7 +129,7 @@ public class OptimizedVoteTraceBuilder {
     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
         VSMTraceBuilder vsmBuilder = new VSMTraceBuilder();
         LDATraceBuilder ldaBuilder = new LDATraceBuilder(); //s_text lda_sim
-        NGramVSMTraceTask ngram_vsmBuilder = new NGramVSMTraceTask();//s_text ngram_vsm_sim
+        NGramVSMTraceTaskBuilder ngram_vsmBuilder = new NGramVSMTraceTaskBuilder();//s_text ngram_vsm_sim
         SGraph ssdf = createSSDF(vsmBuilder.createSSDF(), ngram_vsmBuilder.createSSDF(), ldaBuilder.createSSDF());
         SGraph tsdf = createTSDF(vsmBuilder.createTSDF(), ngram_vsmBuilder.createTSDF(), ldaBuilder.createTSDF());
         SGraph ddf = createDDF(vsmBuilder.createDDF(), ngram_vsmBuilder.createDDF(), ldaBuilder.createDDF());

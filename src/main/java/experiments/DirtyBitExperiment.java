@@ -1,7 +1,7 @@
 package experiments;
 
 
-import buildingBlocks.traceTasks.VSMTraceBuilder;
+import traceTasks.VSMTraceBuilder;
 import core.SparkTraceJob;
 import core.SparkTraceTask;
 import org.apache.spark.sql.*;
@@ -13,7 +13,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
-import static org.apache.spark.sql.functions.*;
 
 public class DirtyBitExperiment extends SparkTraceJob {
     Dataset<Row> sourceDataset, targetDataset;

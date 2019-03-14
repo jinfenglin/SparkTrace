@@ -10,7 +10,7 @@ import org.junit.Test;
 import traceability.TraceDatasetFactory;
 import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenImprovement;
-import traceability.components.maven.MavenLink;
+import traceability.components.maven.MavenICLink;
 
 import static org.apache.spark.sql.functions.*;
 
@@ -27,13 +27,13 @@ public class useCases extends TestBase {
     public void mergeEffectiveTest() {
         Dataset<MavenCommit> commits;
         Dataset<MavenImprovement> improvements;
-        Dataset<MavenLink> links;
+        Dataset<MavenICLink> links;
         String commitPath = "src/main/resources/maven_sample/commits.csv";
         String improvementPath = "src/main/resources/maven_sample/improvement.csv";
         String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
-        links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);
+        links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenICLink.class);
         Dataset<Row> df = commits.toDF();
         Pipeline pipeline = new Pipeline();
         int num = 1;

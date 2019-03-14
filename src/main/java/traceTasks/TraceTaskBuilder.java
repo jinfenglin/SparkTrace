@@ -1,4 +1,4 @@
-package buildingBlocks.traceTasks;
+package traceTasks;
 
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;

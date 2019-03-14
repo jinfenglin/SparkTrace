@@ -1,12 +1,11 @@
 package experiments;
 
-import buildingBlocks.traceTasks.LDATraceBuilder;
-import buildingBlocks.traceTasks.NGramVSMTraceTask;
-import buildingBlocks.traceTasks.OptimizedVoteTraceBuilder;
-import buildingBlocks.traceTasks.VSMTraceBuilder;
+import traceTasks.LDATraceBuilder;
+import traceTasks.NGramVSMTraceTaskBuilder;
+import traceTasks.OptimizedVoteTraceBuilder;
+import traceTasks.VSMTraceBuilder;
 import core.SparkTraceJob;
 
-import java.io.BufferedWriter;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -81,7 +80,7 @@ public class VotingSystemExperiment extends SparkTraceJob {
         vsmTask.train(sourceDataset, targetDataset, null);
         Dataset<Row> result1 = vsmTask.trace(sourceDataset, targetDataset);
 
-        SparkTraceTask ngramTask = new NGramVSMTraceTask().getTask(sourceId, targetId);
+        SparkTraceTask ngramTask = new NGramVSMTraceTaskBuilder().getTask(sourceId, targetId);
         ngramTask.setCleanColumns(false);
         ngramTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(ngramTask);
@@ -96,7 +95,7 @@ public class VotingSystemExperiment extends SparkTraceJob {
         Dataset<Row> result3 = ldaTask.trace(sourceDataset, targetDataset);
 
         String vsmScoreCol = vsmTask.getOutputField(VSMTraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
-        String ngramVsmScoreCol = ngramTask.getOutputField(NGramVSMTraceTask.OUTPUT).getFieldSymbol().getSymbolValue();
+        String ngramVsmScoreCol = ngramTask.getOutputField(NGramVSMTraceTaskBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
         String ldaScoreCol = ldaTask.getOutputField(LDATraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
 
         Seq<String> colNames = scala.collection.JavaConverters.asScalaIteratorConverter(

@@ -2,7 +2,7 @@ package traceability.components.maven;
 
 import traceability.components.abstractComponents.TraceLink;
 
-public class MavenLink extends TraceLink {
+public class MavenICLink extends TraceLink {
     String issue_id, commit_id, method, score;
 
     public String getIssue_id() {

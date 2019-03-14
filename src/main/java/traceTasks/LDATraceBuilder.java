@@ -1,4 +1,4 @@
-package buildingBlocks.traceTasks;
+package traceTasks;
 
 import buildingBlocks.preprocessor.SimpleWordCount;
 import buildingBlocks.unsupervisedLearn.LDAGraphPipeline;

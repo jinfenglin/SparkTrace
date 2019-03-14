@@ -1,76 +1,60 @@
 package featurePipelineStages.temporalRelations;
 
-import javafx.scene.input.DataFormat;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.ml.param.StringArrayParam;
 import org.apache.spark.ml.param.shared.HasInputCols;
 import org.apache.spark.ml.param.shared.HasOutputCol;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
 
+import static featurePipelineStages.temporalRelations.TimeDiff.parseTimeStamp;
 import static org.apache.spark.sql.functions.callUDF;
+import static org.apache.spark.sql.functions.col;
 
 /**
  *
  */
-public class TimeDiff extends Transformer implements HasInputCols, HasOutputCol {
-    private static final long serialVersionUID = -110407388135240734L;
-    private static final String TIME_DIFF = "TIME_DIFF";
+public class InTimeRange extends Transformer implements HasInputCols, HasOutputCol {
+    private static final long serialVersionUID = 8199707556342047548L;
+    private static final String IN_RANGE = "IN_RANGE";
     StringArrayParam inputCols;
     Param<String> outputCol;
 
-    public TimeDiff() {
-        inputCols = initInputCols();
-        outputCol = initOutputCol();
-    }
-
     public StringArrayParam initInputCols() {
-        return new StringArrayParam(this, "inputCols", "two columns of datatime for compare");
+        return new StringArrayParam(this, "inputCols", "3 columns of datatime for comparision. including lowerBound, givenTime, upperBound");
     }
 
     public Param<String> initOutputCol() {
         return new Param<String>(this, "outputCol", "outputColumn if the columns the result of mining col1 with col2, the unit is days");
     }
 
-    public static Date parseTimeStamp(String timeStamp) throws ParseException {
-        SimpleDateFormat timeStampFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzz yyyy");
-        if (timeStamp.contains("EDT")) {
-            TimeZone edtTime = TimeZone.getTimeZone("GMT-04:00");
-            timeStampFormat.setTimeZone(edtTime);
-        } else if (timeStamp.contains("EST")) {
-            TimeZone estTime = TimeZone.getTimeZone("EST");
-            timeStampFormat.setTimeZone(estTime);
-        }
-        Date timeStampDate = timeStampFormat.parse(timeStamp);
-        return timeStampDate;
-    }
-
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
-        double unit = 3600000 * 24;
-        dataset.sqlContext().udf().register(TIME_DIFF, (String col1, String col2) -> {
-            Date t1 = parseTimeStamp(col1);
-            Date t2 = parseTimeStamp(col2);
-            return (double) ((t1.getTime() - t2.getTime()) / unit);
-        }, DataTypes.DoubleType);
-        String[] inputColumns = getInputCols();
-        return dataset.withColumn(getOutputCol(), callUDF(TIME_DIFF, dataset.col(inputColumns[0]), dataset.col(inputColumns[1])));
+        dataset.sqlContext().udf().register(IN_RANGE, (String lower, String givenTime, String upper) -> {
+            Date lowerTime = parseTimeStamp(lower);
+            Date time = parseTimeStamp(givenTime);
+            Date upperTime = parseTimeStamp(upper);
+            return time.after(lowerTime) && time.before(upperTime);
+        }, DataTypes.BooleanType);
+        String[] inputs = getInputCols();
+        Column lower = col(inputs[0]);
+        Column time = col(inputs[1]);
+        Column upper = col(inputs[2]);
+        return dataset.withColumn(getOutputCol(), callUDF(IN_RANGE, lower, time, upper));
     }
 
     @Override
     public StructType transformSchema(StructType structType) {
-        StructField timeDiffField = new StructField(getOutputCol(), DataTypes.DoubleType, false, null);
-        return structType.add(timeDiffField);
+        StructField field = new StructField(getOutputCol(), DataTypes.BooleanType, false, null);
+        return structType.add(field);
     }
 
     @Override

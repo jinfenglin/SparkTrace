@@ -1,6 +1,3 @@
-import buildingBlocks.traceTasks.VSMTraceBuilder;
-import core.SparkTraceTask;
-import core.graphPipeline.basic.SGraph;
 import examples.TestBase;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
@@ -12,13 +9,9 @@ import org.junit.Test;
 import traceability.TraceDatasetFactory;
 import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenImprovement;
-import traceability.components.maven.MavenLink;
+import traceability.components.maven.MavenICLink;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import static core.graphPipeline.basic.SGraph.syncSymbolValues;
 
 public class SparkJobTest extends TestBase {
     private static String masterUrl = "local[1]";
@@ -29,7 +22,7 @@ public class SparkJobTest extends TestBase {
 
     Dataset<MavenCommit> commits;
     Dataset<MavenImprovement> improvements;
-    Dataset<MavenLink> links;
+    Dataset<MavenICLink> links;
 
     @Before
     public void runSparkTestWithMavenData() {
@@ -38,7 +31,7 @@ public class SparkJobTest extends TestBase {
         String linkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
-        links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenLink.class);
+        links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenICLink.class);
     }
 
     @Test

@@ -1,4 +1,4 @@
-package buildingBlocks.traceTasks;
+package traceTasks;
 
 import buildingBlocks.preprocessor.NGramCount;
 import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
@@ -11,7 +11,7 @@ import java.util.Arrays;
 /**
  *
  */
-public class NGramVSMTraceTask implements TraceTaskBuilder {
+public class NGramVSMTraceTaskBuilder implements TraceTaskBuilder {
     public static String INPUT1 = "s_text", INPUT2 = "t_text";
     public static String OUTPUT = "ngram_vsm_sim";
 
