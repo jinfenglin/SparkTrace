@@ -4,7 +4,14 @@ import featurePipelineStages.cloestLinkedCommit.CLTimeDiff;
 import featurePipelineStages.cloestLinkedCommit.CLUser;
 import featurePipelineStages.cloestLinkedCommit.FindClosestPreviousLinkedCommit;
 import featurePipelineStages.cloestLinkedCommit.Overlap;
+import org.apache.spark.ml.feature.VectorAssembler;
+import org.apache.spark.ml.linalg.VectorUDT;
+import org.apache.spark.ml.linalg.Vectors;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.junit.Test;
 import traceTasks.LinkCompletionTraceTask;
 import traceability.TraceDatasetFactory;
@@ -20,6 +27,7 @@ import java.util.Map;
 import static core.SparkTraceTask.LabelCol;
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
 import static org.apache.spark.sql.functions.*;
+import static org.apache.spark.sql.types.DataTypes.*;
 
 /**
  *
@@ -113,6 +121,4 @@ public class ICSEExample extends TestBase {
         task.train(commits, improvements, improvementCommitLink);
         task.trace(commits, improvements).show();
     }
-
-
 }

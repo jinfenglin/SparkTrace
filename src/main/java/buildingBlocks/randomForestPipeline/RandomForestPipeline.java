@@ -20,7 +20,7 @@ public class RandomForestPipeline {
         graph.addOutputField(PREDICTION);
 
 
-        VectorAssembler assembler = new VectorAssembler();
+        VectorAssembler assembler = new VectorAssembler().setHandleInvalid("skip");
         SNode createFeatureVec = new SNode(assembler, "createFeatureVec");
         for (String symbolName : featureColSymbolName) {
             createFeatureVec.addInputField(symbolName);

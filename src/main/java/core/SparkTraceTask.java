@@ -19,7 +19,9 @@ import org.apache.spark.sql.types.StructType;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import static experiments.DirtyBitExperiment.DIRTY_BIT_COL;
 import static org.apache.spark.sql.functions.*;
@@ -44,7 +46,9 @@ public class SparkTraceTask extends SGraph {
     private List<SGraph> unsupervisedLearnGraphs;
     private SGraph ddfGraph;
 
-    private PipelineModel sourceSDFModel, targetSDFModel, ddfModel;
+    private SGraph predictGraph;
+
+    private PipelineModel sourceSDFModel, targetSDFModel, ddfModel, predictModel;
     private List<PipelineModel> unsupervisedModels;
     public int indexOn = 0; // -1 index on source 0 index on both 1 index on target
 
@@ -157,7 +161,6 @@ public class SparkTraceTask extends SGraph {
         this.targetSDFModel = targetSDFModel;
         Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
-
         unsupervisedLeanring(sourceSDFeatureVecs, targetSDFeatureVecs);
         int i = 0;
         for (SGraph unsupervisedLearnGraph : this.unsupervisedLearnGraphs) {
@@ -177,18 +180,19 @@ public class SparkTraceTask extends SGraph {
             targetSDFeatureVecs = unsupervisedModel.transform(targetSDFeatureVecs);
             i++;
         }
-
         Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs);
         if (goldenLinks != null) {
-            //Create sub sampling training dataset
-            //Dataset positiveRows = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs).cache();
             Seq<String> joinCondition = JavaConverters.asScalaIteratorConverter(Arrays.asList(sourceIdCol, targetIdCol).iterator()).asScala().toSeq();
             int cnt = (int) goldenLinks.count();
             candidateLinks = candidateLinks.join(goldenLinks.select(sourceIdCol, targetIdCol, LabelCol), joinCondition, "left_outer").na().fill(0, new String[]{LabelCol});
             candidateLinks = candidateLinks.filter(col(LabelCol).equalTo(0)).limit(cnt).union(candidateLinks.filter(col(LabelCol).equalTo(1)));
         }
+        candidateLinks = candidateLinks.cache();
         PipelineModel ddfModel = ddfGraph.toPipeline().fit(candidateLinks);
         this.ddfModel = ddfModel;
+        if (predictGraph != null) {
+            predictModel = predictGraph.toPipeline().fit(ddfModel.transform(candidateLinks));
+        }
     }
 
     public Dataset<Row> trace(Dataset<?> sourceArtifacts,
@@ -214,7 +218,13 @@ public class SparkTraceTask extends SGraph {
             i++;
         }
         Dataset<Row> candidateLinks = createCandidateLink(sourceSDFeatureVecs, targetSDFeatureVecs);
-        return this.ddfModel.transform(candidateLinks);
+        candidateLinks = candidateLinks.cache();
+        candidateLinks = this.ddfModel.transform(candidateLinks);
+        if (predictModel != null) {
+            return predictModel.transform(candidateLinks.withColumn(LabelCol, lit(0)));
+        } else {
+            return candidateLinks;
+        }
     }
 
     private void unsupervisedLeanring(Dataset<Row> sourceSDFeatureVecs, Dataset<Row> targetSDFFeatreusVecs) throws Exception {
@@ -247,8 +257,6 @@ public class SparkTraceTask extends SGraph {
                         trainingData = trainingData.union(columnData);
                     }
                 }
-
-
             }
             Pipeline unsupervisePipe = unsupervisedLearnGraph.toPipeline();
             PipelineStage innerStage = unsupervisePipe.getStages()[0];
@@ -335,5 +343,13 @@ public class SparkTraceTask extends SGraph {
 
     public void setUseDirtyBit(boolean useDirtyBit) {
         this.useDirtyBit = useDirtyBit;
+    }
+
+    public SGraph getPredictGraph() {
+        return predictGraph;
+    }
+
+    public void setPredictGraph(SGraph predictGraph) {
+        this.predictGraph = predictGraph;
     }
 }
