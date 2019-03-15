@@ -4,10 +4,7 @@ import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.feature.StopWordsRemover;
 import org.apache.spark.ml.param.Param;
-import org.apache.spark.ml.param.shared.HasInputCol;
-import org.apache.spark.ml.param.shared.HasInputCols;
-import org.apache.spark.ml.param.shared.HasOutputCol;
-import org.apache.spark.ml.param.shared.HasOutputCols;
+import org.apache.spark.ml.param.shared.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,10 +52,19 @@ public class SNode extends Vertex {
             HasInputCols hasInputCols = (HasInputCols) sparkPipelineStage;
             List<String> inputColNames = new ArrayList<>();
             inputCells.forEach(cell -> inputColNames.add(cell.getFieldSymbol().getSymbolValue()));
-            //TODO add if (hasInputCols instanceof InnerStageImplementHasInputCols)
             hasInputCols.set(hasInputCols.inputCols(), inputColNames.toArray(new String[0]));
         } else {
-            throw new Exception(stageMoIOInterfaceErrorMsg.format(sparkPipelineStage.toString(), "HasInputCol/HasInputCols"));
+            //TODO this is hard code for supervised models e.g random forest
+            if (sparkPipelineStage instanceof HasFeaturesCol && sparkPipelineStage instanceof HasLabelCol) {
+                String labelColName = inputCells.get(0).getFieldSymbol().getSymbolValue();
+                String featureColName = inputCells.get(1).getFieldSymbol().getSymbolValue();
+                HasLabelCol hasLabelCol = (HasLabelCol) sparkPipelineStage;
+                hasLabelCol.set(hasLabelCol.labelCol(), labelColName);
+                HasFeaturesCol featuresCol = (HasFeaturesCol) sparkPipelineStage;
+                featuresCol.set(featuresCol.featuresCol(), featureColName);
+            } else {
+                throw new Exception(stageMoIOInterfaceErrorMsg.format(sparkPipelineStage.toString(), "HasInputCol/HasInputCols"));
+            }
         }
 
         if (sparkPipelineStage instanceof HasOutputCol) {
@@ -67,10 +73,7 @@ public class SNode extends Vertex {
             }
             HasOutputCol hasOutputCol = (HasOutputCol) sparkPipelineStage;
             String outputColName = outputCells.get(0).getFieldSymbol().getSymbolValue();
-
             hasOutputCol.set(hasOutputCol.outputCol(), outputColName);
-
-
         } else if (sparkPipelineStage instanceof HasOutputCols) {
             HasOutputCols hasOutputCols = (HasOutputCols) sparkPipelineStage;
             List<String> outputColNames = new ArrayList<>();
@@ -78,7 +81,13 @@ public class SNode extends Vertex {
             //TODO add if (hasInputCols instanceof InnerStageImplementHasOutputCols)
             hasOutputCols.set(hasOutputCols.outputCols(), outputColNames.toArray(new String[0]));
         } else {
-            throw new Exception(stageMoIOInterfaceErrorMsg.format(sparkPipelineStage.toString(), "HasOutputCol/HasOutputCols"));
+            if (sparkPipelineStage instanceof HasPredictionCol) {
+                HasPredictionCol hasPredictionCol = (HasPredictionCol) sparkPipelineStage;
+                String outputColName = outputCells.get(0).getFieldSymbol().getSymbolValue();
+                hasPredictionCol.set(hasPredictionCol.predictionCol(), outputColName);
+            } else {
+                throw new Exception(stageMoIOInterfaceErrorMsg.format(sparkPipelineStage.toString(), "HasOutputCol/HasOutputCols"));
+            }
         }
         pipeline.setStages(new PipelineStage[]{sparkPipelineStage});
         return pipeline;

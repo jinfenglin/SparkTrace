@@ -16,11 +16,13 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import scala.collection.JavaConverters;
+import scala.collection.Seq;
 
 import java.util.*;
 
 import static experiments.DirtyBitExperiment.DIRTY_BIT_COL;
-import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.*;
 
 
 /**
@@ -37,7 +39,7 @@ public class SparkTraceTask extends SGraph {
     private boolean useDirtyBit = false;
     //Symbol name for id column which can be configured in different places.
     private String sourceIdCol, targetIdCol;
-
+    public static String LabelCol = "label";
     private SGraph sourceSDF, targetSDF;
     private List<SGraph> unsupervisedLearnGraphs;
     private SGraph ddfGraph;
@@ -176,16 +178,43 @@ public class SparkTraceTask extends SGraph {
             i++;
         }
 
-
-        Dataset<Row> candidateLinks;
-        if (goldenLinks == null) {
-            candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs); //Cross join
-        } else {
-            candidateLinks = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs);
+        Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs);
+        if (goldenLinks != null) {
+            //Create sub sampling training dataset
+            //Dataset positiveRows = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs).cache();
+            Seq<String> joinCondition = JavaConverters.asScalaIteratorConverter(Arrays.asList(sourceIdCol, targetIdCol).iterator()).asScala().toSeq();
+            int cnt = (int) goldenLinks.count();
+            candidateLinks = candidateLinks.join(goldenLinks.select(sourceIdCol, targetIdCol, LabelCol), joinCondition, "left_outer").na().fill(0, new String[]{LabelCol});
+            candidateLinks = candidateLinks.filter(col(LabelCol).equalTo(0)).limit(cnt).union(candidateLinks.filter(col(LabelCol).equalTo(1)));
         }
-
         PipelineModel ddfModel = ddfGraph.toPipeline().fit(candidateLinks);
         this.ddfModel = ddfModel;
+    }
+
+    public Dataset<Row> trace(Dataset<?> sourceArtifacts,
+                              Dataset<?> targetArtifacts) {
+        Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
+        Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
+
+        int i = 0;
+        for (PipelineModel unsupervisedModel : this.unsupervisedModels) {
+            SGraph unsupervisedLearnGraph = this.unsupervisedLearnGraphs.get(i);
+            String inputColParam = "inputCol";
+            String outputColParam = "outputCol";
+            if (unsupervisedModel.stages()[0] instanceof LDAModel) {
+                inputColParam = "featuresCol";
+                outputColParam = "topicDistributionCol";
+            }
+            unsupervisedModel.stages()[0].set(inputColParam, unsupervisedLearnGraph.getInputTable().getCells().get(0).getFieldSymbol().getSymbolValue());
+            unsupervisedModel.stages()[0].set(outputColParam, unsupervisedLearnGraph.getOutputTable().getCells().get(0).getFieldSymbol().getSymbolValue());
+            sourceSDFeatureVecs = unsupervisedModel.transform(sourceSDFeatureVecs);
+            unsupervisedModel.stages()[0].set(inputColParam, unsupervisedLearnGraph.getInputTable().getCells().get(1).getFieldSymbol().getSymbolValue());
+            unsupervisedModel.stages()[0].set(outputColParam, unsupervisedLearnGraph.getOutputTable().getCells().get(1).getFieldSymbol().getSymbolValue());
+            targetSDFeatureVecs = unsupervisedModel.transform(targetSDFeatureVecs);
+            i++;
+        }
+        Dataset<Row> candidateLinks = createCandidateLink(sourceSDFeatureVecs, targetSDFeatureVecs);
+        return this.ddfModel.transform(candidateLinks);
     }
 
     private void unsupervisedLeanring(Dataset<Row> sourceSDFeatureVecs, Dataset<Row> targetSDFFeatreusVecs) throws Exception {
@@ -233,6 +262,7 @@ public class SparkTraceTask extends SGraph {
         }
     }
 
+
     private Dataset<Row> appendFeaturesToLinks(Dataset<Row> links, Dataset<Row> sourceFeatures, Dataset<Row> targetFeatures) {
         String sourceIDColName = getSourceIdCol();
         String targetIDColName = getTargetIdCol();
@@ -246,32 +276,6 @@ public class SparkTraceTask extends SGraph {
         linksWithFeatureVec = linksWithFeatureVec.join(targetFeatures, targetArtifactIdCol.equalTo(linkTargetIdCol));
         linksWithFeatureVec = linksWithFeatureVec.drop(sourceArtifactIdCol).drop(targetArtifactIdCol);
         return linksWithFeatureVec;
-    }
-
-    public Dataset<Row> trace(Dataset<?> sourceArtifacts,
-                              Dataset<?> targetArtifacts) {
-        Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
-        Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
-
-        int i = 0;
-        for (PipelineModel unsupervisedModel : this.unsupervisedModels) {
-            SGraph unsupervisedLearnGraph = this.unsupervisedLearnGraphs.get(i);
-            String inputColParam = "inputCol";
-            String outputColParam = "outputCol";
-            if (unsupervisedModel.stages()[0] instanceof LDAModel) {
-                inputColParam = "featuresCol";
-                outputColParam = "topicDistributionCol";
-            }
-            unsupervisedModel.stages()[0].set(inputColParam, unsupervisedLearnGraph.getInputTable().getCells().get(0).getFieldSymbol().getSymbolValue());
-            unsupervisedModel.stages()[0].set(outputColParam, unsupervisedLearnGraph.getOutputTable().getCells().get(0).getFieldSymbol().getSymbolValue());
-            sourceSDFeatureVecs = unsupervisedModel.transform(sourceSDFeatureVecs);
-            unsupervisedModel.stages()[0].set(inputColParam, unsupervisedLearnGraph.getInputTable().getCells().get(1).getFieldSymbol().getSymbolValue());
-            unsupervisedModel.stages()[0].set(outputColParam, unsupervisedLearnGraph.getOutputTable().getCells().get(1).getFieldSymbol().getSymbolValue());
-            targetSDFeatureVecs = unsupervisedModel.transform(targetSDFeatureVecs);
-            i++;
-        }
-        Dataset<Row> candidateLinks = createCandidateLink(sourceSDFeatureVecs, targetSDFeatureVecs);
-        return this.ddfModel.transform(candidateLinks);
     }
 
     private Dataset createCandidateLink(Dataset sourceSDFVec, Dataset targetSDFVec) {
