@@ -10,6 +10,7 @@ import org.apache.spark.ml.linalg.Vectors;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.Test;
@@ -20,8 +21,10 @@ import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenICLink;
 import traceability.components.maven.MavenImprovement;
 
+import javax.xml.crypto.Data;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static core.SparkTraceTask.LabelCol;
@@ -121,8 +124,11 @@ public class ICSEExample extends TestBase {
         config.put(LinkCompletionTraceTask.ISSUE_CREATE, "issue_created_date");
         config.put(LinkCompletionTraceTask.TRAIN_LABEL, LabelCol);
         task.setConfig(config);
+        task.getDdfGraph().optimize(task.getDdfGraph()); //optimized: 1m28ms unoptimized: 1m45ms including startup time
         syncSymbolValues(task);
         task.train(commits, improvements, improvementCommitLink);
-        task.trace(commits, improvements).show();
+        Dataset result = task.trace(commits, improvements).select("commit_id","issue_id", "probability").withColumn("probability", col("probability").cast(DataTypes.StringType));
+        result.show();
+        result.write().csv("tmp/result.csv");
     }
 }

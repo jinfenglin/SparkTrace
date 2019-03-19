@@ -56,12 +56,15 @@ public class Overlap extends Transformer implements HasInputCols, HasOutputCol {
             if (id2.length() > 0) {
                 Seq<String> file1 = br.getValue().get(id1);
                 Seq<String> file2 = br.getValue().get(id2);
+                if (file1 == null || file2 == null) {
+                    return 0.0;
+                }
                 Set<String> s1 = new HashSet<>(JavaConverters.asJavaCollectionConverter(file1).asJavaCollection());
                 Set<String> s2 = new HashSet<>(JavaConverters.asJavaCollectionConverter(file2).asJavaCollection());
                 long total = s1.size() + s2.size();
                 s1.retainAll(s2);
                 long shared = s1.size();
-                return shared/ Double.valueOf(total);
+                return shared / Double.valueOf(total);
             } else {
                 return 0.0;
             }
