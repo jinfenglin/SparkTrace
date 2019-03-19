@@ -60,6 +60,8 @@ public class FindClosestPreviousLinkedCommit extends Transformer implements HasI
         dataset.sqlContext().udf().register(CLC, (String commitId, String commitTime, Seq<String> linkedCommits) -> {
             long minTime = Long.MAX_VALUE;
             String clc = "";
+            if(linkedCommits == null)
+                return clc;
             for (String lc : JavaConverters.asJavaCollectionConverter(linkedCommits).asJavaCollection()) {
                 if (br.value().containsKey(lc)) {
                     String lcCommitTime = br.value().get(lc);

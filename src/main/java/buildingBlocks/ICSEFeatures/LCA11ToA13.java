@@ -8,11 +8,11 @@ import core.graphPipeline.basic.SGraph;
 /**
  *
  */
-public class LCA8ToA10 {
+public class LCA11ToA13 {
     public static String LINKED_COMMIT = "LINKED_COMMIT", COMMIT_ID = "COMMIT_ID",
             COMMIT_AUTHOR = "COMMIT_AUTHOR", COMMIT_DATE = "COMMIT_DATE", FILES = "FILES";
     public static String CL = "CL";
-    public static String A8 = "A8", A9 = "A9", A10 = "A10";
+    public static String A11 = "A11", A12 = "A12", A13 = "A13";
 
     public static SGraph getGraph(String graphName) throws Exception {
         SGraph graph = new SGraph(graphName);
@@ -21,30 +21,28 @@ public class LCA8ToA10 {
         graph.addInputField(COMMIT_AUTHOR);
         graph.addInputField(COMMIT_DATE);
         graph.addInputField(FILES);
-        graph.addOutputField(A8);
-        graph.addOutputField(A9);
-        graph.addOutputField(A10);
+        graph.addOutputField(A11);
+        graph.addOutputField(A12);
+        graph.addOutputField(A13);
 
-        SGraph a8Graph = A8Graph.getSGraph("A8Graph", true);
-        SGraph a9Graph = A9Graph.getSGraph("A9Graph", true);
-        SGraph a10Graph = A10Graph.getGraph("A10Graph", true);
-
-
-        graph.addNode(a8Graph);
-        graph.addNode(a9Graph);
-        graph.addNode(a10Graph);
-
-        connectSource(graph, a8Graph);
-        connectSource(graph, a9Graph);
-        connectSource(graph, a10Graph);
-
-        graph.connect(graph.sourceNode, COMMIT_AUTHOR, a10Graph, COMMIT_AUTHOR);
-        graph.connect(graph.sourceNode, FILES, a9Graph, FILES);
+        SGraph a11Graph = A8Graph.getSGraph("A11Graph", false);
+        SGraph a12Graph = A9Graph.getSGraph("A12Graph", false);
+        SGraph a13Graph = A10Graph.getGraph("A13Graph", false);
 
 
-        graph.connect(a8Graph, A8, graph.sinkNode, A8);
-        graph.connect(a9Graph, A9, graph.sinkNode, A9);
-        graph.connect(a10Graph, A10, graph.sinkNode, A10);
+        graph.addNode(a11Graph);
+        graph.addNode(a12Graph);
+        graph.addNode(a13Graph);
+
+        connectSource(graph, a11Graph);
+        connectSource(graph, a12Graph);
+        connectSource(graph, a13Graph);
+        graph.connect(graph.sourceNode, COMMIT_AUTHOR, a13Graph, COMMIT_AUTHOR);
+        graph.connect(graph.sourceNode, FILES, a12Graph, FILES);
+
+        graph.connect(a11Graph, A8Graph.A8, graph.sinkNode, A11);
+        graph.connect(a12Graph, A9Graph.A9, graph.sinkNode, A12);
+        graph.connect(a13Graph, A10Graph.A10, graph.sinkNode, A13);
 
         return graph;
     }

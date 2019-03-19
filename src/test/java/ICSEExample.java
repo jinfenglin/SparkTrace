@@ -110,9 +110,13 @@ public class ICSEExample extends TestBase {
     public void taskTest() throws Exception {
         SparkTraceTask task = new LinkCompletionTraceTask().getTask("commit_id", "issue_id");
         Map<String, String> config = new HashMap<>();
+        config.put(LinkCompletionTraceTask.COMMIT_ID, "commit_id");
         config.put(LinkCompletionTraceTask.S_TEXT, "commit_content");
         config.put(LinkCompletionTraceTask.T_TEXT, "issue_content");
         config.put(LinkCompletionTraceTask.COMMIT_TIME, "commit_date");
+        config.put(LinkCompletionTraceTask.COMMIT_AUTHOR, "commit_author");
+        config.put(LinkCompletionTraceTask.FILES, "files");
+        config.put(LinkCompletionTraceTask.LINKED_COMMIT, "linked_commit");
         config.put(LinkCompletionTraceTask.ISSUE_RESOLVE, "issue_resolved_date");
         config.put(LinkCompletionTraceTask.ISSUE_CREATE, "issue_created_date");
         config.put(LinkCompletionTraceTask.TRAIN_LABEL, LabelCol);

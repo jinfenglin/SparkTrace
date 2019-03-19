@@ -191,6 +191,7 @@ public class SparkTraceTask extends SGraph {
         PipelineModel ddfModel = ddfGraph.toPipeline().fit(candidateLinks);
         this.ddfModel = ddfModel;
         if (predictGraph != null) {
+            ddfModel.transform(candidateLinks).show();
             predictModel = predictGraph.toPipeline().fit(ddfModel.transform(candidateLinks));
         }
     }

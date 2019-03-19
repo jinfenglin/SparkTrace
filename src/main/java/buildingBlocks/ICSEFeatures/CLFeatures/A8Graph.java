@@ -6,9 +6,14 @@ import featurePipelineStages.cloestLinkedCommit.CLTimeDiff;
 
 public class A8Graph extends AbsCLFeature {
     public static String A8 = "A8";
+    public static String COMMIT_ID = "COMMIT_ID", COMMIT_DATE = "COMMIT_DATE", LINKED_COMMIT = "LINKED_COMMIT";
 
     public static SGraph getSGraph(String graphName, boolean findPrevious) throws Exception {
         SGraph sGraph = new SGraph(graphName);
+        sGraph.addInputField(COMMIT_ID);
+        sGraph.addInputField(COMMIT_DATE);
+        sGraph.addInputField(LINKED_COMMIT);
+        sGraph.addOutputField(A8);
 
         SNode findCLNode = createFindClosestLink(findPrevious);
         SNode A8Node = new SNode(new CLTimeDiff(), "CLTimeDiff");

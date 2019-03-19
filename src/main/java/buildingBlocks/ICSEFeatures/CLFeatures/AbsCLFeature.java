@@ -8,7 +8,7 @@ import featurePipelineStages.cloestLinkedCommit.FindClosestPreviousLinkedCommit;
  *
  */
 public abstract class AbsCLFeature {
-    public static String COMMIT_ID = "COMMIT_ID", COMMIT_DATE = "COMMIT_DATE", CL = "CL", LINKED_COMMIT = "LINKED_COMMIT";
+    public static String COMMIT_ID = "COMMIT_ID", COMMIT_DATE = "COMMIT_DATE", LINKED_COMMIT = "LINKED_COMMIT", CL = "CL";
 
     public static SNode createFindClosestLink(boolean findPrevious) throws Exception {
         FindClosestPreviousLinkedCommit fcpl = new FindClosestPreviousLinkedCommit();

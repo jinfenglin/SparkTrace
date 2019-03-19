@@ -9,10 +9,17 @@ import featurePipelineStages.cloestLinkedCommit.Overlap;
  */
 public class A9Graph extends AbsCLFeature {
     private static final String FILES = "FILES";
+    public static String COMMIT_ID = "COMMIT_ID", COMMIT_DATE = "COMMIT_DATE", LINKED_COMMIT = "LINKED_COMMIT";
     public static String A9 = "A9";
 
     public static SGraph getSGraph(String graphName, boolean findPrevious) throws Exception {
         SGraph graph = new SGraph(graphName);
+        graph.addInputField(COMMIT_ID);
+        graph.addInputField(COMMIT_DATE);
+        graph.addInputField(LINKED_COMMIT);
+        graph.addInputField(FILES);
+        graph.addOutputField(A9);
+
 
         SNode findCLNode = createFindClosestLink(findPrevious);
         SNode a9Node = new SNode(new Overlap(), "Overlap");
