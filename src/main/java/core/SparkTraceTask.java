@@ -219,7 +219,7 @@ public class SparkTraceTask extends SGraph {
             i++;
         }
         Dataset<Row> candidateLinks = createCandidateLink(sourceSDFeatureVecs, targetSDFeatureVecs);
-        candidateLinks = candidateLinks.cache();
+        //candidateLinks = candidateLinks.cache();
         candidateLinks = this.ddfModel.transform(candidateLinks);
         if (predictModel != null) {
             return predictModel.transform(candidateLinks.withColumn(LabelCol, lit(0)));

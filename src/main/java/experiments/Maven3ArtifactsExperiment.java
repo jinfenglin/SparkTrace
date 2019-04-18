@@ -128,7 +128,6 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
     private List<PipelineModel> unsupervisedLearn(Dataset code, Dataset commit, Dataset bug) throws Exception {
         SGraph idf1 = IDFGraphPipeline.getGraph("code-commit");
         SGraph idf2 = IDFGraphPipeline.getGraph("commit-bug");
-        SGraph idf3 = IDFGraphPipeline.getGraph("code-bug");
 
         String mixedInputCol = "tmpMixedCol";
         StructField field = DataTypes.createStructField(mixedInputCol, new VectorUDT(), false);
@@ -167,7 +166,6 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
 
     public long runOptimizedSystem() throws Exception {
         long startTime = System.currentTimeMillis();
-
         List<Dataset> step1 = preprocess(code, commit, bug);
         List<PipelineModel> models = unsupervisedLearn(step1.get(0), step1.get(1), step1.get(2));
         PipelineModel commitIndexModel = models.get(0);
@@ -238,11 +236,9 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         job1.train(code, commit, null);
         Dataset<Row> result1 = job1.trace(code, commit);
         result1.count();
-        long job1Finished = System.currentTimeMillis();
-        long job1Time = job1Finished - startTime;
 
         SparkTraceTask job2 = new VSMTraceBuilder().getTask(COMMIT_ID, BUG_ID);
-        //job2.indexOn = 1;
+        job2.indexOn = 1;
         job2.setCleanColumns(true);
         Map<String, String> commitBugConfig = new HashMap<>();
         commitBugConfig.put(NGramVSMTraceTaskBuilder.INPUT1, commitContent);
@@ -254,7 +250,7 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         result2.count();
 
         SparkTraceTask job3 = new VSMTraceBuilder().getTask(CODE_ID, BUG_ID);
-        job2.indexOn = 1;
+        job3.indexOn = 1;
         job3.setCleanColumns(false);
         Map<String, String> codeBugConfig = new HashMap<>();
         codeBugConfig.put(NGramVSMTraceTaskBuilder.INPUT1, codeContent);
@@ -265,8 +261,7 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         Dataset<Row> result3 = job3.trace(code, bug);
         result3.count();
 
-        long job2Time = System.currentTimeMillis() - job1Finished;
-        return job1Time + job2Time;
+        return  System.currentTimeMillis() - startTime;
     }
 
     private void writeResult(Dataset result, String[] cols) {

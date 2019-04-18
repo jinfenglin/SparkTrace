@@ -19,11 +19,9 @@ public class Maven3ArtifactExperimentUnoptimized extends Maven3ArtifactsExperime
 
     public static void main(String[] args) throws Exception {
         String outputDir = "results"; // "results"
-        //String dataDirRoot = "G://Document//data_csv";
-        String dataDirRoot = "src/main/resources";
+        String dataDirRoot = "G://Document//data_csv";
         List<String> projects = new ArrayList<>();
-        //projects.addAll(Arrays.asList(new String[]{"derby", "drools", "groovy", "infinispan" , "maven", "pig", "seam2"}));
-        projects.addAll(Arrays.asList(new String[]{"maven_sample"}));
+        projects.addAll(Arrays.asList(new String[]{"derby", "drools", "groovy", "infinispan" , "maven", "pig", "seam2"}));
         org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/Maven3ArtifactResultUnOp.csv");
         OutputStream out = outputPath.getFileSystem(new Configuration()).create(outputPath);
         for (String projectPath : projects) {

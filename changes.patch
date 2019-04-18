@@ -1,0 +1,295 @@
+diff --git a/src/main/java/buildingBlocks/randomForestPipeline/RandomForestPipeline.java b/src/main/java/buildingBlocks/randomForestPipeline/RandomForestPipeline.java
+index 47e59aa..d8c2fdd 100644
+--- a/src/main/java/buildingBlocks/randomForestPipeline/RandomForestPipeline.java
++++ b/src/main/java/buildingBlocks/randomForestPipeline/RandomForestPipeline.java
+@@ -20,7 +20,7 @@ public class RandomForestPipeline {
+         graph.addOutputField(PREDICTION);
+ 
+ 
+-        VectorAssembler assembler = new VectorAssembler();
++        VectorAssembler assembler = new VectorAssembler().setHandleInvalid("skip");
+         SNode createFeatureVec = new SNode(assembler, "createFeatureVec");
+         for (String symbolName : featureColSymbolName) {
+             createFeatureVec.addInputField(symbolName);
+diff --git a/src/main/java/core/SparkTraceTask.java b/src/main/java/core/SparkTraceTask.java
+index fea8fe1..af16d7c 100644
+--- a/src/main/java/core/SparkTraceTask.java
++++ b/src/main/java/core/SparkTraceTask.java
+@@ -19,7 +19,9 @@ import org.apache.spark.sql.types.StructType;
+ import scala.collection.JavaConverters;
+ import scala.collection.Seq;
+ 
++import java.awt.*;
+ import java.util.*;
++import java.util.List;
+ 
+ import static experiments.DirtyBitExperiment.DIRTY_BIT_COL;
+ import static org.apache.spark.sql.functions.*;
+@@ -44,7 +46,9 @@ public class SparkTraceTask extends SGraph {
+     private List<SGraph> unsupervisedLearnGraphs;
+     private SGraph ddfGraph;
+ 
+-    private PipelineModel sourceSDFModel, targetSDFModel, ddfModel;
++    private SGraph predictGraph;
++
++    private PipelineModel sourceSDFModel, targetSDFModel, ddfModel, predictModel;
+     private List<PipelineModel> unsupervisedModels;
+     public int indexOn = 0; // -1 index on source 0 index on both 1 index on target
+ 
+@@ -157,7 +161,6 @@ public class SparkTraceTask extends SGraph {
+         this.targetSDFModel = targetSDFModel;
+         Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
+         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
+-
+         unsupervisedLeanring(sourceSDFeatureVecs, targetSDFeatureVecs);
+         int i = 0;
+         for (SGraph unsupervisedLearnGraph : this.unsupervisedLearnGraphs) {
+@@ -177,18 +180,19 @@ public class SparkTraceTask extends SGraph {
+             targetSDFeatureVecs = unsupervisedModel.transform(targetSDFeatureVecs);
+             i++;
+         }
+-
+         Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs);
+         if (goldenLinks != null) {
+-            //Create sub sampling training dataset
+-            //Dataset positiveRows = appendFeaturesToLinks(goldenLinks.toDF(), sourceSDFeatureVecs, targetSDFeatureVecs).cache();
+             Seq<String> joinCondition = JavaConverters.asScalaIteratorConverter(Arrays.asList(sourceIdCol, targetIdCol).iterator()).asScala().toSeq();
+             int cnt = (int) goldenLinks.count();
+             candidateLinks = candidateLinks.join(goldenLinks.select(sourceIdCol, targetIdCol, LabelCol), joinCondition, "left_outer").na().fill(0, new String[]{LabelCol});
+             candidateLinks = candidateLinks.filter(col(LabelCol).equalTo(0)).limit(cnt).union(candidateLinks.filter(col(LabelCol).equalTo(1)));
+         }
++        candidateLinks = candidateLinks.cache();
+         PipelineModel ddfModel = ddfGraph.toPipeline().fit(candidateLinks);
+         this.ddfModel = ddfModel;
++        if (predictGraph != null) {
++            predictModel = predictGraph.toPipeline().fit(ddfModel.transform(candidateLinks));
++        }
+     }
+ 
+     public Dataset<Row> trace(Dataset<?> sourceArtifacts,
+@@ -214,7 +218,13 @@ public class SparkTraceTask extends SGraph {
+             i++;
+         }
+         Dataset<Row> candidateLinks = createCandidateLink(sourceSDFeatureVecs, targetSDFeatureVecs);
+-        return this.ddfModel.transform(candidateLinks);
++        candidateLinks = candidateLinks.cache();
++        candidateLinks = this.ddfModel.transform(candidateLinks);
++        if (predictModel != null) {
++            return predictModel.transform(candidateLinks.withColumn(LabelCol, lit(0)));
++        } else {
++            return candidateLinks;
++        }
+     }
+ 
+     private void unsupervisedLeanring(Dataset<Row> sourceSDFeatureVecs, Dataset<Row> targetSDFFeatreusVecs) throws Exception {
+@@ -247,8 +257,6 @@ public class SparkTraceTask extends SGraph {
+                         trainingData = trainingData.union(columnData);
+                     }
+                 }
+-
+-
+             }
+             Pipeline unsupervisePipe = unsupervisedLearnGraph.toPipeline();
+             PipelineStage innerStage = unsupervisePipe.getStages()[0];
+@@ -336,4 +344,12 @@ public class SparkTraceTask extends SGraph {
+     public void setUseDirtyBit(boolean useDirtyBit) {
+         this.useDirtyBit = useDirtyBit;
+     }
++
++    public SGraph getPredictGraph() {
++        return predictGraph;
++    }
++
++    public void setPredictGraph(SGraph predictGraph) {
++        this.predictGraph = predictGraph;
++    }
+ }
+diff --git a/src/main/java/traceTasks/LinkCompletionTraceTask.java b/src/main/java/traceTasks/LinkCompletionTraceTask.java
+index 9a1a903..6c3fcf2 100644
+--- a/src/main/java/traceTasks/LinkCompletionTraceTask.java
++++ b/src/main/java/traceTasks/LinkCompletionTraceTask.java
+@@ -2,26 +2,16 @@ package traceTasks;
+ 
+ 
+ import buildingBlocks.ICSEFeatures.LCA4ToA7;
+-import buildingBlocks.preprocessor.NGramCount;
+ import buildingBlocks.preprocessor.SimpleWordCount;
+ import buildingBlocks.randomForestPipeline.RandomForestPipeline;
+ import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
+ import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
+ import core.SparkTraceTask;
+ import core.graphPipeline.basic.SGraph;
+-import org.apache.spark.SparkConf;
+ import org.apache.spark.sql.Dataset;
+-import org.apache.spark.sql.SparkSession;
+-import traceability.TraceDatasetFactory;
+-import traceability.components.maven.MavenCCLink;
+-import traceability.components.maven.MavenCommit;
+-import traceability.components.maven.MavenImprovement;
+-import traceability.components.maven.MavenICLink;
+-
+-import java.awt.*;
++
+ import java.util.Arrays;
+ 
+-import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+ import static org.apache.spark.sql.functions.*;
+ 
+ /**
+@@ -31,7 +21,6 @@ public class LinkCompletionTraceTask {
+     public static String S_TEXT = "S_TEXT", T_TEXT = "T_TEXT", TRAIN_LABEL = "TRAIN_LABEL";
+     public static String COMMIT_TIME = "COMMIT_TIME", ISSUE_CREATE = "ISSUE_CREATE", ISSUE_RESOLVE = "ISSUE_RESOLVE";//inputCol Symbols
+     public static String PREDICTION = "PREDICTION";
+-
+     public static String SHTF = "SHTF", THTF = "THTF";//DDF input output
+     public static String DOC_SIM = "DOC_SIM";
+     public static String A4 = "A4", A5 = "A5", A6 = "A6", A7 = "A7";
+@@ -60,36 +49,34 @@ public class LinkCompletionTraceTask {
+ 
+     public SGraph createDDF() throws Exception {
+         SGraph ddfGraph = new SGraph("LC_DDF");
+-        ddfGraph.addInputField(TRAIN_LABEL);
+         ddfGraph.addInputField(SHTF);
+         ddfGraph.addInputField(THTF);
+         ddfGraph.addInputField(COMMIT_TIME);
+         ddfGraph.addInputField(ISSUE_CREATE);
+         ddfGraph.addInputField(ISSUE_RESOLVE);
+-        ddfGraph.addOutputField(PREDICTION);
++
++        ddfGraph.addOutputField(A4);
++        ddfGraph.addOutputField(A5);
++        ddfGraph.addOutputField(A6);
++        ddfGraph.addOutputField(A7);
++        ddfGraph.addOutputField(DOC_SIM);
+ 
+         SGraph cosinSubGraph = SparseCosinSimilarityPipeline.getGraph("Cosin"); //vec1,2 - cosin_sim
+         SGraph lca4To7 = LCA4ToA7.getGraph("lca4To7");
+-        SGraph rfGraph = RandomForestPipeline.getGraph("RandomForest", new String[]{A4, A5, A6, A7, DOC_SIM});
+ 
+         ddfGraph.addNode(cosinSubGraph);
+         ddfGraph.addNode(lca4To7);
+-        ddfGraph.addNode(rfGraph);
+ 
+         ddfGraph.connect(ddfGraph.sourceNode, SHTF, cosinSubGraph, SparseCosinSimilarityPipeline.INPUT1);
+         ddfGraph.connect(ddfGraph.sourceNode, THTF, cosinSubGraph, SparseCosinSimilarityPipeline.INPUT2);
+         ddfGraph.connect(ddfGraph.sourceNode, COMMIT_TIME, lca4To7, LCA4ToA7.COMMIT_TIME);
+         ddfGraph.connect(ddfGraph.sourceNode, ISSUE_CREATE, lca4To7, LCA4ToA7.ISSUE_CREATE);
+         ddfGraph.connect(ddfGraph.sourceNode, ISSUE_RESOLVE, lca4To7, LCA4ToA7.ISSUE_RESOLVE);
+-        ddfGraph.connect(cosinSubGraph, SparseCosinSimilarityPipeline.OUTPUT, rfGraph, DOC_SIM);
+-
+-        ddfGraph.connect(ddfGraph.sourceNode, TRAIN_LABEL, rfGraph, RandomForestPipeline.TRAIN_LABEL);
+-        ddfGraph.connect(lca4To7, LCA4ToA7.A4, rfGraph, A4);
+-        ddfGraph.connect(lca4To7, LCA4ToA7.A5, rfGraph, A5);
+-        ddfGraph.connect(lca4To7, LCA4ToA7.A6, rfGraph, A6);
+-        ddfGraph.connect(lca4To7, LCA4ToA7.A7, rfGraph, A7);
+-        ddfGraph.connect(rfGraph, RandomForestPipeline.PREDICTION, ddfGraph.sinkNode, PREDICTION);
+-
++        ddfGraph.connect(cosinSubGraph, SparseCosinSimilarityPipeline.OUTPUT, ddfGraph.sinkNode, DOC_SIM);
++        ddfGraph.connect(lca4To7, LCA4ToA7.A4, ddfGraph.sinkNode, A4);
++        ddfGraph.connect(lca4To7, LCA4ToA7.A5, ddfGraph.sinkNode, A5);
++        ddfGraph.connect(lca4To7, LCA4ToA7.A6, ddfGraph.sinkNode, A6);
++        ddfGraph.connect(lca4To7, LCA4ToA7.A7, ddfGraph.sinkNode, A7);
+         return ddfGraph;
+     }
+ 
+@@ -97,12 +84,16 @@ public class LinkCompletionTraceTask {
+         return IDFGraphPipeline.getGraph("SharedIDF");
+     }
+ 
++    public SGraph createModelGraph() throws Exception {
++        return RandomForestPipeline.getGraph("RandomForest", new String[]{A4, A5, A6, A7, DOC_SIM});
++    }
++
+     public SparkTraceTask connectTask(SparkTraceTask task) throws Exception {
+         SGraph SSDF = task.getSourceSDFSdfGraph();
+         SGraph TSDF = task.getTargetSDFSdfGraph();
+         SGraph DDF = task.getDdfGraph();
++        SGraph model = task.getPredictGraph();
+         SGraph unsuperviseGraph = task.getUnsupervisedLearnGraph().get(0);
+-        task.connect(task.sourceNode, ISSUE_RESOLVE, DDF, TRAIN_LABEL);
+         task.connect(task.sourceNode, S_TEXT, SSDF, SimpleWordCount.INPUT_TEXT_COL);
+         task.connect(task.sourceNode, T_TEXT, TSDF, SimpleWordCount.INPUT_TEXT_COL);
+         task.connect(task.sourceNode, COMMIT_TIME, DDF, COMMIT_TIME);
+@@ -113,14 +104,21 @@ public class LinkCompletionTraceTask {
+         task.connect(unsuperviseGraph, IDFGraphPipeline.OUTPUT1, DDF, SHTF);
+         task.connect(unsuperviseGraph, IDFGraphPipeline.OUTPUT2, DDF, THTF);
+ 
+-        task.connect(DDF, RandomForestPipeline.PREDICTION, task.sinkNode, PREDICTION);
++        task.connect(DDF, LCA4ToA7.A4, model, A4);
++        task.connect(DDF, LCA4ToA7.A5, model, A5);
++        task.connect(DDF, LCA4ToA7.A6, model, A6);
++        task.connect(DDF, LCA4ToA7.A7, model, A7);
++        task.connect(DDF, DOC_SIM, model, DOC_SIM);
++        task.connect(task.sourceNode, TRAIN_LABEL, model, TRAIN_LABEL);
++        task.connect(model, PREDICTION, task.sinkNode, PREDICTION);
+         return task;
+     }
+ 
+     public SparkTraceTask getTask(String sourceId, String targetId) throws Exception {
+         SparkTraceTask task = new SparkTraceTask(createSSDF(), createTSDF(), Arrays.asList(createUnsupervise()), createDDF(), sourceId, targetId);
++        task.setPredictGraph(createModelGraph());
+         task.setVertexLabel("ICSE LC");
+-        task.addInputField(S_TEXT).addInputField(T_TEXT);
++        task.addInputField(S_TEXT).addInputField(T_TEXT).addInputField(TRAIN_LABEL);
+         task.addInputField(COMMIT_TIME);
+         task.addInputField(ISSUE_RESOLVE);
+         task.addInputField(ISSUE_CREATE);
+@@ -128,24 +126,4 @@ public class LinkCompletionTraceTask {
+         connectTask(task);
+         return task;
+     }
+-
+-    public static void main(String[] args) throws Exception {
+-        SparkConf conf = new SparkConf();
+-        conf.setMaster("local[4]");
+-        conf.setAppName("playground");
+-        SparkSession sparkSession = SparkSession.builder().config(conf).getOrCreate();
+-        String commitPath = "src/main/resources/maven_sample/commits.csv";
+-        String improvementPath = "src/main/resources/maven_sample/improvement.csv";
+-        String improvementCommitLinkPath = "src/main/resources/maven_sample/improvementCommitLinks.csv";
+-        String commitCodeLinkPath = "src/main/resources/maven_sample/CommitCodeLinks.csv";
+-        Dataset commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
+-        Dataset improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
+-        Dataset improvementCommitLink = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementCommitLinkPath, MavenICLink.class);
+-        Dataset commitCodeLink = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitCodeLinkPath, MavenCCLink.class);
+-
+-        SparkTraceTask task = new LinkCompletionTraceTask().getTask("commmit_id", "issue_id");
+-        syncSymbolValues(task);
+-        task.train(commits, improvements, null);
+-        task.trace(commits, improvements).show();
+-    }
+ }
+diff --git a/src/test/java/ICSEExample.java b/src/test/java/ICSEExample.java
+index b69e9e5..20cb083 100644
+--- a/src/test/java/ICSEExample.java
++++ b/src/test/java/ICSEExample.java
+@@ -4,7 +4,14 @@ import featurePipelineStages.cloestLinkedCommit.CLTimeDiff;
+ import featurePipelineStages.cloestLinkedCommit.CLUser;
+ import featurePipelineStages.cloestLinkedCommit.FindClosestPreviousLinkedCommit;
+ import featurePipelineStages.cloestLinkedCommit.Overlap;
++import org.apache.spark.ml.feature.VectorAssembler;
++import org.apache.spark.ml.linalg.VectorUDT;
++import org.apache.spark.ml.linalg.Vectors;
+ import org.apache.spark.sql.Dataset;
++import org.apache.spark.sql.Row;
++import org.apache.spark.sql.RowFactory;
++import org.apache.spark.sql.types.StructField;
++import org.apache.spark.sql.types.StructType;
+ import org.junit.Test;
+ import traceTasks.LinkCompletionTraceTask;
+ import traceability.TraceDatasetFactory;
+@@ -20,6 +27,7 @@ import java.util.Map;
+ import static core.SparkTraceTask.LabelCol;
+ import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+ import static org.apache.spark.sql.functions.*;
++import static org.apache.spark.sql.types.DataTypes.*;
+ 
+ /**
+  *
+@@ -113,6 +121,4 @@ public class ICSEExample extends TestBase {
+         task.train(commits, improvements, improvementCommitLink);
+         task.trace(commits, improvements).show();
+     }
+-
+-
+ }
