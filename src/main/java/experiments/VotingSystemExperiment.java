@@ -29,8 +29,8 @@ public class VotingSystemExperiment extends SparkTraceJob {
 
     public VotingSystemExperiment(String sourcePath, String targetPath) {
         super("local[4]", "Voting system");
-        sourceDataset = sparkSession.read().option("header", "true").csv(sourcePath); //commit
-        targetDataset = sparkSession.read().option("header", "true").csv(targetPath); //issue
+        sourceDataset = sparkSession.read().option("header", "true").csv(sourcePath).cache(); //commit
+        targetDataset = sparkSession.read().option("header", "true").csv(targetPath).cache(); //issue
     }
 
     private Map<String, String> getConfig() {
@@ -119,6 +119,7 @@ public class VotingSystemExperiment extends SparkTraceJob {
             projects.add(args[i]);
         }
         //projects.addAll(Arrays.asList(new String[]{"alibaba/ARouter", "alibaba/arthas", "alibaba/canal", "alibaba/rax", "baidu/san", "meituan/EasyReact", "Tencent/bk-cmdb"}));
+        projects.addAll(Arrays.asList(new String[]{"meituan/EasyReact"}));
         List<String> opTimeList = new ArrayList<>();
         List<String> unOpTimeList = new ArrayList<>();
         for (String projectPath : projects) {

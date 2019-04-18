@@ -1,9 +1,9 @@
 package core.graphPipeline.SDF;
 
 
-import static core.graphPipeline.basic.SGraph.SDFType;
+import core.pipelineOptimizer.Pair;
 
-import javafx.util.Pair;
+import static core.graphPipeline.basic.SGraph.SDFType;
 
 import java.util.HashSet;
 import java.util.Map;

@@ -42,11 +42,15 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
     SGraph bugPreprocess, codePreprocess, commitPreprocess;
 
     public Maven3ArtifactsExperiment(String codeFilePath, String bugPath, String commitPath, String sourceCodeRootDir) throws IOException {
-        super("local[4]", "Maven Cross Trace");
+        super("local[*]", "Maven Cross Trace");
         bug = sparkSession.read().option("header", "true").csv(bugPath);
         bug = bug.where(col(bugContent).isNotNull());
         commit = sparkSession.read().option("header", "true").csv(commitPath);
         code = readCodeFromFile(codeFilePath, sourceCodeRootDir);
+
+        code = code.withColumn(CODE_ID, col(codeContent)).cache();
+        commit = commit.withColumn(COMMIT_ID, col(commitContent)).cache();
+        bug = bug.withColumn(BUG_ID, col(bugContent)).cache();
     }
 
     private Map<String, String> getConfig() {
@@ -56,13 +60,23 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
 
     private Dataset<Row> readCodeFromFile(String codeFilePath, String codeDirPath) throws IOException {
         File codeIdFile = new File(codeFilePath);
-        List<String> lines = Files.readAllLines(codeIdFile.toPath());
+        List<String> lines = new ArrayList<>();
+        BufferedReader reader = new BufferedReader(new FileReader(codeIdFile));
+        String line = null;
+        while ((line = reader.readLine()) != null) {
+            lines.add(line);
+        }
+        //List<String> lines = Files.readAllLines(codeIdFile.toPath());
         lines.remove(0);
         List<Row> rows = new ArrayList<>();
         for (String codeId : lines) {
-            Path codeFile = Paths.get(codeDirPath, codeId.split(",")[0]);
-            String content = new String(Files.readAllBytes(codeFile));
-            rows.add(RowFactory.create(codeId, content));
+            try {
+                Path codeFile = Paths.get(codeDirPath, codeId.split(",")[0]);
+                String content = new String(Files.readAllBytes(codeFile));
+                rows.add(RowFactory.create(codeId, content));
+            } catch (Exception e) {
+                System.out.println(String.format("Skip %s for error", codeId));
+            }
         }
         StructType schema = new StructType(new StructField[]{
                 new StructField(CODE_ID, DataTypes.StringType, true, Metadata.empty()),
@@ -153,9 +167,6 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
 
     public long runOptimizedSystem() throws Exception {
         long startTime = System.currentTimeMillis();
-        code = code.withColumn(CODE_ID, col(codeContent));
-        commit = commit.withColumn(COMMIT_ID, col(commitContent));
-        bug = bug.withColumn(BUG_ID, col(bugContent));
 
         List<Dataset> step1 = preprocess(code, commit, bug);
         List<PipelineModel> models = unsupervisedLearn(step1.get(0), step1.get(1), step1.get(2));
@@ -216,7 +227,6 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
 
     public long runUnOptimizedSystem() throws Exception {
         long startTime = System.currentTimeMillis();
-
         SparkTraceTask job1 = new NGramVSMTraceTaskBuilder().getTask(CODE_ID, COMMIT_ID);
         job1.setCleanColumns(false);
         job1.indexOn = 1; //index on the target artifacts
@@ -232,8 +242,8 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         long job1Time = job1Finished - startTime;
 
         SparkTraceTask job2 = new VSMTraceBuilder().getTask(COMMIT_ID, BUG_ID);
-        job2.indexOn = 1;
-        job2.setCleanColumns(false);
+        //job2.indexOn = 1;
+        job2.setCleanColumns(true);
         Map<String, String> commitBugConfig = new HashMap<>();
         commitBugConfig.put(NGramVSMTraceTaskBuilder.INPUT1, commitContent);
         commitBugConfig.put(NGramVSMTraceTaskBuilder.INPUT2, bugContent);
@@ -270,17 +280,23 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
 
     public static void main(String[] args) throws Exception {
         String outputDir = "results"; // "results"
-        String codePath = "src/main/resources/maven_sample/code.csv";
-        String bugPath = "src/main/resources/maven_sample/bug.csv";
-        String commitPath = "src/main/resources/maven_sample/commits.csv";
-        String sourceCodeRootDir = "src/main/resources/maven_sample";
-        Maven3ArtifactsExperiment exp = new Maven3ArtifactsExperiment(codePath, bugPath, commitPath, sourceCodeRootDir);
-        long opTime = exp.runOptimizedSystem();
+        String dataDirRoot = "G://Document//data_csv";
+        List<String> projects = new ArrayList<>();
+        projects.addAll(Arrays.asList(new String[]{"derby", "drools", "groovy", "infinispan", "maven", "pig", "seam2"}));
         org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/Maven3ArtifactResultOp.csv");
         OutputStream out = outputPath.getFileSystem(new Configuration()).create(outputPath);
-        String opTimeLine = "Op time = " + String.valueOf(opTime) + "\n";
-        out.write(opTimeLine.getBytes());
+        for (String projectPath : projects) {
+            String codePath = Paths.get(dataDirRoot, projectPath, "code.csv").toString();
+            String bugPath = Paths.get(dataDirRoot, projectPath, "bug.csv").toString();
+            String commitPath = Paths.get(dataDirRoot, projectPath, "commits.csv").toString();
+            String sourceCodeRootDir = Paths.get(dataDirRoot, projectPath).toString();
+            System.out.println(projectPath);
+            Maven3ArtifactsExperiment exp = new Maven3ArtifactsExperiment(codePath, bugPath, commitPath, sourceCodeRootDir);
+            long opTime = exp.runOptimizedSystem();
+            String opTimeLine = "Op time = " + String.valueOf(opTime) + "\n";
+            out.write(opTimeLine.getBytes());
+            System.out.println(opTimeLine);
+        }
         out.close();
-        System.out.println(opTimeLine);
     }
 }

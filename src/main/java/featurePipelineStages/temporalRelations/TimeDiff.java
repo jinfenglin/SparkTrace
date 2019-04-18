@@ -1,6 +1,5 @@
 package featurePipelineStages.temporalRelations;
 
-import javafx.scene.input.DataFormat;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;

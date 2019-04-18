@@ -4,15 +4,8 @@ import featurePipelineStages.cloestLinkedCommit.CLTimeDiff;
 import featurePipelineStages.cloestLinkedCommit.CLUser;
 import featurePipelineStages.cloestLinkedCommit.FindClosestPreviousLinkedCommit;
 import featurePipelineStages.cloestLinkedCommit.Overlap;
-import org.apache.spark.ml.feature.VectorAssembler;
-import org.apache.spark.ml.linalg.VectorUDT;
-import org.apache.spark.ml.linalg.Vectors;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.junit.Test;
 import traceTasks.LinkCompletionTraceTask;
 import traceability.TraceDatasetFactory;
@@ -21,16 +14,13 @@ import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenICLink;
 import traceability.components.maven.MavenImprovement;
 
-import javax.xml.crypto.Data;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static core.SparkTraceTask.LabelCol;
 import static core.graphPipeline.basic.SGraph.syncSymbolValues;
 import static org.apache.spark.sql.functions.*;
-import static org.apache.spark.sql.types.DataTypes.*;
 
 /**
  *
