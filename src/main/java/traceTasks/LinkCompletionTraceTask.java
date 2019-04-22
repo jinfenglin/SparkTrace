@@ -10,6 +10,7 @@ import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.basic.SNode;
 import org.apache.spark.sql.Dataset;
 
 import java.util.Arrays;
@@ -66,6 +67,9 @@ public class LinkCompletionTraceTask {
         ddfGraph.addOutputField(A12);
         ddfGraph.addOutputField(A13);
         ddfGraph.addOutputField(DOC_SIM);
+
+
+        SNode temporalFilterNode = new SNode()
 
         SGraph cosinSubGraph = SparseCosinSimilarityPipeline.getGraph("Cosin"); //vec1,2 - cosin_sim
         SGraph lca4To7 = LCA4ToA7.getGraph("lca4To7");

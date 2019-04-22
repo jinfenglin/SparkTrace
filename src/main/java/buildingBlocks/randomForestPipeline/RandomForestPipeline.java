@@ -33,6 +33,8 @@ public class RandomForestPipeline {
         fIndexNode.addOutputField(INDEXED_FEATURE);
 
         RandomForestClassifier rf = new RandomForestClassifier();
+        rf.setNumTrees(100);
+        rf.setMaxDepth(30);
         SNode rfNode = new SNode(rf, "RandomForest");
         rfNode.addInputField(TRAIN_LABEL);
         rfNode.addInputField(INDEXED_FEATURE);

@@ -116,10 +116,10 @@ public class PipelineOptimizer {
                 //Transfer the dependency of penetrated field to the sourceField
                 Vertex linkedVertex = linkedCell.getParentTable().getContext();
                 String linkedFieldName = linkedCell.getFieldSymbol().getSymbolName();
-                String sourceCellFiledName = sourceCell.getFieldSymbol().getSymbolName();
+                //String sourceCellFiledName = sourceCell.getFieldSymbol().getSymbolName(); //
                 String targetCellFieldName = targetCell.getFieldSymbol().getSymbolName();
                 lcaNode.disconnect(targetTopParentNode, targetCellFieldName, linkedVertex, linkedFieldName);
-                lcaNode.connect(sourceTopParentNode, sourceCellFiledName, linkedVertex, linkedFieldName);
+                lcaNode.connect(sourceTopParentNode, addedOutputFieldName, linkedVertex, linkedFieldName);
             }
         }
     }
