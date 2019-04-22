@@ -59,7 +59,8 @@ public class TemporalFilter extends Transformer implements HasInputCols, HasOutp
             Date tEndTime = parseTimeStamp(tEnd);
             return sTimeDate.before(tEndTime) && sTimeDate.after(tStartTime);
         }, DataTypes.BooleanType);
-        dataset = dataset.withColumn(IS_INSTANCE, callUDF(TIME_CONDITION, c1, c2, c3)).filter(dataset.col(IS_INSTANCE).equalTo(true));
+        dataset = dataset.withColumn(IS_INSTANCE, callUDF(TIME_CONDITION, c1, c2, c3));
+        dataset = dataset.filter(dataset.col(IS_INSTANCE).equalTo(true));
         return (Dataset<Row>) dataset;
     }
 

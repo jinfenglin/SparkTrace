@@ -73,8 +73,8 @@ public class LCExperiment extends SparkTraceJob {
         String outputDir = "results"; // "results"
         String dataDirRoot = "G://Document//data_csv";
         List<String> projects = new ArrayList<>();
-        projects.addAll(Arrays.asList(new String[]{"derby", "drools", "groovy", "infinispan", "maven", "pig", "seam2"}));
-        //projects.addAll(Arrays.asList(new String[]{"maven"}));
+        //projects.addAll(Arrays.asList(new String[]{"derby", "drools", "groovy", "infinispan", "maven", "pig", "seam2"}));
+        projects.addAll(Arrays.asList(new String[]{"maven"}));
         org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/LCResult.csv");
         OutputStream out = outputPath.getFileSystem(new Configuration()).create(outputPath);
 
