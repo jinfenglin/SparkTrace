@@ -67,6 +67,17 @@ public class LinkCompletionTraceTask {
         tNode.addOutputField(COMMIT_AUTHOR);
         tNode.addOutputField(FILES);
         tNode.addOutputField(LINKED_COMMIT);
+
+        //work around for columns getting mistakenly removed
+        tNode.getOutputField(COMMIT_TIME).setRemovable(false);
+        tNode.getOutputField(ISSUE_CREATE).setRemovable(false);
+        tNode.getOutputField(ISSUE_RESOLVE).setRemovable(false);
+        tNode.getOutputField(SHTF).setRemovable(false);
+        tNode.getOutputField(THTF).setRemovable(false);
+        tNode.getOutputField(COMMIT_ID).setRemovable(false);
+        tNode.getOutputField(COMMIT_AUTHOR).setRemovable(false);
+        tNode.getOutputField(FILES).setRemovable(false);
+        tNode.getOutputField(LINKED_COMMIT).setRemovable(false);
         return tNode;
     }
 
@@ -106,6 +117,17 @@ public class LinkCompletionTraceTask {
         ddfGraph.addNode(lca8To10);
         ddfGraph.addNode(lca11To13);
         ddfGraph.addNode(temporalNode);
+
+
+        ddfGraph.sourceNode.getOutputField(COMMIT_TIME).setRemovable(false);
+        ddfGraph.sourceNode.getOutputField(ISSUE_CREATE).setRemovable(false);
+        ddfGraph.sourceNode.getOutputField(ISSUE_RESOLVE).setRemovable(false);
+        ddfGraph.sourceNode.getOutputField(SHTF).setRemovable(false);
+        ddfGraph.sourceNode.getOutputField(THTF).setRemovable(false);
+        ddfGraph.sourceNode.getOutputField(COMMIT_ID).setRemovable(false);
+        ddfGraph.sourceNode.getOutputField(COMMIT_AUTHOR).setRemovable(false);
+        ddfGraph.sourceNode.getOutputField(FILES).setRemovable(false);
+        ddfGraph.sourceNode.getOutputField(LINKED_COMMIT).setRemovable(false);
 
 
         ddfGraph.connect(ddfGraph.sourceNode, SHTF, temporalNode, SHTF);

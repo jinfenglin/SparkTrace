@@ -4,7 +4,6 @@ import core.SparkTraceJob;
 import core.SparkTraceTask;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.types.DataTypes;
 import traceTasks.LinkCompletionTraceTask;
 import traceability.TraceDatasetFactory;
 import traceability.components.maven.MavenCCLink;
@@ -23,12 +22,12 @@ import static org.apache.spark.sql.functions.*;
 /**
  *
  */
-public class LCExperiment extends SparkTraceJob {
+public class LCCloudExp extends SparkTraceJob {
     public static String jobName = "LC  Exp";
     private Dataset commits, improvements, improvementCommitLink;
     String outDir;
 
-    public LCExperiment(String commitPath, String improvementPath, String improvementCommitLinkPath, String commitCodeLinkPath, String sparkMod, String outDir) {
+    public LCCloudExp(String commitPath, String improvementPath, String improvementCommitLinkPath, String commitCodeLinkPath, String sparkMod, String outDir) {
         super(sparkMod, jobName);
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
@@ -41,7 +40,7 @@ public class LCExperiment extends SparkTraceJob {
         this.outDir = outDir;
     }
 
-    public long runExperiment(boolean opFlag) throws Exception {
+    public long runExperiment() throws Exception {
         SparkTraceTask task = new LinkCompletionTraceTask().getTask("commit_id", "issue_id");
         Map<String, String> config = new HashMap<>();
         config.put(LinkCompletionTraceTask.COMMIT_ID, "commit_id");
@@ -55,44 +54,39 @@ public class LCExperiment extends SparkTraceJob {
         config.put(LinkCompletionTraceTask.ISSUE_CREATE, "issue_created_date");
         config.put(LinkCompletionTraceTask.TRAIN_LABEL, LabelCol);
         task.setConfig(config);
-        if(opFlag) {
-            task.getDdfGraph().optimize(task.getDdfGraph()); //optimized: 1m28ms unoptimized: 1m45ms including startup time
-        }
+        task.getDdfGraph().optimize(task.getDdfGraph()); //optimized: 1m28ms unoptimized: 1m45ms including startup time
         syncSymbolValues(task);
         long startTime = System.currentTimeMillis();
         task.train(commits, improvements, improvementCommitLink);
         Dataset result = task.trace(commits, improvements);//.select("commit_id", "issue_id", "probability").withColumn("probability", col("probability").cast(DataTypes.StringType));
+        //result = result.where(result.col("IS_INSTANCE").equalTo(true));
         System.out.println(String.format("Instance number=%s", result.count()));
         //result.write().csv(outDir + "/result.csv");
         return System.currentTimeMillis() - startTime;
     }
 
     public static void main(String[] args) throws Exception {
-        //"src/main/resources/maven_sample/" "local[*]" "tmp/"
         String mavenDir = args[0]; //"src/main/resources/git_projects"
         String sparkMod = args[1];
         String outDir = args[2];
-
-        String outputDir = "results"; // "results"
-        String dataDirRoot = "G://Document//data_csv";
-        List<String> projects = new ArrayList<>();
-        //projects.addAll(Arrays.asList(new String[]{"derby", "drools", "groovy", "infinispan", "maven", "pig", "seam2"}));
-        projects.addAll(Arrays.asList(new String[]{"maven"}));
-        org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/LCResult.csv");
-        OutputStream out = outputPath.getFileSystem(new Configuration()).create(outputPath);
-
-        for (String projectPath : projects) {
-            String commitPath = Paths.get(dataDirRoot, projectPath, "commits.csv").toString();
-            String improvementPath = Paths.get(dataDirRoot, projectPath, "improvement.csv").toString();
-            String improvementCommitLinkPath = Paths.get(dataDirRoot, projectPath, "improvementCommitLinks.csv").toString();
-            String commitCodeLinkPath = Paths.get(dataDirRoot, projectPath, "CommitCodeLinks.csv").toString();
-
-            LCExperiment lc = new LCExperiment(commitPath, improvementPath, improvementCommitLinkPath, commitCodeLinkPath, sparkMod, outDir);
-            long time = lc.runExperiment(true);
-            out.write(String.format("%s:%s", projectPath, String.valueOf(time)).getBytes());
-            out.flush();
-            System.out.println("Time=%s".format(String.valueOf(time)));
+        String op = args[3];
+        boolean opFlag;
+        if (op.equals("true")) {
+            opFlag = true;
+        } else {
+            opFlag = false;
         }
-        out.close();
+        String commitPath = mavenDir + "/commits.csv";
+        String improvementPath = mavenDir + "/bug.csv";
+        String improvementCommitLinkPath = mavenDir + "bugCommitLinks.csv";
+        String commitCodeLinkPath = mavenDir + "/CommitCodeLinks.csv";
+        long average = 0;
+        for (int i = 0; i < 1; i++) {
+            LCExperiment lc = new LCExperiment(commitPath, improvementPath, improvementCommitLinkPath, commitCodeLinkPath, sparkMod, outDir);
+            long time = lc.runExperiment(opFlag);
+            average += time;
+            System.out.println(time);
+        }
+        System.out.println(average);
     }
 }
