@@ -185,13 +185,13 @@ public class SparkTraceTask extends SGraph {
             Seq<String> joinCondition = JavaConverters.asScalaIteratorConverter(Arrays.asList(sourceIdCol, targetIdCol).iterator()).asScala().toSeq();
             int cnt = (int) goldenLinks.count();
             candidateLinks = candidateLinks.join(goldenLinks.select(sourceIdCol, targetIdCol, LabelCol), joinCondition, "left_outer").na().fill(0, new String[]{LabelCol});
-            candidateLinks = candidateLinks.filter(col(LabelCol).equalTo(0)).limit(cnt).union(candidateLinks.filter(col(LabelCol).equalTo(1)));
+            candidateLinks = candidateLinks.filter(col(LabelCol).equalTo(0)).limit(cnt).union(candidateLinks.filter(col(LabelCol).equalTo(1))); //create equal size of positive and negative samples for training
         }
+
         candidateLinks = candidateLinks.cache();
         PipelineModel ddfModel = ddfGraph.toPipeline().fit(candidateLinks);
         this.ddfModel = ddfModel;
         if (predictGraph != null) {
-            ddfModel.transform(candidateLinks);
             predictModel = predictGraph.toPipeline().fit(ddfModel.transform(candidateLinks));
         }
     }

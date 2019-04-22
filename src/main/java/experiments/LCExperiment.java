@@ -24,11 +24,12 @@ import static org.apache.spark.sql.functions.*;
  *
  */
 public class LCExperiment extends SparkTraceJob {
+    public static String jobName = "LC  Exp";
     private Dataset commits, improvements, improvementCommitLink;
     String outDir;
 
     public LCExperiment(String commitPath, String improvementPath, String improvementCommitLinkPath, String commitCodeLinkPath, String sparkMod, String outDir) {
-        super(sparkMod, "LC  Exp");
+        super(sparkMod, jobName);
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
         improvementCommitLink = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementCommitLinkPath, MavenICLink.class).withColumn("label", lit(1));
@@ -58,8 +59,9 @@ public class LCExperiment extends SparkTraceJob {
         syncSymbolValues(task);
         long startTime = System.currentTimeMillis();
         task.train(commits, improvements, improvementCommitLink);
-        Dataset result = task.trace(commits, improvements).select("commit_id", "issue_id", "probability").withColumn("probability", col("probability").cast(DataTypes.StringType));
-        result.count();
+        Dataset result = task.trace(commits, improvements);//.select("commit_id", "issue_id", "probability").withColumn("probability", col("probability").cast(DataTypes.StringType));
+        //result = result.where(result.col("IS_INSTANCE").equalTo(true));
+        System.out.println(String.format("Instance number=%s", result.count()));
         //result.write().csv(outDir + "/result.csv");
         return System.currentTimeMillis() - startTime;
     }
@@ -88,7 +90,7 @@ public class LCExperiment extends SparkTraceJob {
             long time = lc.runExperiment();
             out.write(String.format("%s:%s", projectPath, String.valueOf(time)).getBytes());
             out.flush();
-            System.out.println(time);
+            System.out.println("Time=%s".format(String.valueOf(time)));
         }
         out.close();
     }

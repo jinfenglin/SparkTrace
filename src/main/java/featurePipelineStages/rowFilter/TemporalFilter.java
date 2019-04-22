@@ -13,6 +13,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 
+import java.util.Calendar;
 import java.util.Date;
 
 import static featurePipelineStages.temporalRelations.TimeDiff.parseTimeStamp;
@@ -33,7 +34,6 @@ public class TemporalFilter extends Transformer implements HasInputCols, HasOutp
     private static final String TIME_CONDITION = "TIME_CONDITION";
     private static final String IS_INSTANCE = "IS_INSTANCE";
     StringArrayParam inputCols, outputCols;
-
     public TemporalFilter() {
         inputCols = initInputCols();
         outputCols = initOutputCols();
@@ -56,11 +56,18 @@ public class TemporalFilter extends Transformer implements HasInputCols, HasOutp
         dataset.sqlContext().udf().register(TIME_CONDITION, (String sTime, String tStart, String tEnd) -> {
             Date sTimeDate = parseTimeStamp(sTime);
             Date tStartTime = parseTimeStamp(tStart);
-            Date tEndTime = parseTimeStamp(tEnd);
+
+            Calendar cal = Calendar.getInstance();
+            Date tEndTime = parseTimeStamp(tEnd) ;
+            cal.setTime(tEndTime); // sets calendar time/date
+            cal.add(Calendar.HOUR_OF_DAY, 30); // adds one hour
+            tEndTime = cal.getTime();
+
             return sTimeDate.before(tEndTime) && sTimeDate.after(tStartTime);
         }, DataTypes.BooleanType);
-        dataset = dataset.withColumn(IS_INSTANCE, callUDF(TIME_CONDITION, c1, c2, c3));
-        dataset = dataset.filter(dataset.col(IS_INSTANCE).equalTo(true));
+        dataset = dataset.withColumn(IS_INSTANCE,callUDF(TIME_CONDITION, c1, c2, c3));
+        //dataset = dataset.filter(callUDF(TIME_CONDITION, c1, c2, c3));
+        //dataset = dataset.filter(dataset.col(IS_INSTANCE).equalTo(true));
         return (Dataset<Row>) dataset;
     }
 
