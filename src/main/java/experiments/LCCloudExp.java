@@ -70,6 +70,7 @@ public class LCCloudExp extends SparkTraceJob {
         String sparkMod = args[1];
         String outDir = args[2];
         String op = args[3];
+        int averageIter = Integer.valueOf(args[4]);
         boolean opFlag;
         if (op.equals("true")) {
             opFlag = true;
@@ -81,12 +82,12 @@ public class LCCloudExp extends SparkTraceJob {
         String improvementCommitLinkPath = mavenDir + "bugCommitLinks.csv";
         String commitCodeLinkPath = mavenDir + "/CommitCodeLinks.csv";
         long average = 0;
-        for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < averageIter; i++) {
             LCExperiment lc = new LCExperiment(commitPath, improvementPath, improvementCommitLinkPath, commitCodeLinkPath, sparkMod, outDir);
             long time = lc.runExperiment(opFlag);
             average += time;
             System.out.println(time);
         }
-        System.out.println(average);
+        System.out.println(1.0 * average / averageIter);
     }
 }

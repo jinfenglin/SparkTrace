@@ -1,5 +1,6 @@
 package experiments;
 
+import javafx.util.Pair;
 import traceTasks.LDATraceBuilder;
 import traceTasks.NGramVSMTraceTaskBuilder;
 import traceTasks.OptimizedVoteTraceBuilder;
@@ -42,7 +43,7 @@ public class VotingSystemExperiment extends SparkTraceJob {
         return vsmTaskInputConfig;
     }
 
-    public long runOptimizedSystem(String outputDir) throws Exception {
+    public Pair<Long, Long> runOptimizedSystem(String outputDir) throws Exception {
         long startTime = System.currentTimeMillis();
         SparkTraceTask voteTask = new OptimizedVoteTraceBuilder().getTask(sourceId, targetId);
         Map<String, String> config = getConfig();
@@ -54,7 +55,11 @@ public class VotingSystemExperiment extends SparkTraceJob {
         voteTask.getTargetSDFSdfGraph().optimize(voteTask.getTargetSDFSdfGraph());
         syncSymbolValues(voteTask);
         voteTask.train(sourceDataset, targetDataset, null);
+
+        long traceStart = System.currentTimeMillis();
         Dataset<Row> result = voteTask.trace(sourceDataset, targetDataset);
+        long traceEnd = System.currentTimeMillis();
+        System.out.println(String.format("trace only time = %s", traceEnd - traceStart));
 
         String vsmScoreCol = voteTask.getOutputField(OptimizedVoteTraceBuilder.VSM_SCORE).getFieldSymbol().getSymbolValue();
         String ngramVsmScoreCol = voteTask.getOutputField(OptimizedVoteTraceBuilder.NGRAM_SCORE).getFieldSymbol().getSymbolValue();
@@ -63,11 +68,13 @@ public class VotingSystemExperiment extends SparkTraceJob {
                 .format("com.databricks.spark.csv")
                 .option("header", "true").mode("overwrite")
                 .save(outputDir + "/voteResult_op.csv");
-        return System.currentTimeMillis() - startTime;
+        long totalRuntime = System.currentTimeMillis() - startTime;
+        return new Pair<>(totalRuntime, traceEnd - traceStart);
     }
 
-    public long runUnOptimized(String outputDir) throws Exception {
+    public Pair<Long, Long> runUnOptimized(String outputDir) throws Exception {
         long startTime = System.currentTimeMillis();
+        long traceTime = 0;
         SparkTraceTask vsmTask = new VSMTraceBuilder().getTask(sourceId, targetId);
         vsmTask.setCleanColumns(false);
         Map<String, String> vsmTaskInputConfig = getConfig();
@@ -78,21 +85,27 @@ public class VotingSystemExperiment extends SparkTraceJob {
         vsmTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(vsmTask);
         vsmTask.train(sourceDataset, targetDataset, null);
+        long t1Start = System.currentTimeMillis();
         Dataset<Row> result1 = vsmTask.trace(sourceDataset, targetDataset);
+        traceTime += System.currentTimeMillis() - t1Start;
 
         SparkTraceTask ngramTask = new NGramVSMTraceTaskBuilder().getTask(sourceId, targetId);
         ngramTask.setCleanColumns(false);
         ngramTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(ngramTask);
         ngramTask.train(sourceDataset, targetDataset, null);
+        long t2Start = System.currentTimeMillis();
         Dataset<Row> result2 = ngramTask.trace(sourceDataset, targetDataset);
+        traceTime += System.currentTimeMillis() - t2Start;
 
         SparkTraceTask ldaTask = new LDATraceBuilder().getTask(sourceId, targetId);
         ldaTask.setCleanColumns(false);
         ldaTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(ldaTask);
         ldaTask.train(sourceDataset, targetDataset, null);
+        long t3Start = System.currentTimeMillis();
         Dataset<Row> result3 = ldaTask.trace(sourceDataset, targetDataset);
+        traceTime += System.currentTimeMillis() - t3Start;
 
         String vsmScoreCol = vsmTask.getOutputField(VSMTraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
         String ngramVsmScoreCol = ngramTask.getOutputField(NGramVSMTraceTaskBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
@@ -107,7 +120,7 @@ public class VotingSystemExperiment extends SparkTraceJob {
                 .format("com.databricks.spark.csv")
                 .option("header", "true").mode("overwrite")
                 .save(outputDir + "/voteResult_unOP.csv");
-        return System.currentTimeMillis() - startTime;
+        return new Pair<>(System.currentTimeMillis() - startTime, traceTime);
     }
 
     public static void main(String[] args) throws Exception {
@@ -118,29 +131,40 @@ public class VotingSystemExperiment extends SparkTraceJob {
         for (int i = 2; i < args.length; i++) {
             projects.add(args[i]);
         }
-        //projects.addAll(Arrays.asList(new String[]{"alibaba/ARouter", "alibaba/arthas", "alibaba/canal", "alibaba/rax", "baidu/san", "meituan/EasyReact", "Tencent/bk-cmdb"}));
-        projects.addAll(Arrays.asList(new String[]{"meituan/EasyReact"}));
+        projects.addAll(Arrays.asList(new String[]{"alibaba/ARouter", "alibaba/arthas", "alibaba/canal", "alibaba/rax", "baidu/san", "meituan/EasyReact", "Tencent/bk-cmdb"}));
+        //projects.addAll(Arrays.asList(new String[]{"meituan/EasyReact"}));
         List<String> opTimeList = new ArrayList<>();
         List<String> unOpTimeList = new ArrayList<>();
+        List<String> opTraceTime = new ArrayList<>();
+        List<String> unOpTraceTime = new ArrayList<>();
         for (String projectPath : projects) {
             Path dataDir = Paths.get(dataDirRoot, projectPath, "translated_data", "clean_translated_tokens");
             Path sourceArtifactPath = Paths.get(dataDir.toString(), "commit.csv");
             Path targetArtifactPath = Paths.get(dataDir.toString(), "issue.csv");
             VotingSystemExperiment vs = new VotingSystemExperiment(sourceArtifactPath.toString(), targetArtifactPath.toString());
-            long opTime = vs.runOptimizedSystem(outputDir);
-            long unOpTime = vs.runUnOptimized(outputDir);
+            Pair opResult = vs.runOptimizedSystem(outputDir);
+            Pair unOpResult = vs.runUnOptimized(outputDir);
+            long opTime = (Long) opResult.getKey();
+            long unOpTime = (Long) unOpResult.getKey();
             opTimeList.add(String.valueOf(opTime));
+            opTraceTime.add(String.valueOf(opResult.getValue()));
             unOpTimeList.add(String.valueOf(unOpTime));
-            System.out.println(String.format("%s Time =  %d vs %d", projectPath, opTime, unOpTime));
+            unOpTraceTime.add(String.valueOf(unOpResult.getValue()));
+            System.out.println(String.format("%s Time =  %d/%d vs %d/%d", projectPath, opTime, opResult.getValue(), unOpTime, opResult.getValue()));
         }
         org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/time.csv");
         OutputStream out = outputPath.getFileSystem(new Configuration()).create(outputPath);
         String projectNameLine = String.join(",", projects) + "\n";
         String opTimeLine = String.join(",", opTimeList) + "\n";
+        String opTraceTimeLine = String.join(",", opTraceTime) + "\n";
         String unOpTimeLine = String.join(",", unOpTimeList) + "\n";
+        String unopTraceTimeLine = String.join(",", unOpTimeList) + "\n";
+
         out.write(projectNameLine.getBytes());
         out.write(opTimeLine.getBytes());
         out.write(unOpTimeLine.getBytes());
+        out.write(opTraceTimeLine.getBytes());
+        out.write(unopTraceTimeLine.getBytes());
         out.close();
     }
 }

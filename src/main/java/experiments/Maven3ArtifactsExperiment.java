@@ -36,7 +36,7 @@ import static org.apache.spark.sql.functions.col;
 public class Maven3ArtifactsExperiment extends SparkTraceJob {
     Dataset<Row> code, bug, commit;
     String CODE_ID = "code_id", BUG_ID = "bug_id", COMMIT_ID = "commit_id";
-    String codeContent = "code_content", commitContent = "commit_content", bugContent = "bug_content";
+    String codeContent = "code_content", commitContent = "commit_content", bugContent = "issue_content";
     String codeContentHTF = "code_htf", commitContentHTF = "commit_htf", bugContentHTF = "bug_htf";
     String outputDir = "tmp";
     SGraph bugPreprocess, codePreprocess, commitPreprocess;
@@ -167,7 +167,10 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
     public long runOptimizedSystem() throws Exception {
         long startTime = System.currentTimeMillis();
         List<Dataset> step1 = preprocess(code, commit, bug);
+        long train_start = System.currentTimeMillis();
         List<PipelineModel> models = unsupervisedLearn(step1.get(0), step1.get(1), step1.get(2));
+        long train_time = System.currentTimeMillis() - train_start;
+
         PipelineModel commitIndexModel = models.get(0);
         PipelineModel bugIndexModel = models.get(1);
 
@@ -217,10 +220,10 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         Dataset res2 = cosin2.toPipeline().fit(commitBugFeatureVec).transform(commitBugFeatureVec);
         Dataset res3 = cosin3.toPipeline().fit(codeBugFeatureVec).transform(codeBugFeatureVec);
 
-        res1.count();
-        res2.count();
-        res3.count();
-        return System.currentTimeMillis() - startTime;
+        System.out.println(res1.count());
+        System.out.println(res2.count());
+        System.out.println(res3.count());
+        return System.currentTimeMillis() - startTime - train_time;
     }
 
     public long runUnOptimizedSystem() throws Exception {
@@ -235,7 +238,7 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         syncSymbolValues(job1);
         job1.train(code, commit, null);
         Dataset<Row> result1 = job1.trace(code, commit);
-        result1.count();
+        System.out.println(result1.count());
 
         SparkTraceTask job2 = new VSMTraceBuilder().getTask(COMMIT_ID, BUG_ID);
         job2.indexOn = 1;
@@ -247,7 +250,7 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         syncSymbolValues(job2);
         job2.train(commit, bug, null);
         Dataset<Row> result2 = job2.trace(commit, bug);
-        result2.count();
+        System.out.println(result2.count());
 
         SparkTraceTask job3 = new VSMTraceBuilder().getTask(CODE_ID, BUG_ID);
         job3.indexOn = 1;
@@ -259,9 +262,9 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
         syncSymbolValues(job3);
         job3.train(code, bug, null);
         Dataset<Row> result3 = job3.trace(code, bug);
-        result3.count();
+        System.out.println(result3.count());
 
-        return  System.currentTimeMillis() - startTime;
+        return System.currentTimeMillis() - startTime;
     }
 
     private void writeResult(Dataset result, String[] cols) {

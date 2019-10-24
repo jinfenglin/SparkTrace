@@ -12,10 +12,7 @@ import org.apache.spark.ml.clustering.LDAModel;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
@@ -39,6 +36,8 @@ import static org.apache.spark.sql.functions.*;
 public class SparkTraceTask extends SGraph {
     private boolean isInitialed = false; //record whether the task is init or not
     private boolean useDirtyBit = false;
+    private boolean useTemporal = false;
+
     //Symbol name for id column which can be configured in different places.
     private String sourceIdCol, targetIdCol;
     public static String LabelCol = "label";
@@ -303,6 +302,11 @@ public class SparkTraceTask extends SGraph {
         } else {
             candidateLinks = sourceSDFVec.crossJoin(targetSDFVec); //Cross join
         }
+
+        if (useTemporal) {
+            //reduce candidate size by checking the temporal info, the column names are hard coded for now should use configuration
+            candidateLinks = candidateLinks.filter(col("c1").between(col("c2"), col("c3")));
+        }
         return candidateLinks;
     }
 
@@ -353,4 +357,13 @@ public class SparkTraceTask extends SGraph {
     public void setPredictGraph(SGraph predictGraph) {
         this.predictGraph = predictGraph;
     }
+
+    public boolean isUseTemporal() {
+        return useTemporal;
+    }
+
+    public void setUseTemporal(boolean useTemporal) {
+        this.useTemporal = useTemporal;
+    }
+
 }

@@ -11,7 +11,6 @@ import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.basic.SGraph;
 import core.graphPipeline.basic.SNode;
-import featurePipelineStages.rowFilter.TemporalFilter;
 import org.apache.spark.sql.Dataset;
 
 import java.util.Arrays;
@@ -45,42 +44,6 @@ public class LinkCompletionTraceTask {
         return graph;
     }
 
-    public SNode createTemporalFilterNode() throws Exception {
-        TemporalFilter filter = new TemporalFilter();
-        SNode tNode = new SNode(filter, "temporalFilter");
-        tNode.addInputField(COMMIT_TIME); //The order of first 3 attribute is importnat
-        tNode.addInputField(ISSUE_CREATE);
-        tNode.addInputField(ISSUE_RESOLVE);
-        tNode.addInputField(SHTF);
-        tNode.addInputField(THTF);
-        tNode.addInputField(COMMIT_ID);
-        tNode.addInputField(COMMIT_AUTHOR);
-        tNode.addInputField(FILES);
-        tNode.addInputField(LINKED_COMMIT);
-
-        tNode.addOutputField(COMMIT_TIME); //The order of first 3 attribute is importnat
-        tNode.addOutputField(ISSUE_CREATE);
-        tNode.addOutputField(ISSUE_RESOLVE);
-        tNode.addOutputField(SHTF);
-        tNode.addOutputField(THTF);
-        tNode.addOutputField(COMMIT_ID);
-        tNode.addOutputField(COMMIT_AUTHOR);
-        tNode.addOutputField(FILES);
-        tNode.addOutputField(LINKED_COMMIT);
-
-        //work around for columns getting mistakenly removed
-        tNode.getOutputField(COMMIT_TIME).setRemovable(false);
-        tNode.getOutputField(ISSUE_CREATE).setRemovable(false);
-        tNode.getOutputField(ISSUE_RESOLVE).setRemovable(false);
-        tNode.getOutputField(SHTF).setRemovable(false);
-        tNode.getOutputField(THTF).setRemovable(false);
-        tNode.getOutputField(COMMIT_ID).setRemovable(false);
-        tNode.getOutputField(COMMIT_AUTHOR).setRemovable(false);
-        tNode.getOutputField(FILES).setRemovable(false);
-        tNode.getOutputField(LINKED_COMMIT).setRemovable(false);
-        return tNode;
-    }
-
     public SGraph createDDF() throws Exception {
         SGraph ddfGraph = new SGraph("LC_DDF");
         ddfGraph.addInputField(SHTF);
@@ -105,8 +68,6 @@ public class LinkCompletionTraceTask {
         ddfGraph.addOutputField(A13);
         ddfGraph.addOutputField(DOC_SIM);
 
-        SNode temporalNode = createTemporalFilterNode();
-
         SGraph cosinSubGraph = SparseCosinSimilarityPipeline.getGraph("Cosin"); //vec1,2 - cosin_sim
         SGraph lca4To7 = LCA4ToA7.getGraph("lca4To7");
         SGraph lca8To10 = LCA8ToA10.getGraph("lca8To10");
@@ -116,48 +77,24 @@ public class LinkCompletionTraceTask {
         ddfGraph.addNode(lca4To7);
         ddfGraph.addNode(lca8To10);
         ddfGraph.addNode(lca11To13);
-        ddfGraph.addNode(temporalNode);
 
+        ddfGraph.connect(ddfGraph.sourceNode, SHTF, cosinSubGraph, SparseCosinSimilarityPipeline.INPUT1);
+        ddfGraph.connect(ddfGraph.sourceNode, THTF, cosinSubGraph, SparseCosinSimilarityPipeline.INPUT2);
+        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_TIME, lca4To7, LCA4ToA7.COMMIT_TIME);
+        ddfGraph.connect(ddfGraph.sourceNode, ISSUE_CREATE, lca4To7, LCA4ToA7.ISSUE_CREATE);
+        ddfGraph.connect(ddfGraph.sourceNode, ISSUE_RESOLVE, lca4To7, LCA4ToA7.ISSUE_RESOLVE);
 
-        ddfGraph.sourceNode.getOutputField(COMMIT_TIME).setRemovable(false);
-        ddfGraph.sourceNode.getOutputField(ISSUE_CREATE).setRemovable(false);
-        ddfGraph.sourceNode.getOutputField(ISSUE_RESOLVE).setRemovable(false);
-        ddfGraph.sourceNode.getOutputField(SHTF).setRemovable(false);
-        ddfGraph.sourceNode.getOutputField(THTF).setRemovable(false);
-        ddfGraph.sourceNode.getOutputField(COMMIT_ID).setRemovable(false);
-        ddfGraph.sourceNode.getOutputField(COMMIT_AUTHOR).setRemovable(false);
-        ddfGraph.sourceNode.getOutputField(FILES).setRemovable(false);
-        ddfGraph.sourceNode.getOutputField(LINKED_COMMIT).setRemovable(false);
+        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_ID, lca8To10, LCA8ToA10.COMMIT_ID);
+        ddfGraph.connect(ddfGraph.sourceNode, FILES, lca8To10, LCA8ToA10.FILES);
+        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_AUTHOR, lca8To10, LCA8ToA10.COMMIT_AUTHOR);
+        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_TIME, lca8To10, LCA8ToA10.COMMIT_DATE);
+        ddfGraph.connect(ddfGraph.sourceNode, LINKED_COMMIT, lca8To10, LCA8ToA10.LINKED_COMMIT);
 
-
-        ddfGraph.connect(ddfGraph.sourceNode, SHTF, temporalNode, SHTF);
-        ddfGraph.connect(ddfGraph.sourceNode, THTF, temporalNode, THTF);
-        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_TIME, temporalNode,COMMIT_TIME);
-        ddfGraph.connect(ddfGraph.sourceNode, ISSUE_CREATE, temporalNode, ISSUE_CREATE);
-        ddfGraph.connect(ddfGraph.sourceNode, ISSUE_RESOLVE, temporalNode, ISSUE_RESOLVE);
-        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_ID, temporalNode,COMMIT_ID);
-        ddfGraph.connect(ddfGraph.sourceNode, FILES, temporalNode,FILES);
-        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_AUTHOR, temporalNode,COMMIT_AUTHOR);
-        ddfGraph.connect(ddfGraph.sourceNode, LINKED_COMMIT, temporalNode, LINKED_COMMIT);
-
-
-        ddfGraph.connect(temporalNode, SHTF, cosinSubGraph, SparseCosinSimilarityPipeline.INPUT1);
-        ddfGraph.connect(temporalNode, THTF, cosinSubGraph, SparseCosinSimilarityPipeline.INPUT2);
-        ddfGraph.connect(temporalNode, COMMIT_TIME, lca4To7, LCA4ToA7.COMMIT_TIME);
-        ddfGraph.connect(temporalNode, ISSUE_CREATE, lca4To7, LCA4ToA7.ISSUE_CREATE);
-        ddfGraph.connect(temporalNode, ISSUE_RESOLVE, lca4To7, LCA4ToA7.ISSUE_RESOLVE);
-
-        ddfGraph.connect(temporalNode, COMMIT_ID, lca8To10, LCA8ToA10.COMMIT_ID);
-        ddfGraph.connect(temporalNode, FILES, lca8To10, LCA8ToA10.FILES);
-        ddfGraph.connect(temporalNode, COMMIT_AUTHOR, lca8To10, LCA8ToA10.COMMIT_AUTHOR);
-        ddfGraph.connect(temporalNode, COMMIT_TIME, lca8To10, LCA8ToA10.COMMIT_DATE);
-        ddfGraph.connect(temporalNode, LINKED_COMMIT, lca8To10, LCA8ToA10.LINKED_COMMIT);
-
-        ddfGraph.connect(temporalNode, COMMIT_ID, lca11To13, LCA11ToA13.COMMIT_ID);
-        ddfGraph.connect(temporalNode, FILES, lca11To13, LCA11ToA13.FILES);
-        ddfGraph.connect(temporalNode, COMMIT_AUTHOR, lca11To13, LCA11ToA13.COMMIT_AUTHOR);
-        ddfGraph.connect(temporalNode, COMMIT_TIME, lca11To13, LCA11ToA13.COMMIT_DATE);
-        ddfGraph.connect(temporalNode, LINKED_COMMIT, lca11To13, LCA11ToA13.LINKED_COMMIT);
+        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_ID, lca11To13, LCA11ToA13.COMMIT_ID);
+        ddfGraph.connect(ddfGraph.sourceNode, FILES, lca11To13, LCA11ToA13.FILES);
+        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_AUTHOR, lca11To13, LCA11ToA13.COMMIT_AUTHOR);
+        ddfGraph.connect(ddfGraph.sourceNode, COMMIT_TIME, lca11To13, LCA11ToA13.COMMIT_DATE);
+        ddfGraph.connect(ddfGraph.sourceNode, LINKED_COMMIT, lca11To13, LCA11ToA13.LINKED_COMMIT);
 
 
         ddfGraph.connect(cosinSubGraph, SparseCosinSimilarityPipeline.OUTPUT, ddfGraph.sinkNode, DOC_SIM);
