@@ -3,10 +3,10 @@ package core.graphPipeline.basic;
 /**
  *
  */
-public class SEdge {
+public class Edge {
     private Vertex from, to;
 
-    public SEdge(Vertex from, Vertex to) {
+    public Edge(Vertex from, Vertex to) {
         this.from = from;
         this.to = to;
     }
@@ -33,7 +33,7 @@ public class SEdge {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        SEdge sEdge = (SEdge) o;
+        Edge sEdge = (Edge) o;
 
         if (from != null ? !from.equals(sEdge.from) : sEdge.from != null) return false;
         return to != null ? to.equals(sEdge.to) : sEdge.to == null;

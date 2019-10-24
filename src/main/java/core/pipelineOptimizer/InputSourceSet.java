@@ -1,6 +1,9 @@
 package core.pipelineOptimizer;
 
-import core.graphPipeline.basic.*;
+import core.graphPipeline.SLayer.*;
+import core.graphPipeline.basic.IOTable;
+import core.graphPipeline.basic.IOTableCell;
+import core.graphPipeline.basic.Vertex;
 import featurePipelineStages.SGraphIOStage;
 
 import java.util.HashSet;

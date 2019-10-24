@@ -1,6 +1,8 @@
 package core;
 
-import core.graphPipeline.basic.*;
+import core.graphPipeline.SLayer.*;
+import core.graphPipeline.basic.IOTableCell;
+import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import core.pipelineOptimizer.*;
@@ -16,7 +18,6 @@ import org.apache.spark.sql.types.*;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 

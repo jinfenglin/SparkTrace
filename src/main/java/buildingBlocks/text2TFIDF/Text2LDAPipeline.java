@@ -2,7 +2,7 @@ package buildingBlocks.text2TFIDF;
 
 import buildingBlocks.preprocessor.CleanTokens;
 import buildingBlocks.vectorize.LDAPipeline;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 
 /**
  *

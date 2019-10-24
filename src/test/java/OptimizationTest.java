@@ -1,5 +1,5 @@
-import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
+import core.graphPipeline.SLayer.SGraph;
+import core.graphPipeline.SLayer.SNode;
 import examples.TestBase;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDF;

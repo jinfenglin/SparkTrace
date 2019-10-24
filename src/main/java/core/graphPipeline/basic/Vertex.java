@@ -63,8 +63,6 @@ abstract public class Vertex {
         return outputNodes;
     }
 
-    public abstract Pipeline toPipeline() throws Exception;
-
     public Vertex addInputFields(Symbol[] symbols) throws Exception {
         for (Symbol symbol : symbols) {
             addInputField(symbol);

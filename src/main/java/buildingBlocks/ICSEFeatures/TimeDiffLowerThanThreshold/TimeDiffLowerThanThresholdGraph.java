@@ -1,7 +1,7 @@
 package buildingBlocks.ICSEFeatures.TimeDiffLowerThanThreshold;
 
-import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
+import core.graphPipeline.SLayer.SGraph;
+import core.graphPipeline.SLayer.SNode;
 import featurePipelineStages.temporalRelations.CompareThreshold;
 import featurePipelineStages.temporalRelations.TimeDiff;
 

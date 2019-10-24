@@ -17,7 +17,6 @@ public class TestBase {
     protected SparkSession sparkSession;
 
     public TestBase(String masterUrl) {
-        System.setProperty("hadoop.home.dir", "G:\\tools\\spark-2.4.0-bin-hadoop2.7");
         String jobName = "SparkTest";
         SparkConf conf = new SparkConf();
         conf.setMaster(masterUrl);

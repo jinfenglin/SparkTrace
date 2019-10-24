@@ -1,7 +1,7 @@
 package buildingBlocks.ICSEFeatures;
 
-import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
+import core.graphPipeline.SLayer.SGraph;
+import core.graphPipeline.SLayer.SNode;
 import featurePipelineStages.sameColumnStage.SameAuthorStage;
 
 /**

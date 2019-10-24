@@ -1,6 +1,9 @@
-package core.graphPipeline.basic;
+package core.graphPipeline.SLayer;
 
 import core.graphPipeline.SDF.SDFInterface;
+import core.graphPipeline.basic.Edge;
+import core.graphPipeline.basic.IOTableCell;
+import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import featurePipelineStages.SGraphColumnRemovalStage;
@@ -29,7 +32,7 @@ import static guru.nidi.graphviz.model.Factory.*;
  * 4. Add penetrations to the graph
  * 5. Call toPipeline to create a fully configured and runnable pipeline
  */
-public class SGraph extends Vertex implements SDFInterface {
+public class SGraph extends Vertex implements SDFInterface, SLayerComponent {
     private boolean cleanColumns;
 
     public enum SDFType {
@@ -38,7 +41,7 @@ public class SGraph extends Vertex implements SDFInterface {
     }
 
     private Map<String, Vertex> nodes;
-    private Set<SEdge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
+    private Set<Edge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
     public SNode sourceNode, sinkNode;
     private Map<String, String> config;
     private Map<String, SDFType> outputTypeMap;
@@ -53,8 +56,8 @@ public class SGraph extends Vertex implements SDFInterface {
         sinkNode.setVertexLabel("SinkNode");
         sourceNode.setContext(this);
         sinkNode.setContext(this);
-        nodes.put(sourceNode.vertexId, sourceNode);
-        nodes.put(sinkNode.vertexId, sinkNode);
+        nodes.put(sourceNode.getVertexId(), sourceNode);
+        nodes.put(sinkNode.getVertexId(), sinkNode);
         config = new HashMap<>();
         outputTypeMap = new HashMap<>();
         cleanColumns = true;
@@ -70,8 +73,8 @@ public class SGraph extends Vertex implements SDFInterface {
         sinkNode.setVertexLabel("SinkNode");
         sourceNode.setContext(this);
         sinkNode.setContext(this);
-        nodes.put(sourceNode.vertexId, sourceNode);
-        nodes.put(sinkNode.vertexId, sinkNode);
+        nodes.put(sourceNode.getVertexId(), sourceNode);
+        nodes.put(sinkNode.getVertexId(), sinkNode);
         config = new HashMap<>();
         outputTypeMap = new HashMap<>();
         cleanColumns = true;
@@ -140,7 +143,7 @@ public class SGraph extends Vertex implements SDFInterface {
             if (node instanceof SGraph) {
                 syncSymbolValues((SGraph) node);
             }
-            for (IOTableCell providerCell : node.outputTable.getCells()) {
+            for (IOTableCell providerCell : node.getOutputTable().getCells()) {
                 Symbol providerSymbol = providerCell.getFieldSymbol();
                 for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
                     Symbol receiverSymbol = receiverCell.getFieldSymbol();
@@ -156,7 +159,7 @@ public class SGraph extends Vertex implements SDFInterface {
         }
         //ensure the target cell receive correct transVertex symbols
         for (TransparentSNode tv : transparentVertices) {
-            for (IOTableCell providerCell : tv.outputTable.getCells()) {
+            for (IOTableCell providerCell : tv.getOutputTable().getCells()) {
                 for (IOTableCell receiverCell : providerCell.getOutputTarget()) {
                     Symbol receiverSymbol = receiverCell.getFieldSymbol();
                     SymbolTable.shareSymbolValue(providerCell.getFieldSymbol(), receiverSymbol);
@@ -230,7 +233,7 @@ public class SGraph extends Vertex implements SDFInterface {
      * Make sure the edges which contains deleted nodes are also deleted.
      */
     private void clearEdge() {
-        for (SEdge edge : new ArrayList<>(edges)) {
+        for (Edge edge : new ArrayList<>(edges)) {
             if (!nodes.values().contains(edge.getFrom()) || !nodes.values().contains(edge.getTo())) {
                 edges.remove(edge);
             }
@@ -260,7 +263,7 @@ public class SGraph extends Vertex implements SDFInterface {
         for (Vertex node : topSortNodes) {
             if (node == sinkNode || node == sourceNode)
                 continue;
-            stages.addAll(Arrays.asList(node.toPipeline().getStages()));
+            stages.addAll(Arrays.asList(((SLayerComponent) node).toPipeline().getStages()));
             //Add column clean stages
             if (!node.equals(sinkNode) && cleanColumns) {
                 for (IOTableCell targetCell : node.getInputTable().getCells()) {
@@ -295,13 +298,13 @@ public class SGraph extends Vertex implements SDFInterface {
      * @return
      */
     private static Map<Vertex, List<Vertex>> buildEdgeIndex(SGraph graph, boolean useFromAsIndex) {
-        List<SEdge> edges = graph.getEdges();
+        List<Edge> edges = graph.getEdges();
         List<Vertex> vertices = graph.getNodes();
         Map<Vertex, List<Vertex>> indexMap = new HashMap<>();
         for (Vertex vertex : vertices) {
             indexMap.put(vertex, new ArrayList<>());
         }
-        for (SEdge edge : edges) {
+        for (Edge edge : edges) {
             Vertex key = null;
             Vertex value = null;
             if (useFromAsIndex) { //Build edge index using the `from` node as key
@@ -320,12 +323,12 @@ public class SGraph extends Vertex implements SDFInterface {
 
     private static Map<Vertex, Integer> inDegreeMap(SGraph graph) {
         List<Vertex> nodes = graph.getNodes();
-        List<SEdge> edges = graph.getEdges();
+        List<Edge> edges = graph.getEdges();
         Map<Vertex, Integer> inDegreeMap = new HashMap<>();
         for (Vertex node : nodes) {
             inDegreeMap.put(node, 0);
         }
-        for (SEdge edge : edges) {
+        for (Edge edge : edges) {
             Vertex to = edge.getTo();
             if (to == null || inDegreeMap.get(to) == null) {
                 int i = 0;
@@ -382,7 +385,7 @@ public class SGraph extends Vertex implements SDFInterface {
         return null;
     }
 
-    public List<SEdge> getEdges() {
+    public List<Edge> getEdges() {
         return new ArrayList<>(edges);
     }
 
@@ -391,7 +394,7 @@ public class SGraph extends Vertex implements SDFInterface {
         node.setContext(this);
     }
 
-    public void addEdge(SEdge edge) {
+    public void addEdge(Edge edge) {
         edges.add(edge);
     }
 
@@ -415,7 +418,7 @@ public class SGraph extends Vertex implements SDFInterface {
         }
     }
 
-    public void removeEdge(SEdge edge) {
+    public void removeEdge(Edge edge) {
         edges.remove(edge);
     }
 
@@ -426,7 +429,7 @@ public class SGraph extends Vertex implements SDFInterface {
     }
 
     public void connect(Symbol from, Symbol to) throws Exception {
-        SEdge edge = new SEdge(from.getScope(), to.getScope());
+        Edge edge = new Edge(from.getScope(), to.getScope());
         addEdge(edge);
         connectSymbol(from, to);
     }
@@ -437,8 +440,8 @@ public class SGraph extends Vertex implements SDFInterface {
         disconnect(s1, s2);
     }
 
-    protected void disconnect(Symbol from, Symbol to) throws Exception {
-        SEdge edge = new SEdge(from.getScope(), to.getScope());
+    public void disconnect(Symbol from, Symbol to) throws Exception {
+        Edge edge = new Edge(from.getScope(), to.getScope());
         disconnectSymbol(from, to);
         if (noConnectionBetweenVertex(from.getScope(), to.getScope())) {
             removeEdge(edge);
@@ -446,8 +449,8 @@ public class SGraph extends Vertex implements SDFInterface {
     }
 
     private void disconnectSymbol(Symbol from, Symbol to) throws Exception {
-        IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
-        IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
+        IOTableCell fromCell = from.getScope().getOutputTable().getCellBySymbol(from);
+        IOTableCell toCell = to.getScope().getInputTable().getCellBySymbol(to);
         if (fromCell != null && toCell != null) {
             fromCell.removeOutputTo(toCell);
         } else {
@@ -475,8 +478,8 @@ public class SGraph extends Vertex implements SDFInterface {
      * @param to
      */
     private void connectSymbol(Symbol from, Symbol to) throws Exception {
-        IOTableCell fromCell = from.getScope().outputTable.getCellBySymbol(from);
-        IOTableCell toCell = to.getScope().inputTable.getCellBySymbol(to);
+        IOTableCell fromCell = from.getScope().getOutputTable().getCellBySymbol(from);
+        IOTableCell toCell = to.getScope().getInputTable().getCellBySymbol(to);
         if (fromCell != null && toCell != null) {
             fromCell.sendOutputTo(toCell);
         } else {
@@ -543,8 +546,8 @@ public class SGraph extends Vertex implements SDFInterface {
 
     private String getMissingSymbolInfo(Symbol s1, Symbol s2) {
         StringJoiner notFoundInfo = new StringJoiner(",");
-        IOTableCell c1 = s1.getScope().outputTable.getCellBySymbol(s1);
-        IOTableCell c2 = s2.getScope().inputTable.getCellBySymbol(s2);
+        IOTableCell c1 = s1.getScope().getOutputTable().getCellBySymbol(s1);
+        IOTableCell c2 = s2.getScope().getInputTable().getCellBySymbol(s2);
         if (c1 == null) {
             notFoundInfo.add(s1.toString());
         }
@@ -567,6 +570,7 @@ public class SGraph extends Vertex implements SDFInterface {
         }
         return symbolValues;
     }
+
 
     @Override
     public Set<String> getTargetSDFOutputs() {

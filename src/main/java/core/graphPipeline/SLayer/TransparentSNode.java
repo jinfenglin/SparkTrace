@@ -1,5 +1,8 @@
-package core.graphPipeline.basic;
+package core.graphPipeline.SLayer;
 
+import core.graphPipeline.basic.IOTable;
+import core.graphPipeline.basic.IOTableCell;
+import core.graphPipeline.basic.ITransparentVertex;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import org.apache.spark.ml.PipelineStage;
 

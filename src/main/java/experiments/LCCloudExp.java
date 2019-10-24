@@ -2,7 +2,6 @@ package experiments;
 
 import core.SparkTraceJob;
 import core.SparkTraceTask;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.sql.Dataset;
 import traceTasks.LinkCompletionTraceTask;
 import traceability.TraceDatasetFactory;
@@ -11,12 +10,10 @@ import traceability.components.maven.MavenCommit;
 import traceability.components.maven.MavenICLink;
 import traceability.components.maven.MavenImprovement;
 
-import java.io.OutputStream;
-import java.nio.file.Paths;
 import java.util.*;
 
 import static core.SparkTraceTask.LabelCol;
-import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+import static core.graphPipeline.SLayer.SGraph.syncSymbolValues;
 import static org.apache.spark.sql.functions.*;
 
 /**

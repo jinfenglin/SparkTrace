@@ -2,7 +2,7 @@ package buildingBlocks.text2TFIDF;
 
 import buildingBlocks.preprocessor.NGramTokenizer;
 import buildingBlocks.vectorize.TFIDFPipeline;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 
 /**
  *

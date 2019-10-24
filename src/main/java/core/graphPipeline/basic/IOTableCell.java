@@ -1,5 +1,7 @@
 package core.graphPipeline.basic;
 
+import core.graphPipeline.SLayer.SGraph;
+import core.graphPipeline.SLayer.SNode;
 import core.graphPipeline.graphSymbol.Symbol;
 import featurePipelineStages.SGraphIOStage;
 import org.apache.spark.ml.PipelineStage;

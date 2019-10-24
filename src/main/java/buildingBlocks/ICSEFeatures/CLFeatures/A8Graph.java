@@ -1,7 +1,7 @@
 package buildingBlocks.ICSEFeatures.CLFeatures;
 
-import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
+import core.graphPipeline.SLayer.SGraph;
+import core.graphPipeline.SLayer.SNode;
 import featurePipelineStages.cloestLinkedCommit.CLTimeDiff;
 
 public class A8Graph extends AbsCLFeature {

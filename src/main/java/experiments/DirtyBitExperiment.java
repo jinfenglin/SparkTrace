@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+import static core.graphPipeline.SLayer.SGraph.syncSymbolValues;
 
 public class DirtyBitExperiment extends SparkTraceJob {
     Dataset<Row> sourceDataset, targetDataset;

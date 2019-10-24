@@ -1,4 +1,7 @@
-import core.graphPipeline.basic.*;
+import core.graphPipeline.SLayer.*;
+import core.graphPipeline.basic.IOTable;
+import core.graphPipeline.basic.IOTableCell;
+import core.graphPipeline.basic.Vertex;
 import core.pipelineOptimizer.GraphHierarchyTree;
 import core.pipelineOptimizer.PipelineOptimizer;
 import examples.TestBase;

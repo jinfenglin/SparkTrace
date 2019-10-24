@@ -18,7 +18,7 @@ import org.apache.spark.sql.Row;
 import scala.collection.Seq;
 import org.apache.hadoop.conf.Configuration;
 
-import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+import static core.graphPipeline.SLayer.SGraph.syncSymbolValues;
 import static org.apache.spark.sql.functions.col;
 
 //        Path outputPath = new Path("gs://dataflow-exp1/google_storage_tests/20170524/outputfolder/Test.csv");

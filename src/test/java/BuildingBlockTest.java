@@ -17,7 +17,7 @@ import traceability.components.maven.MavenICLink;
 import java.util.Arrays;
 import java.util.Map;
 
-import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+import static core.graphPipeline.SLayer.SGraph.syncSymbolValues;
 
 /**
  * BuildingBlocks test and voting system test on Maven commit-improvement

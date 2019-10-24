@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static core.SparkTraceTask.LabelCol;
-import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+import static core.graphPipeline.SLayer.SGraph.syncSymbolValues;
 import static org.apache.spark.sql.functions.*;
 
 /**

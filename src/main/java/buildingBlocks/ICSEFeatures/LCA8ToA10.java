@@ -3,7 +3,7 @@ package buildingBlocks.ICSEFeatures;
 import buildingBlocks.ICSEFeatures.CLFeatures.A10Graph;
 import buildingBlocks.ICSEFeatures.CLFeatures.A8Graph;
 import buildingBlocks.ICSEFeatures.CLFeatures.A9Graph;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 
 /**
  *

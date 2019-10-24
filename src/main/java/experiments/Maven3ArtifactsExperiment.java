@@ -7,7 +7,7 @@ import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceJob;
 import core.SparkTraceTask;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.ml.Pipeline;
@@ -27,7 +27,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static core.graphPipeline.basic.SGraph.syncSymbolValues;
+import static core.graphPipeline.SLayer.SGraph.syncSymbolValues;
 import static org.apache.spark.sql.functions.col;
 
 /**

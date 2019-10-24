@@ -1,7 +1,7 @@
 package buildingBlocks.randomForestPipeline;
 
-import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
+import core.graphPipeline.SLayer.SGraph;
+import core.graphPipeline.SLayer.SNode;
 import org.apache.spark.ml.classification.RandomForestClassifier;
 import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.feature.VectorIndexer;

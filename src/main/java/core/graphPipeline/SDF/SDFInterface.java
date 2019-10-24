@@ -3,7 +3,7 @@ package core.graphPipeline.SDF;
 
 import core.pipelineOptimizer.Pair;
 
-import static core.graphPipeline.basic.SGraph.SDFType;
+import static core.graphPipeline.SLayer.SGraph.SDFType;
 
 import java.util.HashSet;
 import java.util.Map;

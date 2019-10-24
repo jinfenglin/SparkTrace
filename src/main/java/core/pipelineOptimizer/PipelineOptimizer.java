@@ -1,7 +1,11 @@
 package core.pipelineOptimizer;
 
 
-import core.graphPipeline.basic.*;
+import core.graphPipeline.SLayer.*;
+import core.graphPipeline.basic.IOTable;
+import core.graphPipeline.basic.IOTableCell;
+import core.graphPipeline.basic.ITransparentVertex;
+import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
 import featurePipelineStages.SGraphIOStage;
 
@@ -9,7 +13,7 @@ import featurePipelineStages.SGraphIOStage;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static core.graphPipeline.basic.SGraph.topologicalSort;
+import static core.graphPipeline.SLayer.SGraph.topologicalSort;
 
 /**
  *

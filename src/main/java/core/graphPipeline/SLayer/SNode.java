@@ -1,8 +1,9 @@
-package core.graphPipeline.basic;
+package core.graphPipeline.SLayer;
 
+import core.graphPipeline.basic.IOTableCell;
+import core.graphPipeline.basic.Vertex;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
-import org.apache.spark.ml.feature.StopWordsRemover;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.shared.*;
 
@@ -16,7 +17,7 @@ import java.util.logging.Logger;
  * A node in the graph. It contains only IO tables and a pipeline stage that will be integrated
  * into a pipeline through SGraph.
  */
-public class SNode extends Vertex {
+public class SNode extends Vertex implements SLayerComponent{
     private PipelineStage sparkPipelineStage;
     private static String stageMoIOInterfaceErrorMsg = "The inner Spark %s is not implementing" +
             "%s interface, thus the input column value can be not " +

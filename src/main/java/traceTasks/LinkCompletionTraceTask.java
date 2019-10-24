@@ -9,13 +9,9 @@ import buildingBlocks.randomForestPipeline.RandomForestPipeline;
 import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
-import core.graphPipeline.basic.SGraph;
-import core.graphPipeline.basic.SNode;
-import org.apache.spark.sql.Dataset;
+import core.graphPipeline.SLayer.SGraph;
 
 import java.util.Arrays;
-
-import static org.apache.spark.sql.functions.*;
 
 /**
  *

@@ -4,7 +4,7 @@ import buildingBlocks.preprocessor.SimpleWordCount;
 import buildingBlocks.unsupervisedLearn.LDAGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.DenseCosinSimilarityPipeline;
 import core.SparkTraceTask;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 
 import java.util.Arrays;
 

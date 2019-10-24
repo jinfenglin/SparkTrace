@@ -1,7 +1,7 @@
 package core.pipelineOptimizer;
 
 import core.graphPipeline.basic.IOTableCell;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 import core.graphPipeline.basic.Vertex;
 
 import java.util.ArrayList;

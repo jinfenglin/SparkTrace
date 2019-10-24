@@ -7,7 +7,7 @@ import buildingBlocks.unsupervisedLearn.LDAGraphPipeline;
 import buildingBlocks.vecSimilarityPipeline.DenseCosinSimilarityPipeline;
 import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 
 import java.util.Arrays;
 import java.util.List;

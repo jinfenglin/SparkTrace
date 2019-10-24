@@ -1,7 +1,7 @@
 package traceTasks;
 
 import core.SparkTraceTask;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 
 /**
  *

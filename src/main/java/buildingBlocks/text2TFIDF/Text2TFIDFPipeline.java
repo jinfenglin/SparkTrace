@@ -2,7 +2,7 @@ package buildingBlocks.text2TFIDF;
 
 import buildingBlocks.preprocessor.CleanTokens;
 import buildingBlocks.vectorize.TFIDFPipeline;
-import core.graphPipeline.basic.SGraph;
+import core.graphPipeline.SLayer.SGraph;
 
 /**
  * Convert two columns of text into TF-IDF. Index the model on both column of text
