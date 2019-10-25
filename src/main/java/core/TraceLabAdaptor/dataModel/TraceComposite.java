@@ -79,4 +79,68 @@ public class TraceComposite {
     public static Node getElementByTag(Element e, String tag) {
         return e.getElementsByTagName(tag).item(0);
     }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<IOItemDefinition> getInputs() {
+        return inputs;
+    }
+
+    public void setInputs(List<IOItemDefinition> inputs) {
+        this.inputs = inputs;
+    }
+
+    public List<IOItemDefinition> getOutputs() {
+        return outputs;
+    }
+
+    public void setOutputs(List<IOItemDefinition> outputs) {
+        this.outputs = outputs;
+    }
+
+    public Map<String, NodeConfigure> getConfig() {
+        return config;
+    }
+
+    public void setConfig(Map<String, NodeConfigure> config) {
+        this.config = config;
+    }
+
+    public List<TraceLabNode> getVertices() {
+        return vertices;
+    }
+
+    public void setVertices(List<TraceLabNode> vertices) {
+        this.vertices = vertices;
+    }
+
+    public List<TraceLabEdge> getEdges() {
+        return edges;
+    }
+
+    public void setEdges(List<TraceLabEdge> edges) {
+        this.edges = edges;
+    }
 }

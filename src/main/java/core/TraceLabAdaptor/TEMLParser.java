@@ -24,7 +24,6 @@ import java.util.List;
  * Parse a TEML file into a workflow graph.
  */
 public class TEMLParser {
-
     public static Element fileToDOM(Path TEMLpath) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();

@@ -2,6 +2,7 @@ package core.graphPipeline.SLayer;
 
 import core.graphPipeline.SDF.SDFInterface;
 import core.graphPipeline.basic.Edge;
+import core.graphPipeline.basic.Graph;
 import core.graphPipeline.basic.IOTableCell;
 import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
@@ -32,7 +33,7 @@ import static guru.nidi.graphviz.model.Factory.*;
  * 4. Add penetrations to the graph
  * 5. Call toPipeline to create a fully configured and runnable pipeline
  */
-public class SGraph extends Vertex implements SDFInterface, SLayerComponent {
+public class SGraph extends Graph implements SDFInterface, SLayerComponent {
     private boolean cleanColumns;
 
     public enum SDFType {
