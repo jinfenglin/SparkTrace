@@ -1,5 +1,7 @@
 package core.TraceLabAdaptor;
 
+import core.TraceLabAdaptor.dataModel.TraceLabEdge;
+import core.TraceLabAdaptor.dataModel.TraceLabNode;
 import core.graphPipeline.FLayer.FGraph;
 import core.graphPipeline.basic.Edge;
 import core.graphPipeline.basic.Vertex;
@@ -7,11 +9,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,45 +27,58 @@ public class TEMLParser {
         this.filePath = filePath;
     }
 
-    public FGraph parseGraph() throws ParserConfigurationException, IOException, SAXException {
+    public FGraph parseGraph() throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document document = builder.parse(new File(filePath));
         document.getDocumentElement().normalize();
-        FGraph flowGraph = new FGraph();
 
-        //Here comes the root node
         Element root = document.getDocumentElement();
         System.out.println(root.getNodeName());
         NodeList graphBody = document.getElementsByTagName("graph").item(0).getChildNodes();
-        List<Node> vertices = new ArrayList<>();
-        List<Node> edges = new ArrayList<>();
+        List<TraceLabNode> vertices = new ArrayList<>();
+        List<TraceLabEdge> edges = new ArrayList<>();
         for (int i = 0; i < graphBody.getLength(); i++) {
             Node node = graphBody.item(i);
-            String tag = ((Element) node).getTagName();
-            if (tag.equals("node")) {
-                vertices.add(node);
-            } else if (tag.equals("edge")) {
-                edges.add(node);
+            if (node.getNodeType() == node.ELEMENT_NODE) {
+                String tag = ((Element) node).getTagName();
+                if (tag.equals("node")) {
+                    vertices.add(new TraceLabNode(node));
+                } else if (tag.equals("edge")) {
+                    edges.add(new TraceLabEdge(node));
+                }
             }
         }
-        return flowGraph;
+        return null;
+    }
+
+    /**
+     * Create a FGraph and configure it properly
+     *
+     * @param vertices
+     * @param edges
+     * @return
+     */
+    public FGraph createFGraph(List<Vertex> vertices, List<Edge> edges) {
+        return null;
     }
 
     /**
      * Parse a node into edge
+     *
      * @return
      */
-    public Vertex parserVertex() {
-
+    public Vertex parserVertex(Node node) {
+        return null;
     }
 
-    public Edge parseEdge() {
-
+    public Edge parseEdge(Node node) {
+        return null;
     }
 
-    public static void main(String[] args) throws IOException, ParserConfigurationException, SAXException {
-        TEMLParser temlParser = new TEMLParser("C:\\Program Files (x86)\\COEST\\TraceLab\\workspace\\vsm_flow.teml");
-        temlParser.parseGraph();
+    public static void main(String[] args) throws Exception {
+        String testFile = "src/main/resources/vsm_flow.teml";
+        TEMLParser temlParser = new TEMLParser(testFile);
+        FGraph graph = temlParser.parseGraph();
     }
 }
