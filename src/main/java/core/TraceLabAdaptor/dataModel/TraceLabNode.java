@@ -48,17 +48,23 @@ public class TraceLabNode {
         }
         Element e = (Element) configNode;
         Node configValue = e.getElementsByTagName(CONFIG_VALUES).item(0);
-        NodeList properties = configValue.getChildNodes();
+        config = parseConfigProps(configValue);
+    }
+
+    public static Map<String, NodeConfigure> parseConfigProps(Node propSec) {
+        NodeList properties = propSec.getChildNodes();
+        Map<String, NodeConfigure> res = new HashMap<>();
         for (int i = 0; i < properties.getLength(); i++) {
             Node property = properties.item(i);
             if (property.getNodeType() == Node.ELEMENT_NODE) {
                 Element propEle = (Element) property;
                 if (propEle.getTagName().equals(PROPERTY_OBJECT)) {
                     NodeConfigure nodeConfigure = new NodeConfigure(propEle);
-                    config.put(nodeConfigure.name, nodeConfigure);
+                    res.put(nodeConfigure.name, nodeConfigure);
                 }
             }
         }
+        return res;
     }
 
     private String getComponentType(String metaType) {

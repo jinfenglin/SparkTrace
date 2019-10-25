@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CompositeComponentMetadataDefinition xmlVersion="2">
+  <Info>
+    <ID>7f7960af-6d6e-4665-b8da-fc5e01875dcc</ID>
+    <Version />
+    <Label>WF_TFVector</Label>
+    <Name>WF_TFVector</Name>
+    <Author />
+    <Description />
+  </Info>
+  <Input>
+    <IOItemDefinition Name="datasetInput" Type="types.Dataset" IOType="Input" />
+  </Input>
+  <Output>
+    <IOItemDefinition Name="datasetOutput" Type="types.Dataset" IOType="Output" />
+  </Output>
+  <ConfigDefinition>
+    <IsJava>False</IsJava>
+    <ConfigProperties>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>59ac0c21-8ca0-49c3-bb0e-1db9a05ec8b3:OutputSchema</Name>
+        <DisplayName>SinkNode2 OutputSchema</DisplayName>
+        <Description>OutputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>True</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>id,tf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>7d336e55-d9ce-4013-a7f6-c3dd36814d35:InputSchema</Name>
+        <DisplayName>SourceNode2 InputSchema</DisplayName>
+        <Description>InputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>True</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>id,text</string>
+        </Value>
+      </PropertyObject>
+    </ConfigProperties>
+  </ConfigDefinition>
+  <ComponentGraph>
+    <graph>
+      <References />
+      <ExperimentInfo>
+        <Version>2</Version>
+        <Id>84bb8f25-52d2-45a7-8443-5f085deecdfa</Id>
+      </ExperimentInfo>
+      <node id="59ac0c21-8ca0-49c3-bb0e-1db9a05ec8b3">
+        <SerializedVertexData Version="1" X="140.5" Y="533">
+          <Metadata type="TraceLab.Core.Components.ComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="SinkNode2" ComponentMetadataDefinitionID="28adcdd5-1490-5dd3-807d-61996edb7101" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="output1" Type="System.String" IOType="Input" />
+                  <MappedTo>id</MappedTo>
+                </IOItem>
+                <IOItem>
+                  <IOItemDefinition Name="output2" Type="System.String" IOType="Input" />
+                  <MappedTo>TF</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="datasetOutput" Type="types.Dataset" IOType="Output" />
+                  <MappedTo>datasetOutput</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="True">
+              <ConfigValues>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>OutputSchema</Name>
+                  <DisplayName>OutputSchema</DisplayName>
+                  <Description>OutputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>id,tf</string>
+                  </Value>
+                </PropertyObject>
+              </ConfigValues>
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="4311b5dc-ca4f-4939-a62e-ae82ce0be87e">
+        <SerializedVertexData Version="1" X="257.5" Y="405">
+          <Metadata type="TraceLab.Core.Components.ComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="StopWordRemover" ComponentMetadataDefinitionID="7c22dcd8-57f3-5552-ad4a-8f6e56b6166c" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="rawTokens" Type="System.String" IOType="Input" />
+                  <MappedTo>tokens</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="cleanTokens" Type="System.String" IOType="Output" />
+                  <MappedTo>cleanTokens</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="False">
+              <ConfigValues />
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="1579851d-8489-47a0-ad2c-9d42647901d1">
+        <SerializedVertexData Version="1" X="248.5" Y="352">
+          <Metadata type="TraceLab.Core.Components.ComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="Tokenizer" ComponentMetadataDefinitionID="c5fe6529-3010-56a2-926a-68239f25348f" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="text" Type="System.String" IOType="Input" />
+                  <MappedTo>text</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="tokens" Type="System.String" IOType="Output" />
+                  <MappedTo>tokens</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="False">
+              <ConfigValues />
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="d6194ed0-e5b0-4a8a-941a-842d08fc5731">
+        <SerializedVertexData Version="1" X="259.5" Y="462">
+          <Metadata type="TraceLab.Core.Components.ComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="TF" ComponentMetadataDefinitionID="7ff783f2-a915-5202-9cc6-58160bc2c2bf" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="token" Type="System.String" IOType="Input" />
+                  <MappedTo>cleanTokens</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="TF" Type="System.String" IOType="Output" />
+                  <MappedTo>TF</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="False">
+              <ConfigValues />
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="7d336e55-d9ce-4013-a7f6-c3dd36814d35">
+        <SerializedVertexData Version="1" X="141.5" Y="250">
+          <Metadata type="TraceLab.Core.Components.ComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="SourceNode2" ComponentMetadataDefinitionID="251916f4-ec15-56d9-9710-1450bdad6a9e" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="datasetInput" Type="types.Dataset" IOType="Input" />
+                  <MappedTo>datasetInput</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="field1" Type="System.String" IOType="Output" />
+                  <MappedTo>id</MappedTo>
+                </IOItem>
+                <IOItem>
+                  <IOItemDefinition Name="field2" Type="System.String" IOType="Output" />
+                  <MappedTo>text</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="True">
+              <ConfigValues>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>InputSchema</Name>
+                  <DisplayName>InputSchema</DisplayName>
+                  <Description>InputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>id,text</string>
+                  </Value>
+                </PropertyObject>
+              </ConfigValues>
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="Start">
+        <SerializedVertexData Version="1" X="200" Y="200">
+          <Metadata type="TraceLab.Core.Components.StartNodeMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="Start" />
+        </SerializedVertexData>
+      </node>
+      <node id="End">
+        <SerializedVertexData Version="1" X="200" Y="583">
+          <Metadata type="TraceLab.Core.Components.EndNodeMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="End" WaitsForAllPredecessors="True" />
+        </SerializedVertexData>
+      </node>
+      <edge id="8ffd4698-3bd5-46ca-a2d9-802e44b5efea" source="59ac0c21-8ca0-49c3-bb0e-1db9a05ec8b3" target="End" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="a43beb43-f4f8-4867-a2d2-008fcec7884f" source="4311b5dc-ca4f-4939-a62e-ae82ce0be87e" target="d6194ed0-e5b0-4a8a-941a-842d08fc5731" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="4b0ed8b4-2bed-43ae-931d-d90b37d3a6a3" source="1579851d-8489-47a0-ad2c-9d42647901d1" target="4311b5dc-ca4f-4939-a62e-ae82ce0be87e" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="2070f5f9-6a07-418d-af57-6eded172db3e" source="d6194ed0-e5b0-4a8a-941a-842d08fc5731" target="59ac0c21-8ca0-49c3-bb0e-1db9a05ec8b3" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="17e6ff69-7466-4a5d-b1e0-a324bebe90dd" source="7d336e55-d9ce-4013-a7f6-c3dd36814d35" target="1579851d-8489-47a0-ad2c-9d42647901d1" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="e4d1dae4-e9c1-4ae7-862f-90850648f868" source="7d336e55-d9ce-4013-a7f6-c3dd36814d35" target="59ac0c21-8ca0-49c3-bb0e-1db9a05ec8b3" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="58f42c83-861f-4bac-972a-9b5675e54d54" source="Start" target="7d336e55-d9ce-4013-a7f6-c3dd36814d35" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+    </graph>
+  </ComponentGraph>
+</CompositeComponentMetadataDefinition>
