@@ -34,9 +34,9 @@ public class BuildingBlockTest extends TestBase {
 
     @Before
     public void runSparkTestWithMavenData() {
-        String commitPath = "src/main/resources/maven/commits.csv";
-        String improvementPath = "src/main/resources/maven/improvement.csv";
-        String linkPath = "src/main/resources/maven/improvementCommitLinks.csv";
+        String commitPath = "src/main/resources/maven_mini/commits.csv";
+        String improvementPath = "src/main/resources/maven_mini/improvement.csv";
+        String linkPath = "src/main/resources/maven_mini/improvementCommitLinks.csv";
         commits = TraceDatasetFactory.createDatasetFromCSV(sparkSession, commitPath, MavenCommit.class);
         improvements = TraceDatasetFactory.createDatasetFromCSV(sparkSession, improvementPath, MavenImprovement.class);
         links = TraceDatasetFactory.createDatasetFromCSV(sparkSession, linkPath, MavenICLink.class);
@@ -109,7 +109,6 @@ public class BuildingBlockTest extends TestBase {
         String sourceId = "s_id", targetId = "t_id";
 
         SparkTraceTask vsmTask = new VSMTraceBuilder().getTask(sourceId, targetId);
-        vsmTask.setCleanColumns(false);
         Map<String, String> vsmTaskInputConfig = getVSMTaskConfig();
         String s_id_col_name = vsmTaskInputConfig.get(sourceId);
         String t_id_col_name = vsmTaskInputConfig.get(targetId);
@@ -121,14 +120,12 @@ public class BuildingBlockTest extends TestBase {
         Dataset<Row> result1 = vsmTask.trace(commits, improvements);
 
         SparkTraceTask ngramTask = new NGramVSMTraceTaskBuilder().getTask(sourceId, targetId);
-        ngramTask.setCleanColumns(false);
         ngramTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(ngramTask);
         ngramTask.train(commits, improvements, null);
         Dataset<Row> result2 = ngramTask.trace(commits, improvements);
 
         SparkTraceTask ldaTask = new LDATraceBuilder().getTask(sourceId, targetId);
-        ldaTask.setCleanColumns(false);
         ldaTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(ldaTask);
         ldaTask.train(commits, improvements, null);

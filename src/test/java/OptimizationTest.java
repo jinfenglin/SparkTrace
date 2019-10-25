@@ -7,6 +7,12 @@ import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Test;
+import traceTasks.LinkCompletionTraceTask;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static core.graphPipeline.basic.Graph.syncSymbolValues;
 
 /**
  *
@@ -26,6 +32,7 @@ public class OptimizationTest extends TestBase {
     @Test
     public void NoSubGraphOptimizationTest() throws Exception {
         Dataset<Row> dataset = getSentenceLabelDataset();
+
         SGraph graph = new SGraph("NoSubGraphOptimization");
         graph.addInputField("sentence");
         graph.addOutputField("token1");
@@ -47,7 +54,13 @@ public class OptimizationTest extends TestBase {
         graph.connect(tkNode1, "tokens1", graph.sinkNode, "token1");
         graph.connect(graph.sourceNode, "sentence", tkNode2, "text");
         graph.connect(tkNode2, "tokens2", graph.sinkNode, "token2");
+        Map<String, String> config = new HashMap<>();
+        config.put("sentence", "sentence");
+        graph.setConfig(config);
+        graph.showGraph("NoSubGraphOptimizationTest.before");
         graph.optimize(graph);
+        syncSymbolValues(graph);
+        graph.showGraph("NoSubGraphOptimizationTest.after");
         Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
         result.show();
     }
@@ -90,6 +103,9 @@ public class OptimizationTest extends TestBase {
         graph.connect(graph.sourceNode, "sentence", tkNode2, "text");
         graph.connect(tkNode2, "tokens2", hashTFNode, "tokenInput");
         graph.connect(hashTFNode, "TF", graph.sinkNode, "hashTF");
+        Map<String, String> config = new HashMap<>();
+        config.put("sentence", "sentence");
+        graph.setConfig(config);
         graph.showGraph("RemoveNodeHasDependency_before_optimize");
         graph.optimize(graph);
         Dataset<Row> result = graph.toPipeline().fit(dataset).transform(dataset);
@@ -140,7 +156,9 @@ public class OptimizationTest extends TestBase {
 
         graph.connect(graph.sourceNode, "sentence", subGraph, "text");
         graph.connect(subGraph, "TF", graph.sinkNode, "hashTF");
-
+        Map<String, String> config = new HashMap<>();
+        config.put("sentence", "sentence");
+        graph.setConfig(config);
         graph.showGraph("subGraphOptimization_before_optimize");
         graph.optimize(graph);
         graph.showGraph("subGraphOptimization_after_optimize");
@@ -214,7 +232,9 @@ public class OptimizationTest extends TestBase {
         graph.connect(graph.sourceNode, "sentence", subGraph2, "text");
         graph.connect(subGraph1, "TF-IDF", graph.sinkNode, "TF-IDF");
         graph.connect(subGraph2, "TF", graph.sinkNode, "TF");
-
+        Map<String, String> config = new HashMap<>();
+        config.put("sentence", "sentence");
+        graph.setConfig(config);
         graph.showGraph("dual_subGraph_before_optimize");
         graph.optimize(graph);
         graph.showGraph("dual_subGraph__after_optimize");
@@ -258,7 +278,9 @@ public class OptimizationTest extends TestBase {
         graph.connect(graph.sourceNode, "sentence", htfGraph, "text");
         graph.connect(VSMGraph, "TF-IDF", graph.sinkNode, "TF-IDF");
         graph.connect(htfGraph, "TF", graph.sinkNode, "TF");
-
+        Map<String, String> config = new HashMap<>();
+        config.put("sentence", "sentence");
+        graph.setConfig(config);
         graph.showGraph("subSubGraphTest_before_optimize");
         graph.optimize(graph);
         graph.showGraph("subSubGraphTest_after_optimize");
@@ -332,6 +354,9 @@ public class OptimizationTest extends TestBase {
         graph.connect(VSMGraph1, "TF-IDF", graph.sinkNode, "TF-IDF1");
         graph.connect(VSMGraph2, "TF-IDF", graph.sinkNode, "TF-IDF2");
 
+        Map<String, String> config = new HashMap<>();
+        config.put("sentence", "sentence");
+        graph.setConfig(config);
         graph.showGraph("subSubGraphTest_before_optimize_before_optimize");
         graph.optimize(graph);
         graph.showGraph("subSubGraphTest_before_optimize_after_optimize");

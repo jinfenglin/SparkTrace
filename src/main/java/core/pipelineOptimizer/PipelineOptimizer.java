@@ -2,10 +2,7 @@ package core.pipelineOptimizer;
 
 
 import core.graphPipeline.SLayer.*;
-import core.graphPipeline.basic.IOTable;
-import core.graphPipeline.basic.IOTableCell;
-import core.graphPipeline.basic.ITransparentVertex;
-import core.graphPipeline.basic.Vertex;
+import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
 import featurePipelineStages.SGraphIOStage;
 
@@ -213,7 +210,7 @@ public class PipelineOptimizer {
      * Collect the nodes which receive the output from the given node. If any of the nodes are IONode,
      * then keep searching the nodes which consume the output of that IONode
      */
-    private static List<SNode> traceImpactedNodes(SNode node) {
+    private static List<SNode> traceImpactedNodes(Node node) {
         List<SNode> impNodes = new ArrayList<>();
         for (Vertex vertex : node.getOutputVertices()) {
             if (vertex instanceof SNode) {
@@ -227,14 +224,14 @@ public class PipelineOptimizer {
                                 impNodes.add((SNode) sinkRelatedVertex);
                             }
                         } else {
-                            impNodes.addAll(traceImpactedNodes(((SGraph) sinkRelatedVertex).sourceNode));
+                            impNodes.addAll(traceImpactedNodes(((Graph) sinkRelatedVertex).sourceNode));
                         }
                     }
                 } else {
                     impNodes.add(impactNode);
                 }
             } else {
-                impNodes.addAll(traceImpactedNodes(((SGraph) vertex).sourceNode));
+                impNodes.addAll(traceImpactedNodes(((Graph) vertex).sourceNode));
             }
         }
         return impNodes;

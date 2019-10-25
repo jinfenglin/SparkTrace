@@ -35,7 +35,6 @@ public class TCMLParser {
             fg.addOutputField(outputField.getFieldName());
         }
 
-        fg.addNode
 
 
         List<TraceLabNode> vertices = tc.getVertices();

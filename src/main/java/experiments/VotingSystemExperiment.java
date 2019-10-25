@@ -76,7 +76,6 @@ public class VotingSystemExperiment extends SparkTraceJob {
         long startTime = System.currentTimeMillis();
         long traceTime = 0;
         SparkTraceTask vsmTask = new VSMTraceBuilder().getTask(sourceId, targetId);
-        vsmTask.setCleanColumns(false);
         Map<String, String> vsmTaskInputConfig = getConfig();
         String s_id_col_name = vsmTaskInputConfig.get(sourceId);
         String t_id_col_name = vsmTaskInputConfig.get(targetId);
@@ -90,7 +89,6 @@ public class VotingSystemExperiment extends SparkTraceJob {
         traceTime += System.currentTimeMillis() - t1Start;
 
         SparkTraceTask ngramTask = new NGramVSMTraceTaskBuilder().getTask(sourceId, targetId);
-        ngramTask.setCleanColumns(false);
         ngramTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(ngramTask);
         ngramTask.train(sourceDataset, targetDataset, null);
@@ -99,7 +97,6 @@ public class VotingSystemExperiment extends SparkTraceJob {
         traceTime += System.currentTimeMillis() - t2Start;
 
         SparkTraceTask ldaTask = new LDATraceBuilder().getTask(sourceId, targetId);
-        ldaTask.setCleanColumns(false);
         ldaTask.setConfig(vsmTaskInputConfig);
         syncSymbolValues(ldaTask);
         ldaTask.train(sourceDataset, targetDataset, null);

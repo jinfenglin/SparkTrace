@@ -229,7 +229,6 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
     public long runUnOptimizedSystem() throws Exception {
         long startTime = System.currentTimeMillis();
         SparkTraceTask job1 = new NGramVSMTraceTaskBuilder().getTask(CODE_ID, COMMIT_ID);
-        job1.setCleanColumns(false);
         job1.indexOn = 1; //index on the target artifacts
         Map<String, String> codeCommitConfig = new HashMap<>();
         codeCommitConfig.put(NGramVSMTraceTaskBuilder.INPUT1, codeContent);
@@ -242,7 +241,6 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
 
         SparkTraceTask job2 = new VSMTraceBuilder().getTask(COMMIT_ID, BUG_ID);
         job2.indexOn = 1;
-        job2.setCleanColumns(true);
         Map<String, String> commitBugConfig = new HashMap<>();
         commitBugConfig.put(NGramVSMTraceTaskBuilder.INPUT1, commitContent);
         commitBugConfig.put(NGramVSMTraceTaskBuilder.INPUT2, bugContent);
@@ -254,7 +252,6 @@ public class Maven3ArtifactsExperiment extends SparkTraceJob {
 
         SparkTraceTask job3 = new VSMTraceBuilder().getTask(CODE_ID, BUG_ID);
         job3.indexOn = 1;
-        job3.setCleanColumns(false);
         Map<String, String> codeBugConfig = new HashMap<>();
         codeBugConfig.put(NGramVSMTraceTaskBuilder.INPUT1, codeContent);
         codeBugConfig.put(NGramVSMTraceTaskBuilder.INPUT2, bugContent);
