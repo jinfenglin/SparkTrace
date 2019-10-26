@@ -1,10 +1,8 @@
 package core.pipelineOptimizer;
 
 
-import core.graphPipeline.SLayer.*;
 import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
-import componentRepo.SLayer.featurePipelineStages.SGraphIOStage;
 
 
 import java.util.*;
@@ -55,7 +53,7 @@ public class PipelineOptimizer {
             //Add the sourceCell as an output to all the SGraph in the sourceToLCAPath
             Vertex subGraph = sourceCell.getParentTable().getContext();
             for (GraphHierarchyTree treeNode : sourceToLCAPath) {
-                SGraph curGraph = treeNode.getNodeContent();
+                Graph curGraph = treeNode.getNodeContent();
                 Symbol newOutField = new Symbol(curGraph, addedOutputFieldName);//expand the output filed of parent graph
                 curGraph.addOutputField(newOutField);
                 if (isPenetratedVertex) {
@@ -80,7 +78,7 @@ public class PipelineOptimizer {
             Vertex subGraph = null; // starting from the graph that contains penetrated vertex, there is not sub graph
 
             for (GraphHierarchyTree treeNode : targetToLCAPath) {
-                SGraph curGraph = treeNode.getNodeContent();
+                Graph curGraph = treeNode.getNodeContent();
                 Symbol newInputField = new Symbol(curGraph, addedInputFieldName);
                 curGraph.addInputField(newInputField);
                 if (isPenetratedVertex) {
@@ -108,8 +106,8 @@ public class PipelineOptimizer {
             addedInputFieldName = targetCell.getFieldSymbol().getSymbolName();
         }
 
-        SGraph lcaNode = lcaResult.LCANode.getNodeContent();
-        if (targetTopParentNode instanceof SGraph) {
+        Graph lcaNode = lcaResult.LCANode.getNodeContent();
+        if (targetTopParentNode instanceof Graph) {
             lcaNode.connect(sourceTopParentNode, addedOutputFieldName, targetTopParentNode, addedInputFieldName);
         } else {
             List<IOTableCell> linkedCells = targetCell.getOutputTarget();
@@ -156,13 +154,13 @@ public class PipelineOptimizer {
         //       partition the buckets by the inputs. Eliminate the input-bucket partition with penetration, add the impacted nodes into search list
         Map<Graph, List<Vertex>> topoOrderMap = buildTopologicalOrderMap(graph);
         GraphHierarchyTree ght = new GraphHierarchyTree(null, graph);
-        List<SNode> searchPool = getAllSNodesRecursively(graph);
+        List<Node> searchPool = getAllSNodesRecursively(graph);
         while (searchPool.size() > 0) {
-            List<List<SNode>> snodeFamilies = groupByNode(searchPool);
-            List<List<SNode>> duplicatedSNodeGroups = groupByInputs(snodeFamilies);
+            List<List<Node>> snodeFamilies = groupByNode(searchPool);
+            List<List<Node>> duplicatedSNodeGroups = groupByInputs(snodeFamilies);
             // exclude the IOStage groups
             duplicatedSNodeGroups = duplicatedSNodeGroups.stream().filter(
-                    group -> !(group.get(0).getSparkPipelineStage() instanceof SGraphIOStage)
+                    group -> !(group.get(0).isIONode())
             ).collect(Collectors.toList());
             searchPool = resolveDuplication(duplicatedSNodeGroups, topoOrderMap, ght);
         }
@@ -172,8 +170,8 @@ public class PipelineOptimizer {
         Map<Graph, List<Vertex>> tpOrderMap = new HashMap<>();
         tpOrderMap.put(graph, topologicalSort(graph));
         for (Vertex vertex : graph.getNodes()) {
-            if (vertex instanceof SGraph) {
-                Map<Graph, List<Vertex>> subMap = buildTopologicalOrderMap((SGraph) vertex);
+            if (vertex instanceof Graph) {
+                Map<Graph, List<Vertex>> subMap = buildTopologicalOrderMap((Graph) vertex);
                 tpOrderMap.putAll(subMap);
             }
         }
@@ -188,15 +186,15 @@ public class PipelineOptimizer {
      * @param treeRoot            GraphHierarchyTree whose root is current graph
      * @return
      */
-    public static List<SNode> resolveDuplication(List<List<SNode>> identicalNodeGroups, Map<SGraph, List<Vertex>> topoOrderMap, GraphHierarchyTree treeRoot) throws Exception {
-        List<SNode> impactedNode = new ArrayList<>(); //Record nodes whose input has been changed
-        for (List<SNode> nodeGroup : identicalNodeGroups) {
+    public static List<Node> resolveDuplication(List<List<Node>> identicalNodeGroups, Map<Graph, List<Vertex>> topoOrderMap, GraphHierarchyTree treeRoot) throws Exception {
+        List<Node> impactedNode = new ArrayList<>(); //Record nodes whose input has been changed
+        for (List<Node> nodeGroup : identicalNodeGroups) {
             if (nodeGroup.size() > 1) {
-                SNode master = selectMaster(nodeGroup, treeRoot, topoOrderMap); //Select the node whose topological index is lower as master
-                for (SNode node : nodeGroup) {
+                Node master = selectMaster(nodeGroup, treeRoot, topoOrderMap); //Select the node whose topological index is lower as master
+                for (Node node : nodeGroup) {
                     impactedNode.addAll(traceImpactedNodes(node));
                 }
-                for (SNode node : nodeGroup) {
+                for (Node node : nodeGroup) {
                     if (node != master) {
                         penetrate(master, node, treeRoot);
                     }
@@ -210,18 +208,18 @@ public class PipelineOptimizer {
      * Collect the nodes which receive the output from the given node. If any of the nodes are IONode,
      * then keep searching the nodes which consume the output of that IONode
      */
-    private static List<SNode> traceImpactedNodes(Node node) {
-        List<SNode> impNodes = new ArrayList<>();
+    private static List<Node> traceImpactedNodes(Node node) {
+        List<Node> impNodes = new ArrayList<>();
         for (Vertex vertex : node.getOutputVertices()) {
-            if (vertex instanceof SNode) {
-                SNode impactNode = (SNode) vertex;
-                if (impactNode.getSparkPipelineStage() instanceof SGraphIOStage) {
+            if (vertex instanceof Node) {
+                Node impactNode = (Node) vertex;
+                if (impactNode.isIONode()) {
                     for (Vertex sinkRelatedVertex : impactNode.getContext().getOutputVertices()) {
-                        if (sinkRelatedVertex instanceof SNode) {
-                            if (((SNode) sinkRelatedVertex).getSparkPipelineStage() instanceof SGraphIOStage) {
-                                impNodes.addAll(traceImpactedNodes((SNode) sinkRelatedVertex));
+                        if (sinkRelatedVertex instanceof Node) {
+                            if (((Node) sinkRelatedVertex).isIONode()) {
+                                impNodes.addAll(traceImpactedNodes((Node) sinkRelatedVertex));
                             } else {
-                                impNodes.add((SNode) sinkRelatedVertex);
+                                impNodes.add((Node) sinkRelatedVertex);
                             }
                         } else {
                             impNodes.addAll(traceImpactedNodes(((Graph) sinkRelatedVertex).sourceNode));
@@ -237,47 +235,47 @@ public class PipelineOptimizer {
         return impNodes;
     }
 
-    private static SNode selectMaster(List<SNode> nodes, GraphHierarchyTree ght, Map<SGraph, List<Vertex>> topoOrderMap) {
+    private static Node selectMaster(List<Node> nodes, GraphHierarchyTree ght, Map<Graph, List<Vertex>> topoOrderMap) {
         List<GraphHierarchyTree> treeNodes = new ArrayList<>();
-        for (SNode node : nodes) {
+        for (Node node : nodes) {
             GraphHierarchyTree treeNode = ght.findNode(node);
             treeNodes.add(treeNode);
         }
 
         GraphHierarchyTree lcaTreeNode = ght.LCA(treeNodes.toArray(new GraphHierarchyTree[0]));
-        List<Pair<Vertex, SNode>> parentVertices = new ArrayList<>();
-        for (SNode node : nodes) {
+        List<Pair<Vertex, Node>> parentVertices = new ArrayList<>();
+        for (Node node : nodes) {
             Vertex parentVertex = ght.findParentVertexInTreeNode(lcaTreeNode, node);
             parentVertices.add(new Pair<>(parentVertex, node));
         }
         //Sort the parentVertices base on their topological order index, from low to high
         List<Vertex> topoOrder = topoOrderMap.get(lcaTreeNode.getNodeContent());
-        Collections.sort(parentVertices, new Comparator<Pair<Vertex, SNode>>() {
+        Collections.sort(parentVertices, new Comparator<Pair<Vertex, Node>>() {
             @Override
-            public int compare(Pair<Vertex, SNode> o1, Pair<Vertex, SNode> o2) {
+            public int compare(Pair<Vertex, Node> o1, Pair<Vertex, Node> o2) {
                 return topoOrder.indexOf(o1.getKey()) - topoOrder.indexOf(o2.getKey());
             }
         });
         return parentVertices.get(0).getValue();
     }
 
-    public static List<List<SNode>> groupByNode(List<SNode> snodeList) {
-        Map<String, List<SNode>> nodeGroups = new HashMap<>();
-        for (SNode node : snodeList) {
-            List<SNode> nodeGroup = nodeGroups.getOrDefault(node.nodeContentInfo(), new ArrayList<>());
+    public static List<List<Node>> groupByNode(List<Node> snodeList) {
+        Map<String, List<Node>> nodeGroups = new HashMap<>();
+        for (Node node : snodeList) {
+            List<Node> nodeGroup = nodeGroups.getOrDefault(node.nodeContentInfo(), new ArrayList<>());
             nodeGroup.add(node);
             nodeGroups.put(node.nodeContentInfo(), nodeGroup);
         }
         return new ArrayList<>(nodeGroups.values());
     }
 
-    public static List<List<SNode>> groupByInputs(List<List<SNode>> snodeList) {
-        List<List<SNode>> equalNodeGroups = new ArrayList<>(); //each list within this list contains identical nodes that should be merged
-        for (List<SNode> nodeGroup : snodeList) {
-            Map<InputSourceSet, List<SNode>> sameInputGroups = new HashMap<>(); //For each bucket that node have same stages, group the bucket by their input fields
-            for (SNode node : nodeGroup) {
+    public static List<List<Node>> groupByInputs(List<List<Node>> snodeList) {
+        List<List<Node>> equalNodeGroups = new ArrayList<>(); //each list within this list contains identical nodes that should be merged
+        for (List<Node> nodeGroup : snodeList) {
+            Map<InputSourceSet, List<Node>> sameInputGroups = new HashMap<>(); //For each bucket that node have same stages, group the bucket by their input fields
+            for (Node node : nodeGroup) {
                 InputSourceSet inputSource = new InputSourceSet(node); //represent the input source as string
-                List<SNode> identicalNodeGroup = sameInputGroups.getOrDefault(inputSource, new ArrayList<>());
+                List<Node> identicalNodeGroup = sameInputGroups.getOrDefault(inputSource, new ArrayList<>());
                 identicalNodeGroup.add(node);
                 sameInputGroups.put(inputSource, identicalNodeGroup);
             }
@@ -292,15 +290,15 @@ public class PipelineOptimizer {
      * @param graph
      * @return
      */
-    public static List<SNode> getAllSNodesRecursively(SGraph graph) {
-        List<SNode> nodes = new ArrayList<>();
+    public static List<Node> getAllSNodesRecursively(Graph graph) {
+        List<Node> nodes = new ArrayList<>();
         List<Vertex> vertices = graph.getNodes();
         for (Vertex vertex : vertices) {
-            if (vertex instanceof SGraph) {
-                List<SNode> subGraphNodes = getAllSNodesRecursively((SGraph) vertex);
+            if (vertex instanceof Graph) {
+                List<Node> subGraphNodes = getAllSNodesRecursively((Graph) vertex);
                 nodes.addAll(subGraphNodes);
             } else {
-                nodes.add((SNode) vertex);
+                nodes.add((Node) vertex);
             }
         }
         return nodes;
@@ -327,7 +325,7 @@ public class PipelineOptimizer {
      *
      * @param graph
      */
-    public static void removeRedundantOutputFields(SGraph graph) throws Exception {
+    public static void removeRedundantOutputFields(Graph graph) throws Exception {
         //If the graph is a root graph then no removal otherwise do removal
         if (graph.getContext() != null) {
             for (IOTableCell outputCell : new ArrayList<>(graph.getOutputTable().getCells())) {
@@ -339,17 +337,17 @@ public class PipelineOptimizer {
             }
         }
         for (Vertex node : graph.getNodes()) {
-            if (node instanceof SGraph) {
-                SGraph graphNode = (SGraph) node;
+            if (node instanceof Graph) {
+                Graph graphNode = (Graph) node;
                 removeRedundantOutputFields(graphNode);
             }
         }
     }
 
-    public static void removeRedundantInputFields(SGraph graph) {
+    public static void removeRedundantInputFields(Graph graph) {
         for (Vertex node : graph.getNodes()) {
-            if (node instanceof SGraph) {
-                SGraph graphNode = (SGraph) node;
+            if (node instanceof Graph) {
+                Graph graphNode = (Graph) node;
                 removeRedundantInputFields(graphNode);
             }
         }
@@ -371,7 +369,7 @@ public class PipelineOptimizer {
      *
      * @param graph
      */
-    public static int removeRedundantVertices(SGraph graph) throws Exception {
+    public static int removeRedundantVertices(Graph graph) throws Exception {
         int removedCnt = 0;
         List<Vertex> vertices = graph.getNodes();
         vertices.remove(graph.sourceNode);
@@ -394,18 +392,18 @@ public class PipelineOptimizer {
             });
         }
         for (Vertex node : vertices) {
-            if (node instanceof SGraph) {
-                removedCnt += removeRedundantVertices((SGraph) node);
+            if (node instanceof Graph) {
+                removedCnt += removeRedundantVertices((Graph) node);
             }
         }
         return removedCnt;
     }
 
-    public static void removeEmptyGraph(SGraph graph) throws Exception {
-        Queue<SGraph> deletionQueue = new LinkedList<>();
+    public static void removeEmptyGraph(Graph graph) throws Exception {
+        Queue<Graph> deletionQueue = new LinkedList<>();
         for (Vertex node : graph.getNodes()) {
-            if (node instanceof SGraph) {
-                SGraph graphNode = (SGraph) node;
+            if (node instanceof Graph) {
+                Graph graphNode = (Graph) node;
                 removeEmptyGraph(graphNode);
                 if (graphNode.getNodes().size() == 2) {
                     deletionQueue.add(graphNode);
@@ -414,7 +412,7 @@ public class PipelineOptimizer {
         }
         //by pass the empty graph first then delete the graph
         while (deletionQueue.size() > 0) {
-            SGraph curGraph = deletionQueue.poll();
+            Graph curGraph = deletionQueue.poll();
             IOTable inputTable = curGraph.getInputTable();
             for (IOTableCell inputCell : inputTable.getCells()) {
                 for (IOTableCell outputCell : getDirectlyConnectedOutputCell(inputCell)) {
@@ -437,7 +435,7 @@ public class PipelineOptimizer {
      */
     private static List<IOTableCell> getDirectlyConnectedOutputCell(IOTableCell inputCell) {
         List<IOTableCell> directlyConnectedGraphOutCells = new ArrayList<>();
-        SGraph context = (SGraph) inputCell.getParentTable().getContext();
+        Graph context = (Graph) inputCell.getParentTable().getContext();
         IOTableCell sourceNodeOutCell = context.sourceNode.getOutputField(inputCell.getFieldSymbol().getSymbolName());
         List<IOTableCell> sourceNodeConnectTargets = sourceNodeOutCell.getOutputTarget();
 

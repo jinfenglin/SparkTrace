@@ -336,7 +336,7 @@ public class Graph extends Vertex {
     }
 
     private MutableNode createVizEdge(MutableNode vizFromNode, Vertex outputNode) {
-        if (outputNode instanceof SNode) {
+        if (outputNode instanceof Node) {
             vizFromNode = vizFromNode.addLink(outputNode.getVertexId());
         } else {
             Graph subGraph = (Graph) outputNode;

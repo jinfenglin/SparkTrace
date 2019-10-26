@@ -11,10 +11,16 @@ public class IDF extends NFNode {
 
     public IDF(String label) throws Exception {
         super(label);
+        NFNType = IDF;
         addInputField("sourceInputDataset");
         addInputField("targetInputDataset");
         addOutputField("sourceOutputDataset");
         addOutputField("targetOutputDataset");
+    }
+
+    @Override
+    public String nodeContentInfo() {
+        return vertexId;
     }
 
 }

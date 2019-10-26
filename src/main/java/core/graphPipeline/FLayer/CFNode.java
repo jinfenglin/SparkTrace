@@ -18,6 +18,17 @@ public class CFNode extends FNode {
         super(id);
     }
 
+    @Override
+    public String nodeContentInfo() {
+        //TODO add schema info
+        return String.format("%s|", sGraph.getVertexId());
+    }
+
+    @Override
+    public boolean isIONode() {
+        return false;
+    }
+
     public SGraph getsGraph() {
         return sGraph;
     }

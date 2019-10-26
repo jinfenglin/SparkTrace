@@ -3,7 +3,7 @@ package core.graphPipeline.basic;
 /**
  *
  */
-public class Node extends Vertex {
+public abstract class Node extends Vertex {
     public Node() {
         super();
     }
@@ -11,4 +11,8 @@ public class Node extends Vertex {
     public Node(String label) {
         super(label);
     }
+
+    public abstract String nodeContentInfo();
+
+    public abstract boolean isIONode();
 }

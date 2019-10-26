@@ -10,9 +10,15 @@ public class Join extends NFNode {
 
     public Join(String label) throws Exception {
         super(label);
+        NFNType = JOIN;
         addInputField("sourceInputDataset");
         addInputField("targetInputDataset");
         addOutputField("OutputDataset");
+    }
+
+    @Override
+    public String nodeContentInfo() {
+        return vertexId; //
     }
 
 }

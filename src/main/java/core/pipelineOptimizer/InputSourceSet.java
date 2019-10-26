@@ -1,9 +1,7 @@
 package core.pipelineOptimizer;
 
-import core.graphPipeline.SLayer.*;
-import core.graphPipeline.basic.IOTable;
-import core.graphPipeline.basic.IOTableCell;
-import core.graphPipeline.basic.Vertex;
+
+import core.graphPipeline.basic.*;
 import componentRepo.SLayer.featurePipelineStages.SGraphIOStage;
 
 import java.util.HashSet;
@@ -16,7 +14,7 @@ import java.util.Set;
 public class InputSourceSet {
     Set<IOTableCell> inputSources;
 
-    public InputSourceSet(SNode node) {
+    public InputSourceSet(Node node) {
         inputSources = new HashSet<>();
         IOTable inputTable = node.getInputTable();
         for (IOTableCell inputCell : inputTable.getCells()) {
@@ -32,19 +30,19 @@ public class InputSourceSet {
         }
         IOTableCell inputSourceCell = inputCell.getInputSource().get(0); //One input field should have only 1 source
         Vertex providerVertex = inputSourceCell.getParentTable().getContext();
-        if (providerVertex instanceof SNode) {
-            boolean isNonIOSNode = !(((SNode) providerVertex).getSparkPipelineStage() instanceof SGraphIOStage);
+        if (providerVertex instanceof Node) {
+            boolean isNonIOSNode = !(((Node) providerVertex).isIONode());
             if (isNonIOSNode) {
                 inputSources.add(inputSourceCell);
             } else {
                 //Skip the sourceNode and keep searching
-                SGraph contextGraph = (SGraph) providerVertex.getContext();
+                Graph contextGraph = (Graph) providerVertex.getContext();
                 IOTableCell graphInputField = contextGraph.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
                 traceToSource(graphInputField);
             }
         } else {
             //look into the SGraph and keep search
-            SGraph providerGraph = (SGraph) providerVertex;
+            Graph providerGraph = (Graph) providerVertex;
             IOTableCell sinkNodeReceiverCell = providerGraph.sinkNode.getInputField(inputSourceCell.getFieldSymbol().getSymbolName());
             traceToSource(sinkNodeReceiverCell);
         }

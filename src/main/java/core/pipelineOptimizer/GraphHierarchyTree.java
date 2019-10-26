@@ -1,7 +1,7 @@
 package core.pipelineOptimizer;
 
+import core.graphPipeline.basic.Graph;
 import core.graphPipeline.basic.IOTableCell;
-import core.graphPipeline.SLayer.SGraph;
 import core.graphPipeline.basic.Vertex;
 
 import java.util.ArrayList;
@@ -12,22 +12,22 @@ import java.util.List;
  * will form the subtree
  */
 public class GraphHierarchyTree {
-    private SGraph nodeContent;
+    private Graph nodeContent;
     private GraphHierarchyTree parentTree;
     private List<GraphHierarchyTree> subTrees;
 
-    public GraphHierarchyTree(GraphHierarchyTree parentTree, SGraph nodeContent) {
+    public GraphHierarchyTree(GraphHierarchyTree parentTree, Graph nodeContent) {
         this.nodeContent = nodeContent;
         this.parentTree = parentTree;
         subTrees = new ArrayList<>();
         buildTree(nodeContent);
     }
 
-    private void buildTree(SGraph graph) {
+    private void buildTree(Graph graph) {
         List<Vertex> nodes = graph.getNodes();
         for (Vertex vertex : nodes) {
-            if (vertex instanceof SGraph) {
-                GraphHierarchyTree subTree = new GraphHierarchyTree(this, (SGraph) vertex);
+            if (vertex instanceof Graph) {
+                GraphHierarchyTree subTree = new GraphHierarchyTree(this, (Graph) vertex);
                 subTrees.add(subTree);
             }
         }
@@ -144,11 +144,11 @@ public class GraphHierarchyTree {
         }
     }
 
-    public SGraph getNodeContent() {
+    public Graph getNodeContent() {
         return nodeContent;
     }
 
-    public void setNodeContent(SGraph nodeContent) {
+    public void setNodeContent(Graph nodeContent) {
         this.nodeContent = nodeContent;
     }
 

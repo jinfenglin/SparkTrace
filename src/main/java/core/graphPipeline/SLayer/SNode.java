@@ -1,5 +1,6 @@
 package core.graphPipeline.SLayer;
 
+import componentRepo.SLayer.featurePipelineStages.SGraphIOStage;
 import core.graphPipeline.basic.IOTableCell;
 import core.graphPipeline.basic.Node;
 import core.graphPipeline.basic.Vertex;
@@ -106,6 +107,11 @@ public class SNode extends Node implements SLayerComponent{
     public String nodeContentInfo() {
         String snodeStr = String.format("%s|%s", getStageTypes(getSparkPipelineStage()), getNonIOParamsValue(getSparkPipelineStage()));
         return snodeStr;
+    }
+
+    @Override
+    public boolean isIONode() {
+        return getSparkPipelineStage() instanceof SGraphIOStage;
     }
 
     private void removeParam(List<Param> params, Param param) {
