@@ -6,7 +6,7 @@ import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
 import core.pipelineOptimizer.*;
-import featurePipelineStages.LDAWithIO.LDAWithIO;
+import componentRepo.SLayer.featurePipelineStages.LDAWithIO.LDAWithIO;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;

@@ -1,13 +1,13 @@
 package traceTasks;
 
 
-import buildingBlocks.ICSEFeatures.LCA11ToA13;
-import buildingBlocks.ICSEFeatures.LCA4ToA7;
-import buildingBlocks.ICSEFeatures.LCA8ToA10;
-import buildingBlocks.preprocessor.SimpleWordCount;
-import buildingBlocks.randomForestPipeline.RandomForestPipeline;
-import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
-import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
+import componentRepo.SLayer.buildingBlocks.ICSEFeatures.LCA11ToA13;
+import componentRepo.SLayer.buildingBlocks.ICSEFeatures.LCA4ToA7;
+import componentRepo.SLayer.buildingBlocks.ICSEFeatures.LCA8ToA10;
+import componentRepo.SLayer.buildingBlocks.preprocessor.SimpleWordCount;
+import componentRepo.SLayer.buildingBlocks.randomForestPipeline.RandomForestPipeline;
+import componentRepo.SLayer.buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
+import componentRepo.SLayer.buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.SLayer.SGraph;
 

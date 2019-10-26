@@ -1,10 +1,13 @@
 package core.TraceLabAdaptor.dataModel;
 
+import core.TraceLabAdaptor.TCML.NativeVertex.NFNodeBuilder;
+import core.TraceLabAdaptor.TCML.NativeVertex.SNodeBuilder;
 import core.TraceLabAdaptor.TCML.TCMLParser;
 import core.TraceLabAdaptor.dataModel.IO.IOItem;
 import core.graphPipeline.FLayer.CFNode;
 import core.graphPipeline.FLayer.FGraph;
 import core.graphPipeline.FLayer.FType;
+import core.graphPipeline.SLayer.SNode;
 import core.graphPipeline.basic.Vertex;
 import org.w3c.dom.Element;
 
@@ -29,18 +32,18 @@ public class TraceLabNodeUtils {
      *
      * @return
      */
-    public static Vertex toSparkGraphVertex(TraceLabNode tcNode) throws Exception {
+    public static Vertex toSparkGraphVertex(TraceLabNode tlNode) throws Exception {
         Properties prop = new Properties();
-        String fileName = "sparkTrace.config";
+        String fileName = "src/main/resources/sparkTrace.config";
         prop.load(new FileInputStream(fileName));
         Path componentDir = Paths.get(prop.getProperty("traceLab.dirs.tcml"));
-        FType nodeType = tcNode.getComponentType();
-        if (tcNode.isComposite) { // A composite node is stored in TCML file.
-            String label = tcNode.getLabel().toLowerCase();
+        FType nodeType = tlNode.getComponentType();
+        String vertexId = tlNode.getNodeId();
+        if (tlNode.isComposite) { // A composite node is stored in TCML file.
+            String label = tlNode.getLabel().toLowerCase();
             Path filePath = Paths.get(componentDir.toString(), label + ".tcml");
             TraceComposite tc = convertTCMLToTraceComposite(filePath);
-            String vertexId = tcNode.getNodeId();
-            switch (tcNode.getComponentType()) {
+            switch (tlNode.getComponentType()) {
                 case CFNode:
                     return TCMLParser.toCFNode(tc, vertexId);
                 case SGraph:
@@ -51,11 +54,11 @@ public class TraceLabNodeUtils {
                     throw new Exception(String.format("%s should not included in a TCML file", nodeType));
             }
         } else {
-            switch (tcNode.getComponentType()) {
+            switch (tlNode.getComponentType()) {
                 case SNode:
-                    return null;
+                    return SNodeBuilder.getInstance().buildSNode(tlNode,vertexId);
                 case NFNode:
-                    return null;
+                    return NFNodeBuilder.getInstance().buildNFNode(tlNode, vertexId);
                 default:
                     throw new Exception(String.format("%s can not be handled", nodeType));
             }

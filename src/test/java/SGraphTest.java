@@ -5,7 +5,7 @@ import core.graphPipeline.basic.Vertex;
 import core.pipelineOptimizer.GraphHierarchyTree;
 import core.pipelineOptimizer.PipelineOptimizer;
 import examples.TestBase;
-import featurePipelineStages.SGraphColumnRemovalStage;
+import componentRepo.SLayer.featurePipelineStages.SGraphColumnRemovalStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;

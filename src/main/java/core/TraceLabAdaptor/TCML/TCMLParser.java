@@ -1,26 +1,14 @@
 package core.TraceLabAdaptor.TCML;
 
-import core.TraceLabAdaptor.dataModel.IO.IOItem;
-import core.TraceLabAdaptor.dataModel.IO.IOItemDefinition;
+import core.TraceLabAdaptor.TCML.CompositeVertex.CFNodeBuilder;
 import core.TraceLabAdaptor.dataModel.TraceComposite;
-import core.TraceLabAdaptor.dataModel.TraceLabEdge;
-import core.TraceLabAdaptor.dataModel.TraceLabNode;
-import core.TraceLabAdaptor.dataModel.TraceLabNodeUtils;
 import core.graphPipeline.FLayer.CFNode;
 import core.graphPipeline.FLayer.FGraph;
-import core.graphPipeline.FLayer.FType;
 import core.graphPipeline.SLayer.SGraph;
-import core.graphPipeline.basic.Graph;
-import core.graphPipeline.basic.Vertex;
-import core.graphPipeline.graphSymbol.Symbol;
 import org.w3c.dom.Element;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static core.TraceLabAdaptor.TEMLParser.fileToDOM;
 

@@ -1,9 +1,9 @@
 import examples.TestBase;
-import featurePipelineStages.VecSimilarity.DenseVecSimilarity.DenseVecSimilarity;
-import featurePipelineStages.VecSimilarity.SparseVecSimilarity.SparseVecCosinSimilarityStage;
-import featurePipelineStages.sameColumnStage.SameAuthorStage;
-import featurePipelineStages.temporalRelations.CompareThreshold;
-import featurePipelineStages.temporalRelations.TimeDiff;
+import componentRepo.SLayer.featurePipelineStages.VecSimilarity.DenseVecSimilarity.DenseVecSimilarity;
+import componentRepo.SLayer.featurePipelineStages.VecSimilarity.SparseVecSimilarity.SparseVecCosinSimilarityStage;
+import componentRepo.SLayer.featurePipelineStages.sameColumnStage.SameAuthorStage;
+import componentRepo.SLayer.featurePipelineStages.temporalRelations.CompareThreshold;
+import componentRepo.SLayer.featurePipelineStages.temporalRelations.TimeDiff;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
@@ -15,7 +15,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.Test;
 
-import javax.xml.crypto.Data;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

@@ -1,8 +1,8 @@
 package traceTasks;
 
-import buildingBlocks.preprocessor.SimpleWordCount;
-import buildingBlocks.unsupervisedLearn.LDAGraphPipeline;
-import buildingBlocks.vecSimilarityPipeline.DenseCosinSimilarityPipeline;
+import componentRepo.SLayer.buildingBlocks.preprocessor.SimpleWordCount;
+import componentRepo.SLayer.buildingBlocks.unsupervisedLearn.LDAGraphPipeline;
+import componentRepo.SLayer.buildingBlocks.vecSimilarityPipeline.DenseCosinSimilarityPipeline;
 import core.SparkTraceTask;
 import core.graphPipeline.SLayer.SGraph;
 

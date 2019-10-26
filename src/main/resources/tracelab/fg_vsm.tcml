@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CompositeComponentMetadataDefinition xmlVersion="2">
+  <Info>
+    <ID>66022cf1-3a1e-4810-9dd7-fc3de5eea95e</ID>
+    <Version />
+    <Label>FG_VSM</Label>
+    <Name>FG_VSM</Name>
+    <Author />
+    <Description />
+  </Info>
+  <Input>
+    <IOItemDefinition Name="s1" Type="types.Dataset" IOType="Input" />
+    <IOItemDefinition Name="t1" Type="types.Dataset" IOType="Input" />
+  </Input>
+  <Output>
+    <IOItemDefinition Name="res" Type="types.Dataset" IOType="Output" />
+  </Output>
+  <ConfigDefinition>
+    <IsJava>False</IsJava>
+    <ConfigProperties>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>7941162a-b3e0-45bb-90e2-fa39aeacf1e3:625b45bc-abdc-40e0-9cb9-77a3aa1abbe5:OutputSchema</Name>
+        <DisplayName>CFN_CosineSimilarity SinkNode3 OutputSchema</DisplayName>
+        <Description>OutputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>sid,tid,score</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>7941162a-b3e0-45bb-90e2-fa39aeacf1e3:c520a20e-98bd-4761-9eaf-bdd05ad7078d:InputSchema</Name>
+        <DisplayName>CFN_CosineSimilarity SourceNode4 InputSchema</DisplayName>
+        <Description>InputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>sid,stfidf,tid,ttfidf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>c738252a-a200-434c-96aa-d8c859be8384:08954aaa-6aa6-44e6-88c2-c9e7a36e1f5a:OutputSchema</Name>
+        <DisplayName>CFN_Preprocess SinkNode2 OutputSchema</DisplayName>
+        <Description>OutputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>sid,stf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>874329ec-65c8-4e28-939a-a31b8f7a9728:08954aaa-6aa6-44e6-88c2-c9e7a36e1f5a:OutputSchema</Name>
+        <DisplayName>CFN_Preprocess SinkNode2 OutputSchema 2</DisplayName>
+        <Description>OutputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>tid,ttf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>c738252a-a200-434c-96aa-d8c859be8384:22851da3-a98f-4d40-b814-af7822221b21:InputSchema</Name>
+        <DisplayName>CFN_Preprocess SourceNode2 InputSchema</DisplayName>
+        <Description>InputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>sid,stext</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>874329ec-65c8-4e28-939a-a31b8f7a9728:22851da3-a98f-4d40-b814-af7822221b21:InputSchema</Name>
+        <DisplayName>CFN_Preprocess SourceNode2 InputSchema 2</DisplayName>
+        <Description>InputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>tid,ttext</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:IndexOn</Name>
+        <DisplayName>NFN_IDF IndexOn</DisplayName>
+        <Description>IndexOn</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>0</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:sInputSchema</Name>
+        <DisplayName>NFN_IDF sInputSchema</DisplayName>
+        <Description>sInputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>sid,stf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:sOutputSchema</Name>
+        <DisplayName>NFN_IDF sOutputSchema</DisplayName>
+        <Description>sOutputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>sid,stfidf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:sTFColName</Name>
+        <DisplayName>NFN_IDF sTFColName</DisplayName>
+        <Description>sTFColName</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>stf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:sTFIDFColName</Name>
+        <DisplayName>NFN_IDF sTFIDFColName</DisplayName>
+        <Description>sTFIDFColName</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>stfidf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:tInputSchema</Name>
+        <DisplayName>NFN_IDF tInputSchema</DisplayName>
+        <Description>tInputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>tid,ttf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:tOutputSchema</Name>
+        <DisplayName>NFN_IDF tOutputSchema</DisplayName>
+        <Description>tOutputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>tid,ttfidf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:tTFColName</Name>
+        <DisplayName>NFN_IDF tTFColName</DisplayName>
+        <Description>tTFColName</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>ttf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>822383fd-b1d7-4b44-890a-903bd1e31442:tTFIDFColName</Name>
+        <DisplayName>NFN_IDF tTFIDFColName</DisplayName>
+        <Description>tTFIDFColName</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>ttfidf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>70e3b842-07a9-4387-9e40-c7922bdf1f4f:JoinCondition</Name>
+        <DisplayName>NFN_Join JoinCondition</DisplayName>
+        <Description>JoinCondition</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="True" />
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>70e3b842-07a9-4387-9e40-c7922bdf1f4f:JoinType</Name>
+        <DisplayName>NFN_Join JoinType</DisplayName>
+        <Description>JoinType</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>crossjoin</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>70e3b842-07a9-4387-9e40-c7922bdf1f4f:LeftSchema</Name>
+        <DisplayName>NFN_Join LeftSchema</DisplayName>
+        <Description>LeftSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>sid,stfidf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>70e3b842-07a9-4387-9e40-c7922bdf1f4f:OutputSchema</Name>
+        <DisplayName>NFN_Join OutputSchema</DisplayName>
+        <Description>OutputSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>sid,stfidf,tid,ttfidf</string>
+        </Value>
+      </PropertyObject>
+      <PropertyObject>
+        <Version>3</Version>
+        <Name>70e3b842-07a9-4387-9e40-c7922bdf1f4f:RightSchema</Name>
+        <DisplayName>NFN_Join RightSchema</DisplayName>
+        <Description>RightSchema</Description>
+        <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+        <Visible>False</Visible>
+        <IsEnum>False</IsEnum>
+        <Value IsNull="False">
+          <string>tid,ttfidf</string>
+        </Value>
+      </PropertyObject>
+    </ConfigProperties>
+  </ConfigDefinition>
+  <ComponentGraph>
+    <graph>
+      <References />
+      <ExperimentInfo>
+        <Version>2</Version>
+        <Id>c16ab8c6-be99-46a8-b888-23bc5f78754a</Id>
+      </ExperimentInfo>
+      <node id="c738252a-a200-434c-96aa-d8c859be8384">
+        <SerializedVertexData Version="1" X="74.5" Y="250">
+          <Metadata type="TraceLab.Core.Components.CompositeComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="CFN_Preprocess" ComponentMetadataDefinitionID="97846ad6-3e39-4240-8767-f9ec67b35500" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="datasetInput" Type="types.Dataset" IOType="Input" />
+                  <MappedTo>s1</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="datasetOutput" Type="types.Dataset" IOType="Output" />
+                  <MappedTo>s2</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="False">
+              <ConfigValues>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>08954aaa-6aa6-44e6-88c2-c9e7a36e1f5a:OutputSchema</Name>
+                  <DisplayName>SinkNode2 OutputSchema</DisplayName>
+                  <Description>OutputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>sid,stf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>22851da3-a98f-4d40-b814-af7822221b21:InputSchema</Name>
+                  <DisplayName>SourceNode2 InputSchema</DisplayName>
+                  <Description>InputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>sid,stext</string>
+                  </Value>
+                </PropertyObject>
+              </ConfigValues>
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="874329ec-65c8-4e28-939a-a31b8f7a9728">
+        <SerializedVertexData Version="1" X="325.5" Y="251">
+          <Metadata type="TraceLab.Core.Components.CompositeComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="CFN_Preprocess" ComponentMetadataDefinitionID="97846ad6-3e39-4240-8767-f9ec67b35500" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="datasetInput" Type="types.Dataset" IOType="Input" />
+                  <MappedTo>t1</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="datasetOutput" Type="types.Dataset" IOType="Output" />
+                  <MappedTo>t2</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="False">
+              <ConfigValues>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>08954aaa-6aa6-44e6-88c2-c9e7a36e1f5a:OutputSchema</Name>
+                  <DisplayName>SinkNode2 OutputSchema</DisplayName>
+                  <Description>OutputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>tid,ttf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>22851da3-a98f-4d40-b814-af7822221b21:InputSchema</Name>
+                  <DisplayName>SourceNode2 InputSchema</DisplayName>
+                  <Description>InputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>tid,ttext</string>
+                  </Value>
+                </PropertyObject>
+              </ConfigValues>
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="822383fd-b1d7-4b44-890a-903bd1e31442">
+        <SerializedVertexData Version="1" X="193.5" Y="338">
+          <Metadata type="TraceLab.Core.Components.ComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="NFN_IDF" ComponentMetadataDefinitionID="d3ed1f40-f59c-5bc4-bc99-ee6c5b36c5a9" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="sourceInputDataset" Type="types.Dataset" IOType="Input" />
+                  <MappedTo>sourceInputDataset</MappedTo>
+                </IOItem>
+                <IOItem>
+                  <IOItemDefinition Name="targetInputDataset" Type="types.Dataset" IOType="Input" />
+                  <MappedTo>targetInputDataset</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="sourceOutputDataset" Type="types.Dataset" IOType="Output" />
+                  <MappedTo>s3</MappedTo>
+                </IOItem>
+                <IOItem>
+                  <IOItemDefinition Name="targetOutputDataset" Type="types.Dataset" IOType="Output" />
+                  <MappedTo>t3</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="True">
+              <ConfigValues>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>IndexOn</Name>
+                  <DisplayName>IndexOn</DisplayName>
+                  <Description>IndexOn</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>0</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>sInputSchema</Name>
+                  <DisplayName>sInputSchema</DisplayName>
+                  <Description>sInputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>sid,stf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>sOutputSchema</Name>
+                  <DisplayName>sOutputSchema</DisplayName>
+                  <Description>sOutputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>sid,stfidf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>sTFColName</Name>
+                  <DisplayName>sTFColName</DisplayName>
+                  <Description>sTFColName</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>stf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>sTFIDFColName</Name>
+                  <DisplayName>sTFIDFColName</DisplayName>
+                  <Description>sTFIDFColName</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>stfidf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>tInputSchema</Name>
+                  <DisplayName>tInputSchema</DisplayName>
+                  <Description>tInputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>tid,ttf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>tOutputSchema</Name>
+                  <DisplayName>tOutputSchema</DisplayName>
+                  <Description>tOutputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>tid,ttfidf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>tTFColName</Name>
+                  <DisplayName>tTFColName</DisplayName>
+                  <Description>tTFColName</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>ttf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>tTFIDFColName</Name>
+                  <DisplayName>tTFIDFColName</DisplayName>
+                  <Description>tTFIDFColName</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>ttfidf</string>
+                  </Value>
+                </PropertyObject>
+              </ConfigValues>
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="70e3b842-07a9-4387-9e40-c7922bdf1f4f">
+        <SerializedVertexData Version="1" X="196.5" Y="402">
+          <Metadata type="TraceLab.Core.Components.ComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="NFN_Join" ComponentMetadataDefinitionID="6de5467a-fbe7-5f4d-9ba5-e3293a7b5795" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="sourceInputDataset" Type="types.Dataset" IOType="Input" />
+                  <MappedTo>s3</MappedTo>
+                </IOItem>
+                <IOItem>
+                  <IOItemDefinition Name="targetInputDataset" Type="types.Dataset" IOType="Input" />
+                  <MappedTo>t3</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="OutputDataset" Type="types.Dataset" IOType="Output" />
+                  <MappedTo>candidate</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="True">
+              <ConfigValues>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>JoinCondition</Name>
+                  <DisplayName>JoinCondition</DisplayName>
+                  <Description>JoinCondition</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="True" />
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>JoinType</Name>
+                  <DisplayName>JoinType</DisplayName>
+                  <Description>JoinType</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>crossjoin</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>LeftSchema</Name>
+                  <DisplayName>LeftSchema</DisplayName>
+                  <Description>LeftSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>sid,stfidf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>RightSchema</Name>
+                  <DisplayName>RightSchema</DisplayName>
+                  <Description>RightSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>tid,ttfidf</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>OutputSchema</Name>
+                  <DisplayName>OutputSchema</DisplayName>
+                  <Description>OutputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>sid,stfidf,tid,ttfidf</string>
+                  </Value>
+                </PropertyObject>
+              </ConfigValues>
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="7941162a-b3e0-45bb-90e2-fa39aeacf1e3">
+        <SerializedVertexData Version="1" X="194.5" Y="477">
+          <Metadata type="TraceLab.Core.Components.CompositeComponentMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="CFN_CosineSimilarity" ComponentMetadataDefinitionID="8854e84c-2f5a-4b8d-8baf-1a6e468d6fea" WaitsForAllPredecessors="True">
+            <IOSpec Version="2">
+              <Input>
+                <IOItem>
+                  <IOItemDefinition Name="dataSetInput" Type="types.Dataset" IOType="Input" />
+                  <MappedTo>candidate</MappedTo>
+                </IOItem>
+              </Input>
+              <Output>
+                <IOItem>
+                  <IOItemDefinition Name="datasetOutput" Type="types.Dataset" IOType="Output" />
+                  <MappedTo>res</MappedTo>
+                </IOItem>
+              </Output>
+            </IOSpec>
+            <ConfigWrapper Version="1" IsJava="False">
+              <ConfigValues>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>625b45bc-abdc-40e0-9cb9-77a3aa1abbe5:OutputSchema</Name>
+                  <DisplayName>SinkNode3 OutputSchema</DisplayName>
+                  <Description>OutputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>sid,tid,score</string>
+                  </Value>
+                </PropertyObject>
+                <PropertyObject>
+                  <Version>3</Version>
+                  <Name>c520a20e-98bd-4761-9eaf-bdd05ad7078d:InputSchema</Name>
+                  <DisplayName>SourceNode4 InputSchema</DisplayName>
+                  <Description>InputSchema</Description>
+                  <ValueType>System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</ValueType>
+                  <Visible>True</Visible>
+                  <IsEnum>False</IsEnum>
+                  <Value IsNull="False">
+                    <string>sid,stfidf,tid,ttfidf</string>
+                  </Value>
+                </PropertyObject>
+              </ConfigValues>
+            </ConfigWrapper>
+          </Metadata>
+        </SerializedVertexData>
+      </node>
+      <node id="Start">
+        <SerializedVertexData Version="1" X="200" Y="200">
+          <Metadata type="TraceLab.Core.Components.StartNodeMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="Start" />
+        </SerializedVertexData>
+      </node>
+      <node id="End">
+        <SerializedVertexData Version="1" X="200" Y="527">
+          <Metadata type="TraceLab.Core.Components.EndNodeMetadata, TraceLab.Core, Culture=neutral, PublicKeyToken=2c83cea59a8bb151" Label="End" WaitsForAllPredecessors="True" />
+        </SerializedVertexData>
+      </node>
+      <edge id="c31d132a-fa64-405a-b0ba-a2f116787d0c" source="c738252a-a200-434c-96aa-d8c859be8384" target="822383fd-b1d7-4b44-890a-903bd1e31442" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="7d29a67f-e78e-4e9b-be65-8bc08abebc51" source="874329ec-65c8-4e28-939a-a31b8f7a9728" target="822383fd-b1d7-4b44-890a-903bd1e31442" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="ac56751f-b9e2-4edd-aa4f-db3611ce0017" source="822383fd-b1d7-4b44-890a-903bd1e31442" target="70e3b842-07a9-4387-9e40-c7922bdf1f4f" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="e59fbbc7-9a6d-48d6-93f5-0ebe99bbb572" source="70e3b842-07a9-4387-9e40-c7922bdf1f4f" target="7941162a-b3e0-45bb-90e2-fa39aeacf1e3" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="0d57cde3-ff85-46aa-83c2-a4a8f6a26e6b" source="7941162a-b3e0-45bb-90e2-fa39aeacf1e3" target="End" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="fb8987af-b29e-4925-a1a7-8d364acc19a4" source="Start" target="c738252a-a200-434c-96aa-d8c859be8384" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+      <edge id="74a37fdb-5edd-498c-ae1c-8c6d74d4951b" source="Start" target="874329ec-65c8-4e28-939a-a31b8f7a9728" isFixed="False" isVisible="True">
+        <RoutePointsCollection />
+      </edge>
+    </graph>
+  </ComponentGraph>
+</CompositeComponentMetadataDefinition>

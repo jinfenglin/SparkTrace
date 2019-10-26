@@ -4,7 +4,7 @@ package core.pipelineOptimizer;
 import core.graphPipeline.SLayer.*;
 import core.graphPipeline.basic.*;
 import core.graphPipeline.graphSymbol.Symbol;
-import featurePipelineStages.SGraphIOStage;
+import componentRepo.SLayer.featurePipelineStages.SGraphIOStage;
 
 
 import java.util.*;

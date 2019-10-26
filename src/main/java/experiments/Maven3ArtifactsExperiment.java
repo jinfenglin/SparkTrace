@@ -1,10 +1,10 @@
 package experiments;
 
-import buildingBlocks.preprocessor.NGramCount;
+import componentRepo.SLayer.buildingBlocks.preprocessor.NGramCount;
 import traceTasks.NGramVSMTraceTaskBuilder;
 import traceTasks.VSMTraceBuilder;
-import buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
-import buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
+import componentRepo.SLayer.buildingBlocks.unsupervisedLearn.IDFGraphPipeline;
+import componentRepo.SLayer.buildingBlocks.vecSimilarityPipeline.SparseCosinSimilarityPipeline;
 import core.SparkTraceJob;
 import core.SparkTraceTask;
 import core.graphPipeline.SLayer.SGraph;

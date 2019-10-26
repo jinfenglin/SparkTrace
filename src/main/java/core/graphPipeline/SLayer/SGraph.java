@@ -7,22 +7,12 @@ import core.graphPipeline.basic.IOTableCell;
 import core.graphPipeline.basic.Vertex;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
-import featurePipelineStages.SGraphColumnRemovalStage;
-import featurePipelineStages.SGraphIOStage;
-import guru.nidi.graphviz.attribute.Label;
-import guru.nidi.graphviz.engine.Format;
-import guru.nidi.graphviz.engine.Graphviz;
-import guru.nidi.graphviz.model.*;
+import componentRepo.SLayer.featurePipelineStages.SGraphColumnRemovalStage;
+import componentRepo.SLayer.featurePipelineStages.SGraphIOStage;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineStage;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
-import java.util.logging.Logger;
-
-import static core.pipelineOptimizer.PipelineOptimizer.*;
-import static guru.nidi.graphviz.model.Factory.*;
 
 /**
  * A DAG which will be applied to optimize the pipeline structure.

@@ -8,7 +8,7 @@ public class Node extends Vertex {
         super();
     }
 
-    public Node(String id) {
-        super(id);
+    public Node(String label) {
+        super(label);
     }
 }
