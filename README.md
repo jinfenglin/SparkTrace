@@ -20,17 +20,12 @@ Create a TraceTask
 
 ###TODO
 TODO: 
-3. Modify the SDFGraph which only need to receive sdftype at SDFGraph level and can convert a graph into SDFGraph
-
-Experiments:
-(Voting system is the best example for demonstration. But in paper,we need to explain other usage cases)
-1. Voting system (VSM + LDA + VSM_NGRam) with and without optimization 
-2. Voting system with and without infusion
-3. Voting system cache point experiment
-3. ICSE example 
-
 FLayer and SLayer:
 1. Rework the SymbolValueSyn system in SLayer to make the output name can be specified in configuration.
+2. Complete the Fschema system 
+3. Add code to parse the parameters of TraceLab nodes
+4. Complete the function getNodeContent for FNodes to enable FGraph to reuse SGraph optimization algorithm.
+5. Complete the workflow system for the FGraph
 
 Note:
 TraceLab component must be assigned with a prefix to indicate its type
