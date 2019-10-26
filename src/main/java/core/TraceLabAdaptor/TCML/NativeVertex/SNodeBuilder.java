@@ -16,6 +16,10 @@ public class SNodeBuilder {
     protected SNodeBuilder() throws ClassNotFoundException {
         stagesReg = new HashMap<>();
         stagesReg.put("SN_CosineSimilarity", Class.forName("componentRepo.SLayer.featurePipelineStages.VecSimilarity.SparseVecSimilarity.SparseVecCosinSimilarityStage"));
+        stagesReg.put("SN_Tokenizer", Class.forName("org.apache.spark.ml.feature.Tokenizer"));
+        stagesReg.put("SN_StopWordRemover", Class.forName("org.apache.spark.ml.feature.StopWordsRemover"));
+        stagesReg.put("SN_TF", Class.forName("org.apache.spark.ml.feature.HashingTF"));
+        stagesReg.put("SN_IDF", Class.forName("org.apache.spark.ml.feature.IDF"));
     }
 
     public static SNodeBuilder getInstance() throws ClassNotFoundException {
@@ -40,10 +44,14 @@ public class SNodeBuilder {
         return sNode;
     }
 
-    public PipelineStage getPipelineStageByLabel(String label) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Class<?> clazz = stagesReg.get(label);
-        PipelineStage stage = (PipelineStage) clazz.getConstructor().newInstance();
-        return stage;
+    public PipelineStage getPipelineStageByLabel(String label) throws Exception {
+        if (stagesReg.containsKey(label)) {
+            Class<?> clazz = stagesReg.get(label);
+            PipelineStage stage = (PipelineStage) clazz.getConstructor().newInstance();
+            return stage;
+        } else {
+            throw new Exception(String.format("%s is not a registered pipelinestage for SNode", label));
+        }
     }
 
 }

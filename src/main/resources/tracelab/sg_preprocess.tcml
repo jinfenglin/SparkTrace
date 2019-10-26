@@ -9,7 +9,7 @@
     <Description>SGraph of converting text into term-frequency representation</Description>
   </Info>
   <Input>
-    <IOItemDefinition Name="rawTokens" Type="System.String" IOType="Input" />
+    <IOItemDefinition Name="text" Type="System.String" IOType="Input" />
   </Input>
   <Output>
     <IOItemDefinition Name="TF" Type="System.String" IOType="Output" />
@@ -38,7 +38,7 @@
               <Output>
                 <IOItem>
                   <IOItemDefinition Name="tokens" Type="System.String" IOType="Output" />
-                  <MappedTo>tokens</MappedTo>
+                  <MappedTo>rawTokens</MappedTo>
                 </IOItem>
               </Output>
             </IOSpec>
@@ -78,7 +78,7 @@
               <Input>
                 <IOItem>
                   <IOItemDefinition Name="token" Type="System.String" IOType="Input" />
-                  <MappedTo>token</MappedTo>
+                  <MappedTo>cleanTokens</MappedTo>
                 </IOItem>
               </Input>
               <Output>

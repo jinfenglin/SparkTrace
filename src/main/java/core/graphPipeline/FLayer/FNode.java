@@ -2,7 +2,7 @@ package core.graphPipeline.FLayer;
 
 import core.graphPipeline.basic.Node;
 
-public class FNode extends Node {
+abstract public class FNode extends Node implements FLayerComponent {
     public FNode() {
         super();
     }

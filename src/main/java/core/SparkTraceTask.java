@@ -53,7 +53,7 @@ public class SparkTraceTask extends SGraph {
     public int indexOn = 0; // -1 index on source 0 index on both 1 index on target
 
 
-    public SparkTraceTask(SGraph sourceSDF, SGraph targetSDF, List<SGraph> unsupervisedLearnGraphs, SGraph ddfGraph, String sourceIdCol, String targetIdCol) {
+    public SparkTraceTask(SGraph sourceSDF, SGraph targetSDF, List<SGraph> unsupervisedLearnGraphs, SGraph ddfGraph, String sourceIdCol, String targetIdCol) throws Exception {
         super();
         this.sourceSDF = sourceSDF;
         this.targetSDF = targetSDF;

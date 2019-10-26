@@ -54,7 +54,7 @@
             <IOSpec Version="2">
               <Input>
                 <IOItem>
-                  <IOItemDefinition Name="rawTokens" Type="System.String" IOType="Input" />
+                  <IOItemDefinition Name="text" Type="System.String" IOType="Input" />
                   <MappedTo>text</MappedTo>
                 </IOItem>
               </Input>

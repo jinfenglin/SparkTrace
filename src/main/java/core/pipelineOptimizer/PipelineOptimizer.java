@@ -149,12 +149,12 @@ public class PipelineOptimizer {
      *
      * @param graph
      */
-    public static void removeDuplicatedNodes(SGraph graph) throws Exception {
+    public static void removeDuplicatedNodes(Graph graph) throws Exception {
         //Put all nodes in the search list as init
         // while search list not empty
         // Partition the node in list into buckets then in each buckets
         //       partition the buckets by the inputs. Eliminate the input-bucket partition with penetration, add the impacted nodes into search list
-        Map<SGraph, List<Vertex>> topoOrderMap = buildTopologicalOrderMap(graph);
+        Map<Graph, List<Vertex>> topoOrderMap = buildTopologicalOrderMap(graph);
         GraphHierarchyTree ght = new GraphHierarchyTree(null, graph);
         List<SNode> searchPool = getAllSNodesRecursively(graph);
         while (searchPool.size() > 0) {
@@ -168,12 +168,12 @@ public class PipelineOptimizer {
         }
     }
 
-    private static Map<SGraph, List<Vertex>> buildTopologicalOrderMap(SGraph graph) throws Exception {
-        Map<SGraph, List<Vertex>> tpOrderMap = new HashMap<>();
+    private static Map<Graph, List<Vertex>> buildTopologicalOrderMap(Graph graph) throws Exception {
+        Map<Graph, List<Vertex>> tpOrderMap = new HashMap<>();
         tpOrderMap.put(graph, topologicalSort(graph));
         for (Vertex vertex : graph.getNodes()) {
             if (vertex instanceof SGraph) {
-                Map<SGraph, List<Vertex>> subMap = buildTopologicalOrderMap((SGraph) vertex);
+                Map<Graph, List<Vertex>> subMap = buildTopologicalOrderMap((SGraph) vertex);
                 tpOrderMap.putAll(subMap);
             }
         }

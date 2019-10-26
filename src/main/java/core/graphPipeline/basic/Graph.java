@@ -1,7 +1,5 @@
 package core.graphPipeline.basic;
 
-import core.graphPipeline.SLayer.SGraph;
-import core.graphPipeline.SLayer.SNode;
 import core.graphPipeline.SLayer.TransparentSNode;
 import core.graphPipeline.graphSymbol.Symbol;
 import core.graphPipeline.graphSymbol.SymbolTable;
@@ -81,7 +79,7 @@ public class Graph extends Vertex {
     /**
      * Let the connected symbols share same value. The final output table's column name can be renamed by a renaming stage
      */
-    public static void syncSymbolValues(SGraph graph) throws Exception {
+    public static void syncSymbolValues(Graph graph) throws Exception {
         //SourceNode and SinkNode are special in the graph. The sourceNode don't have connection on its InputTable,
         //Instead, it consume graph's InputTable directly. However, the consumption is through parameters thus no explicit
         //connections are specified between graph.inputTable and sourceNode.outputTable (And inputTable should receive and have no out going links)
@@ -94,8 +92,8 @@ public class Graph extends Vertex {
         List<TransparentSNode> transparentVertices = new ArrayList<>(); //collect transVertices for second round process
         //Need topological order of processing if we don't pick out these nodes for second round processing.
         for (Vertex node : graph.getNodes()) {
-            if (node instanceof SGraph) {
-                syncSymbolValues((SGraph) node);
+            if (node instanceof Graph) {
+                syncSymbolValues((Graph) node);
             }
             for (IOTableCell providerCell : node.getOutputTable().getCells()) {
                 Symbol providerSymbol = providerCell.getFieldSymbol();
@@ -147,6 +145,25 @@ public class Graph extends Vertex {
             }
         } else {
             Logger.getLogger(this.getClass().getName()).warning(String.format("%s is not contained in the graph nodes", node.getVertexId()));
+        }
+    }
+
+    /**
+     * Change the ID for a node within the graph. This function
+     * 1. change vertex id
+     * 2. change the key in node registration
+     *
+     * @param node
+     * @param newId
+     */
+    public void updateNodeId(Vertex node, String newId) {
+        if (node == null)
+            return;
+        String oldId = node.getVertexId();
+        if (this.nodes.containsKey(oldId)) {
+            node.setVertexId(newId);
+            this.nodes.remove(oldId);
+            this.nodes.put(newId, node);
         }
     }
 
@@ -243,7 +260,7 @@ public class Graph extends Vertex {
     }
 
 
-    public void addNode(Vertex node) {
+    public void addNode(Vertex node) throws Exception{
         nodes.put(node.getVertexId(), node);
         node.setContext(this);
     }
@@ -296,8 +313,8 @@ public class Graph extends Vertex {
         MutableGraph g = mutGraph(vertexId).setDirected(true).setCluster(true);
         g.graphAttrs().add(Label.of(getVertexLabel()));
         for (Vertex vertex : this.getNodes()) {
-            if (vertex instanceof SNode) {
-                SNode v = (SNode) vertex;
+            if (vertex instanceof Node) {
+                Node v = (Node) vertex;
                 String nodeTitle = v.getVertexLabel();
                 MutableNode vNode = mutNode(v.getVertexId()).add(Label.of(nodeTitle));
                 for (Vertex outputNode : v.getOutputVertices()) { //note: sink node have no outputVertices, parent graph hold this information
@@ -305,7 +322,7 @@ public class Graph extends Vertex {
                 }
                 g.add(vNode);
             } else {
-                SGraph v = (SGraph) vertex;
+                Graph v = (Graph) vertex;
                 MutableGraph subGraph = v.getVizGraph();
                 Vertex sinkNode = v.sinkNode;
                 MutableNode innerSink = mutNode(sinkNode.getVertexId()).add(Label.of("SinkNode"));
@@ -322,7 +339,7 @@ public class Graph extends Vertex {
         if (outputNode instanceof SNode) {
             vizFromNode = vizFromNode.addLink(outputNode.getVertexId());
         } else {
-            SGraph subGraph = (SGraph) outputNode;
+            Graph subGraph = (Graph) outputNode;
             Vertex innerSource = subGraph.sourceNode;
             MutableGraph innerGraph = subGraph.getVizGraph();// create inner graph, this graph is implicitly added to the parent
             vizFromNode = vizFromNode.addLink(innerSource.getVertexId());
@@ -339,7 +356,7 @@ public class Graph extends Vertex {
     }
 
 
-    public static List<Vertex> topologicalSort(SGraph graph) throws Exception {
+    public static List<Vertex> topologicalSort(Graph graph) throws Exception {
         List<Vertex> nodes = new ArrayList<>(graph.getNodes());
         Map<Vertex, List<Vertex>> edgeIndex = buildEdgeIndex(graph, true);
         Map<Vertex, Integer> inDegrees = inDegreeMap(graph);
@@ -376,7 +393,7 @@ public class Graph extends Vertex {
      * @param useFromAsIndex
      * @return
      */
-    private static Map<Vertex, List<Vertex>> buildEdgeIndex(SGraph graph, boolean useFromAsIndex) {
+    private static Map<Vertex, List<Vertex>> buildEdgeIndex(Graph graph, boolean useFromAsIndex) {
         List<Edge> edges = graph.getEdges();
         List<Vertex> vertices = graph.getNodes();
         Map<Vertex, List<Vertex>> indexMap = new HashMap<>();
@@ -400,7 +417,7 @@ public class Graph extends Vertex {
         return indexMap;
     }
 
-    private static Map<Vertex, Integer> inDegreeMap(SGraph graph) {
+    private static Map<Vertex, Integer> inDegreeMap(Graph graph) {
         List<Vertex> nodes = graph.getNodes();
         List<Edge> edges = graph.getEdges();
         Map<Vertex, Integer> inDegreeMap = new HashMap<>();
@@ -417,7 +434,7 @@ public class Graph extends Vertex {
         return inDegreeMap;
     }
 
-    public void optimize(SGraph graph) throws Exception {
+    public void optimize(Graph graph) throws Exception {
         removeDuplicatedNodes(graph);
         while (true) {
             removeRedundantInputFields(graph);

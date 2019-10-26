@@ -2,19 +2,20 @@ package core.graphPipeline.FLayer;
 
 import core.TraceLabAdaptor.dataModel.TraceComposite;
 import core.graphPipeline.basic.Graph;
+import core.graphPipeline.basic.Vertex;
 
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class FGraph extends Graph {
+public class FGraph extends Graph implements FLayerComponent {
     FSchemaManger fsManger; //Control the Schema for this and child FGraph
 
     public FGraph() {
         super();
         nodes = new HashMap<>();
         edges = new HashSet<>();
-        sourceNode = new FNode();
-        sinkNode = new FNode();
+        sourceNode = new NFNode();
+        sinkNode = new NFNode();
         sourceNode.setVertexLabel("SourceNode");
         sinkNode.setVertexLabel("SinkNode");
         sourceNode.setContext(this);
@@ -32,5 +33,15 @@ public class FGraph extends Graph {
      */
     public FGraph(TraceComposite tc) {
         super();
+    }
+
+    @Override
+    public void addNode(Vertex node) throws Exception {
+        if (node instanceof FLayerComponent) {
+            super.addNode(node);
+        } else {
+            throw new Exception(String.format("%s is not a FLayer component, " +
+                    "therefore can not be added to FGraph. Only FNode and FGraph are allowed.", node.getVertexLabel()));
+        }
     }
 }

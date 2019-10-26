@@ -368,11 +368,11 @@
               <Input>
                 <IOItem>
                   <IOItemDefinition Name="sourceInputDataset" Type="types.Dataset" IOType="Input" />
-                  <MappedTo>sourceInputDataset</MappedTo>
+                  <MappedTo>s2</MappedTo>
                 </IOItem>
                 <IOItem>
                   <IOItemDefinition Name="targetInputDataset" Type="types.Dataset" IOType="Input" />
-                  <MappedTo>targetInputDataset</MappedTo>
+                  <MappedTo>t2</MappedTo>
                 </IOItem>
               </Input>
               <Output>

@@ -7,7 +7,6 @@ import core.TraceLabAdaptor.dataModel.TraceLabNode;
 import core.TraceLabAdaptor.dataModel.TraceLabNodeUtils;
 import core.graphPipeline.FLayer.CFNode;
 import core.graphPipeline.SLayer.SGraph;
-import core.graphPipeline.basic.Vertex;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,24 +31,23 @@ public class CFNodeBuilder extends CompositeVertexBuilder {
         return cfNode;
     }
 
+
     private SGraph buildSGraph() throws Exception {
         SGraph sg = new SGraph();
         // Create IONode
         TraceLabNode sourceTLNode = findSourceNode();
-        sg.sourceNode.setVertexId(sourceTLNode.getNodeId());
+        sg.updateNodeId(sg.sourceNode, sourceTLNode.getNodeId());
         for (IOItem item : sourceTLNode.getIOSpec().getOutputs()) {
             String fieldName = item.getDef().getFieldName();
             sg.addInputField(fieldName);
         }
         TraceLabNode sinkTLNode = findSinkNode();
-        sg.sinkNode.setVertexId(sinkTLNode.getNodeId());
+        sg.updateNodeId(sg.sinkNode, sinkTLNode.getNodeId());
         for (IOItem item : sinkTLNode.getIOSpec().getInputs()) {
             String fieldName = item.getDef().getFieldName();
             sg.addOutputField(fieldName);
         }
         List<TraceLabNode> vertices = getTraceLabNodeWithoutStartAndEnd();
-        List<TraceLabEdge> edges = getTraceLabEdgeWithoutStartAndEnd();
-
         Map<String, TraceLabNode> TLNodeIndex = new HashMap<>();
         for (TraceLabNode node : vertices) {
             TLNodeIndex.put(node.getNodeId(), node);
@@ -57,20 +55,7 @@ public class CFNodeBuilder extends CompositeVertexBuilder {
                 sg.addNode(TraceLabNodeUtils.toSparkGraphVertex(node));
             }
         }
-        for (TraceLabEdge edge : edges) {
-            Vertex sVertex = sg.getNode(edge.getSource());
-            Vertex tVertex = sg.getNode(edge.getTarget());
-            TraceLabNode sTLNode = TLNodeIndex.get(edge.getSource());
-            TraceLabNode tTLNode = TLNodeIndex.get(edge.getTarget());
-
-            for (IOItem sItem : sTLNode.getIOSpec().getOutputs()) {
-                for (IOItem tItem : tTLNode.getIOSpec().getInputs()) {
-                    if (sItem.isMatch(tItem)) {
-                        sg.connect(sVertex, sItem.getDef().getFieldName(), tVertex, tItem.getDef().getFieldName());
-                    }
-                }
-            }
-        }
+        connectNonIONodes(sg, TLNodeIndex);
         return sg;
     }
 
