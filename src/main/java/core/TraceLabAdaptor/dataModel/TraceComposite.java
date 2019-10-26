@@ -1,6 +1,7 @@
 package core.TraceLabAdaptor.dataModel;
 
 import core.TraceLabAdaptor.dataModel.IO.IOItemDefinition;
+import core.graphPipeline.FLayer.FType;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -14,7 +15,7 @@ import static core.TraceLabAdaptor.TEMLParser.parseNodes;
 import static core.TraceLabAdaptor.dataModel.TraceLabNode.parseConfigProps;
 
 /**
- *
+ * TraceComposite is the data model for TCML file
  */
 public class TraceComposite {
     static String INFO = "Info", INPUT = "Input", OUTPUT = "Output", CONFIG = "ConfigDefinition", COMPONENT_GRAPH = "ComponentGraph";

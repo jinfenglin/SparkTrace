@@ -28,3 +28,15 @@ Experiments:
 2. Voting system with and without infusion
 3. Voting system cache point experiment
 3. ICSE example 
+
+FLayer and SLayer:
+1. Rework the SymbolValueSyn system in SLayer to make the output name can be specified in configuration.
+
+Note:
+TraceLab component must be assigned with a prefix to indicate its type
+
+    NFN:(NFNode or Native Flow Node.) E.g. JOIN operation  Refer NFNode class
+    CFN:(CFNode Composite Flow Node.) Refer CFNode class
+    FG:(FGraph  or Flow graph)
+    SG:SGraph
+    SN:SNode:

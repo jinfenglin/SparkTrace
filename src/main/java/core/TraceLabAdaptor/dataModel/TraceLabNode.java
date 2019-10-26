@@ -1,6 +1,8 @@
 package core.TraceLabAdaptor.dataModel;
 
 import core.TraceLabAdaptor.dataModel.IO.IOSpecification;
+import core.graphPipeline.FLayer.FType;
+import core.graphPipeline.basic.Vertex;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -67,6 +69,10 @@ public class TraceLabNode {
         return res;
     }
 
+    public FType getComponentType() throws Exception {
+        return FType.fromString(getLabel());
+    }
+
     private String getComponentType(String metaType) {
         String typeInfo = metaType.split(",")[0];
         String[] parts = typeInfo.split("\\.");
@@ -85,5 +91,45 @@ public class TraceLabNode {
         } else {
             throw new Exception(String.format("Unrecognized node meta type %s", componentType));
         }
+    }
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public boolean isComposite() {
+        return isComposite;
+    }
+
+    public void setComposite(boolean composite) {
+        isComposite = composite;
+    }
+
+    public IOSpecification getIOSpec() {
+        return IOSpec;
+    }
+
+    public void setIOSpec(IOSpecification IOSpec) {
+        this.IOSpec = IOSpec;
+    }
+
+    public Map<String, NodeConfigure> getConfig() {
+        return config;
+    }
+
+    public void setConfig(Map<String, NodeConfigure> config) {
+        this.config = config;
     }
 }

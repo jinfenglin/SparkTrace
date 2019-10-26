@@ -45,4 +45,20 @@ public class IOSpecification {
         }
         return res;
     }
+
+    public List<IOItem> getInputs() {
+        return inputs;
+    }
+
+    public void setInputs(List<IOItem> inputs) {
+        this.inputs = inputs;
+    }
+
+    public List<IOItem> getOutputs() {
+        return outputs;
+    }
+
+    public void setOutputs(List<IOItem> outputs) {
+        this.outputs = outputs;
+    }
 }

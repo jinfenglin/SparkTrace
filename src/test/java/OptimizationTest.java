@@ -56,6 +56,8 @@ public class OptimizationTest extends TestBase {
         graph.connect(tkNode2, "tokens2", graph.sinkNode, "token2");
         Map<String, String> config = new HashMap<>();
         config.put("sentence", "sentence");
+        config.put("token1", "tk1");
+        config.put("token2", "tk2");
         graph.setConfig(config);
         graph.showGraph("NoSubGraphOptimizationTest.before");
         graph.optimize(graph);
@@ -356,6 +358,8 @@ public class OptimizationTest extends TestBase {
 
         Map<String, String> config = new HashMap<>();
         config.put("sentence", "sentence");
+        config.put("TF-IDF1", "out1");
+        config.put("TF-IDF2", "out2");
         graph.setConfig(config);
         graph.showGraph("subSubGraphTest_before_optimize_before_optimize");
         graph.optimize(graph);

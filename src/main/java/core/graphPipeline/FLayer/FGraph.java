@@ -1,18 +1,13 @@
 package core.graphPipeline.FLayer;
 
-import core.graphPipeline.basic.Edge;
-import core.graphPipeline.basic.Vertex;
+import core.TraceLabAdaptor.dataModel.TraceComposite;
+import core.graphPipeline.basic.Graph;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
-public class FGraph extends Vertex{
-    private Map<String, Vertex> nodes;
-    private Set<Edge> edges; //Record the node level connection, the field level connection is recorded by the IOTable
-    public FNode sourceNode, sinkNode;
-    private Map<String, String> config;
+public class FGraph extends Graph {
+    FSchemaManger fsManger; //Control the Schema for this and child FGraph
 
     public FGraph() {
         super();
@@ -27,5 +22,15 @@ public class FGraph extends Vertex{
         nodes.put(sourceNode.getVertexId(), sourceNode);
         nodes.put(sinkNode.getVertexId(), sinkNode);
         config = new HashMap<>();
+        fsManger = new FSchemaManger();
+    }
+
+    /**
+     * Build FGraph based on TraceComposite
+     *
+     * @param tc
+     */
+    public FGraph(TraceComposite tc) {
+        super();
     }
 }

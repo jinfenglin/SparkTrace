@@ -73,7 +73,6 @@ public class SGraph extends Graph implements SDFInterface, SLayerComponent {
         nodes.put(sinkNode.getVertexId(), sinkNode);
         config = new HashMap<>();
         outputTypeMap = new HashMap<>();
-
     }
 
     @Override

@@ -337,7 +337,7 @@ public class Graph extends Vertex {
     public Vertex getNode(String vertexId) {
         return nodes.get(vertexId);
     }
-    
+
 
     public static List<Vertex> topologicalSort(SGraph graph) throws Exception {
         List<Vertex> nodes = new ArrayList<>(graph.getNodes());

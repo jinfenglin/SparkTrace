@@ -18,4 +18,24 @@ public class IOItem {
         Node mapToNode = e.getElementsByTagName(MAP_TO).item(0);
         mapTo = mapToNode.getTextContent();
     }
+
+    public boolean isMatch(IOItem o) {
+        return o.getMapTo().equals(this.mapTo);
+    }
+
+    public String getMapTo() {
+        return mapTo;
+    }
+
+    public void setMapTo(String mapTo) {
+        this.mapTo = mapTo;
+    }
+
+    public IOItemDefinition getDef() {
+        return def;
+    }
+
+    public void setDef(IOItemDefinition def) {
+        this.def = def;
+    }
 }

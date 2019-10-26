@@ -149,6 +149,10 @@ abstract public class Vertex {
         return vertexId;
     }
 
+    public void setVertexId(String id) {
+        this.vertexId = id;
+    }
+
     /**
      * Get the global path of the vertex in the whole graph. For debug use primarily.
      *
