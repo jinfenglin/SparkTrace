@@ -151,11 +151,11 @@ public class VotingSystemExperiment extends SparkTraceJob {
         }
         org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/time.csv");
         OutputStream out = outputPath.getFileSystem(new Configuration()).create(outputPath);
-        String projectNameLine = String.join(",", projects) + "\n";
-        String opTimeLine = String.join(",", opTimeList) + "\n";
-        String opTraceTimeLine = String.join(",", opTraceTime) + "\n";
-        String unOpTimeLine = String.join(",", unOpTimeList) + "\n";
-        String unopTraceTimeLine = String.join(",", unOpTimeList) + "\n";
+        String projectNameLine = "projects:" + String.join(",", projects) + "\n";
+        String opTimeLine = "OP TIME:" + String.join(",", opTimeList) + "\n";
+        String opTraceTimeLine = "OP TRACE:" + String.join(",", opTraceTime) + "\n";
+        String unOpTimeLine = "UNOP TIME:" + String.join(",", unOpTimeList) + "\n";
+        String unopTraceTimeLine = "UNOP TRACE:" + String.join(",", unOpTraceTime) + "\n";
 
         out.write(projectNameLine.getBytes());
         out.write(opTimeLine.getBytes());
