@@ -30,7 +30,7 @@ public class VotingSystemExperiment extends SparkTraceJob {
 
     public VotingSystemExperiment(String sourcePath, String targetPath) {
         super("local[4]", "Voting system");
-        sourceDataset = sparkSession.read().option("header", "true").csv(sourcePath).cache(); //commit
+        sourceDataset = sparkSession.read().option("header", "true").csv(sourcePath).limit(1).cache(); //commit
         targetDataset = sparkSession.read().option("header", "true").csv(targetPath).cache(); //issue
     }
 
@@ -86,7 +86,7 @@ public class VotingSystemExperiment extends SparkTraceJob {
         vsmTask.train(sourceDataset, targetDataset, null);
         long t1Start = System.currentTimeMillis();
         Dataset<Row> result1 = vsmTask.trace(sourceDataset, targetDataset);
-        traceTime += System.currentTimeMillis() - t1Start;
+//        traceTime += System.currentTimeMillis() - t1Start;
 
         SparkTraceTask ngramTask = new NGramVSMTraceTaskBuilder().getTask(sourceId, targetId);
         ngramTask.setConfig(vsmTaskInputConfig);
@@ -94,7 +94,7 @@ public class VotingSystemExperiment extends SparkTraceJob {
         ngramTask.train(sourceDataset, targetDataset, null);
         long t2Start = System.currentTimeMillis();
         Dataset<Row> result2 = ngramTask.trace(sourceDataset, targetDataset);
-        traceTime += System.currentTimeMillis() - t2Start;
+//        traceTime += System.currentTimeMillis() - t2Start;
 
         SparkTraceTask ldaTask = new LDATraceBuilder().getTask(sourceId, targetId);
         ldaTask.setConfig(vsmTaskInputConfig);
@@ -102,21 +102,29 @@ public class VotingSystemExperiment extends SparkTraceJob {
         ldaTask.train(sourceDataset, targetDataset, null);
         long t3Start = System.currentTimeMillis();
         Dataset<Row> result3 = ldaTask.trace(sourceDataset, targetDataset);
-        traceTime += System.currentTimeMillis() - t3Start;
 
         String vsmScoreCol = vsmTask.getOutputField(VSMTraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
         String ngramVsmScoreCol = ngramTask.getOutputField(NGramVSMTraceTaskBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
         String ldaScoreCol = ldaTask.getOutputField(LDATraceBuilder.OUTPUT).getFieldSymbol().getSymbolValue();
 
-        Seq<String> colNames = scala.collection.JavaConverters.asScalaIteratorConverter(
-                Arrays.asList(s_id_col_name, t_id_col_name).iterator()
-        ).asScala().toSeq();
-        Dataset<Row> result = result1.join(result2, colNames);
-        result = result.join(result3, colNames);
-        result.select(vsmTaskInputConfig.get(sourceId), vsmTaskInputConfig.get(targetId), vsmScoreCol, ngramVsmScoreCol, ldaScoreCol).write()
-                .format("com.databricks.spark.csv")
-                .option("header", "true").mode("overwrite")
-                .save(outputDir + "/voteResult_unOP.csv");
+        String s_id_col_name1 = s_id_col_name + "_1";
+        String t_id_col_name1 = t_id_col_name + "_1";
+        String s_id_col_name2 = s_id_col_name + "_2";
+        String t_id_col_name2 = t_id_col_name + "_2";
+        result2 = result2.withColumnRenamed(s_id_col_name, s_id_col_name1).withColumnRenamed(t_id_col_name, t_id_col_name1);
+        Dataset<Row> result = result1.join(result2,
+                result1.col(s_id_col_name).equalTo(result2.col(s_id_col_name1))
+                        .and(result1.col(t_id_col_name).equalTo(result2.col(t_id_col_name1))));
+        result3 = result3.withColumnRenamed(s_id_col_name, s_id_col_name2).withColumnRenamed(t_id_col_name, t_id_col_name2);
+        result = result.join(result3, result.col(s_id_col_name).equalTo(result3.col(s_id_col_name2)).and(result.col(t_id_col_name).equalTo(result3.col(t_id_col_name2))));
+        result.select(vsmTaskInputConfig.get(sourceId), vsmTaskInputConfig.get(targetId), vsmScoreCol, ngramVsmScoreCol, ldaScoreCol);
+        result.count();
+//        result.write()
+//                .format("com.databricks.spark.csv")
+//                .option("header", "true").mode("overwrite")
+//                .save(outputDir + "/voteResult_unOP.csv");
+        traceTime += System.currentTimeMillis() - t3Start;
+
         return new Pair<>(System.currentTimeMillis() - startTime, traceTime);
     }
 
@@ -134,33 +142,40 @@ public class VotingSystemExperiment extends SparkTraceJob {
         List<String> unOpTimeList = new ArrayList<>();
         List<String> opTraceTime = new ArrayList<>();
         List<String> unOpTraceTime = new ArrayList<>();
+        int i = 0;
         for (String projectPath : projects) {
+//            i += 1;
+//            if (i != 2) {
+//                continue;
+//            }
             Path dataDir = Paths.get(dataDirRoot, projectPath, "translated_data", "clean_translated_tokens");
             Path sourceArtifactPath = Paths.get(dataDir.toString(), "commit.csv");
             Path targetArtifactPath = Paths.get(dataDir.toString(), "issue.csv");
             VotingSystemExperiment vs = new VotingSystemExperiment(sourceArtifactPath.toString(), targetArtifactPath.toString());
-            Pair opResult = vs.runOptimizedSystem(outputDir);
+//            Pair opResult = vs.runOptimizedSystem(outputDir);
             Pair unOpResult = vs.runUnOptimized(outputDir);
-            long opTime = (Long) opResult.getKey();
+//            long opTime = (Long) opResult.getKey();
             long unOpTime = (Long) unOpResult.getKey();
-            opTimeList.add(String.valueOf(opTime));
-            opTraceTime.add(String.valueOf(opResult.getValue()));
+//            opTimeList.add(String.valueOf(opTime));
+//            opTraceTime.add(String.valueOf(opResult.getValue()));
             unOpTimeList.add(String.valueOf(unOpTime));
             unOpTraceTime.add(String.valueOf(unOpResult.getValue()));
-            System.out.println(String.format("%s Time =  %d/%d vs %d/%d", projectPath, opTime, opResult.getValue(), unOpTime, opResult.getValue()));
+//            System.out.println(String.format("%s Time =  %d/%d vs %d/%d", projectPath, opTime, opResult.getValue(), unOpTime, opResult.getValue()));
+            System.out.println("==============================");
+            System.out.println(String.format("%s,%s,%s", projectPath, unOpTime, unOpTraceTime));
         }
         org.apache.hadoop.fs.Path outputPath = new org.apache.hadoop.fs.Path(outputDir + "/time.csv");
         OutputStream out = outputPath.getFileSystem(new Configuration()).create(outputPath);
         String projectNameLine = "projects:" + String.join(",", projects) + "\n";
-        String opTimeLine = "OP TIME:" + String.join(",", opTimeList) + "\n";
-        String opTraceTimeLine = "OP TRACE:" + String.join(",", opTraceTime) + "\n";
+//        String opTimeLine = "OP TIME:" + String.join(",", opTimeList) + "\n";
+//        String opTraceTimeLine = "OP TRACE:" + String.join(",", opTraceTime) + "\n";
         String unOpTimeLine = "UNOP TIME:" + String.join(",", unOpTimeList) + "\n";
         String unopTraceTimeLine = "UNOP TRACE:" + String.join(",", unOpTraceTime) + "\n";
 
         out.write(projectNameLine.getBytes());
-        out.write(opTimeLine.getBytes());
+//        out.write(opTimeLine.getBytes());
         out.write(unOpTimeLine.getBytes());
-        out.write(opTraceTimeLine.getBytes());
+//        out.write(opTraceTimeLine.getBytes());
         out.write(unopTraceTimeLine.getBytes());
         out.close();
     }

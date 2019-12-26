@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class HardCodedSparkTraceJob extends SparkTraceJob {
     public HardCodedSparkTraceJob() {
-        super("local", "hardCodedExample");
+        super("local[*]", "hardCodedExample");
     }
 
     public void trace() {
