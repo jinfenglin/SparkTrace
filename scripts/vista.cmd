@@ -1,1 +1,0 @@
-spark-submit.cmd --class examples.HardCodedSparkTraceJob --master local[*] --executor-memory 6G --packages    .\classes\artifacts\SparkTrace_jar\SparkTrace.jar
