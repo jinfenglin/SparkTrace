@@ -3,7 +3,6 @@ import re
 import many_stop_words
 import math
 import nltk
-from github_project_crawl.github_script import KOREAN_CHAR_PATTERN
 
 
 class Preprocessor():

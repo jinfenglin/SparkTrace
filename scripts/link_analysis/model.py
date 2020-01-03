@@ -1,13 +1,10 @@
 import re
 
-import many_stop_words
 from nltk.parse.corenlp import CoreNLPParser
-from nltk.stem.snowball import SnowballStemmer
-from nltk import word_tokenize
 from subprocess import Popen, PIPE
 from datetime import datetime
 
-from reborn.Preprocessor import Preprocessor
+from Preprocessor import Preprocessor
 
 
 class Model:
@@ -61,8 +58,7 @@ class Model:
             return False
         return True
 
-    def get_link_scores(self, source_artifacts, target_artifacts, issue_create_dict, issue_close_dict,
-                        commit_time_dict):
+    def get_link_scores(self, source_artifacts, target_artifacts):
         """
         Create links for raw dataset
         :param source_artifacts:
@@ -84,11 +80,11 @@ class Model:
 
         for s_id in source_artifacts:
             for t_id in target_artifacts:
-                issue_create_time = issue_create_dict[s_id]
-                issue_close_time = issue_close_dict[s_id]
-                commit_time = commit_time_dict[t_id]
-                if not self.link_comply_with_time_constrain(issue_create_time, issue_close_time, commit_time):
-                    continue
+                # issue_create_time = issue_create_dict[s_id]
+                # issue_close_time = issue_close_dict[s_id]
+                # commit_time = commit_time_dict[t_id]
+                # if not self.link_comply_with_time_constrain(issue_create_time, issue_close_time, commit_time):
+                #     continue
                 s_tokens = self.processed_artifacts[s_id]
                 t_tokens = self.processed_artifacts[t_id]
                 score = self._get_doc_similarity(s_tokens, t_tokens)

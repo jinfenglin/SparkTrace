@@ -14,4 +14,6 @@ public interface TraceTaskBuilder {
     SparkTraceTask connectTask(SparkTraceTask traceTask) throws Exception;
 
     SparkTraceTask getTask(String sourceId, String targetId) throws Exception;
+
+    String getOutputColName();
 }

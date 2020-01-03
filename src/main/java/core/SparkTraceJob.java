@@ -14,8 +14,6 @@ public class SparkTraceJob {
         SparkConf conf = new SparkConf();
         conf.setMaster(masterUrl);
         conf.setAppName(jobName);
-        conf.set("spark.executor.memory", "6g");
-        conf.set("spark.driver.memory", "10g");
         this.jobName = jobName;
         sparkSession = SparkSession.builder().config(conf).getOrCreate();
     }

@@ -50,7 +50,7 @@ public class SparkTraceTask extends SGraph {
 
     private PipelineModel sourceSDFModel, targetSDFModel, ddfModel, predictModel;
     private List<PipelineModel> unsupervisedModels;
-    public int indexOn = 0; // -1 index on source 0 index on both 1 index on target
+    public int indexOn = 1; // -1 index on source 0 index on both 1 index on target
 
 
     public SparkTraceTask(SGraph sourceSDF, SGraph targetSDF, List<SGraph> unsupervisedLearnGraphs, SGraph ddfGraph, String sourceIdCol, String targetIdCol) throws Exception {
@@ -159,8 +159,14 @@ public class SparkTraceTask extends SGraph {
         PipelineModel targetSDFModel = this.getTargetSDFSdfGraph().toPipeline().fit(targetArtifacts);
         this.sourceSDFModel = sourceSDFModel;
         this.targetSDFModel = targetSDFModel;
+
         Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
+
+        //temp fix for Vista task
+        sourceSDFeatureVecs = sourceSDFeatureVecs.drop(config.get("s_text"));
+        targetSDFeatureVecs = targetSDFeatureVecs.drop(config.get("t_text"));
+
         unsupervisedLeanring(sourceSDFeatureVecs, targetSDFeatureVecs);
         int i = 0;
         for (SGraph unsupervisedLearnGraph : this.unsupervisedLearnGraphs) {
@@ -188,7 +194,6 @@ public class SparkTraceTask extends SGraph {
             candidateLinks = candidateLinks.filter(col(LabelCol).equalTo(0)).limit(cnt).union(candidateLinks.filter(col(LabelCol).equalTo(1))); //create equal size of positive and negative samples for training
         }
 
-        candidateLinks = candidateLinks.cache();
         PipelineModel ddfModel = ddfGraph.toPipeline().fit(candidateLinks);
         this.ddfModel = ddfModel;
         if (predictGraph != null) {
@@ -200,7 +205,8 @@ public class SparkTraceTask extends SGraph {
                               Dataset<?> targetArtifacts) {
         Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
-
+        sourceSDFeatureVecs = sourceSDFeatureVecs.drop("code_content");
+        targetSDFeatureVecs = targetSDFeatureVecs.drop("issue_content");
         int i = 0;
         for (PipelineModel unsupervisedModel : this.unsupervisedModels) {
             SGraph unsupervisedLearnGraph = this.unsupervisedLearnGraphs.get(i);
@@ -289,8 +295,6 @@ public class SparkTraceTask extends SGraph {
 
     private Dataset createCandidateLink(Dataset sourceSDFVec, Dataset targetSDFVec) {
         Dataset<Row> candidateLinks;
-        sourceSDFVec.cache();
-        targetSDFVec.cache();
         if (useDirtyBit) {
             Dataset dirtySource = sourceSDFVec.filter(col(DIRTY_BIT_COL).equalTo(true)).drop(DIRTY_BIT_COL);
             Dataset cleanSource = sourceSDFVec.filter(col(DIRTY_BIT_COL).equalTo(false)).drop(DIRTY_BIT_COL);

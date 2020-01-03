@@ -59,4 +59,9 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
         connectTask(task);
         return task;
     }
+
+    @Override
+    public String getOutputColName() {
+        return OUTPUT;
+    }
 }
