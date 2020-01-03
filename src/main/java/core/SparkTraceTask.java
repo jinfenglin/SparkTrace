@@ -11,6 +11,7 @@ import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.clustering.LDAModel;
+import org.apache.spark.ml.linalg.SparseVector;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -20,6 +21,7 @@ import scala.collection.Seq;
 
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static experiments.DirtyBitExperiment.DIRTY_BIT_COL;
 import static org.apache.spark.sql.functions.*;
@@ -168,6 +170,7 @@ public class SparkTraceTask extends SGraph {
         targetSDFeatureVecs = targetSDFeatureVecs.drop(config.get("t_text"));
 
         unsupervisedLeanring(sourceSDFeatureVecs, targetSDFeatureVecs);
+
         int i = 0;
         for (SGraph unsupervisedLearnGraph : this.unsupervisedLearnGraphs) {
             PipelineModel unsupervisedModel = this.unsupervisedModels.get(i);
@@ -186,6 +189,18 @@ public class SparkTraceTask extends SGraph {
             targetSDFeatureVecs = unsupervisedModel.transform(targetSDFeatureVecs);
             i++;
         }
+        String sourceHtfColumn = Arrays.asList(sourceSDFeatureVecs.columns()).stream().filter(x -> x.startsWith("IDF")).toArray(String[]::new)[0];
+        String targetHtfColumn = Arrays.asList(targetSDFeatureVecs.columns()).stream().filter(x -> x.startsWith("IDF")).toArray(String[]::new)[0];
+
+        sourceSDFeatureVecs.sqlContext().udf().register("myfunc", (Object obj) -> {
+            return obj.toString();
+
+        }, DataTypes.StringType);
+
+        sourceSDFeatureVecs.withColumn("TF_IDF", callUDF("myfunc", col(sourceHtfColumn))).select("code_id","TF_IDF").write().format("com.databricks.spark.csv")
+                .option("header", "true").mode("overwrite").save("results/vista" + "/" + "code_info.csv");
+        targetSDFeatureVecs.withColumn("TF_IDF", callUDF("myfunc", col(targetHtfColumn))).select("req_id","TF_IDF").write().format("com.databricks.spark.csv")
+                .option("header", "true").mode("overwrite").save("results/vista" + "/" + "req_info.csv");
         Dataset<Row> candidateLinks = sourceSDFeatureVecs.crossJoin(targetSDFeatureVecs);
         if (goldenLinks != null) {
             Seq<String> joinCondition = JavaConverters.asScalaIteratorConverter(Arrays.asList(sourceIdCol, targetIdCol).iterator()).asScala().toSeq();
@@ -207,6 +222,7 @@ public class SparkTraceTask extends SGraph {
         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
         sourceSDFeatureVecs = sourceSDFeatureVecs.drop("code_content");
         targetSDFeatureVecs = targetSDFeatureVecs.drop("issue_content");
+
         int i = 0;
         for (PipelineModel unsupervisedModel : this.unsupervisedModels) {
             SGraph unsupervisedLearnGraph = this.unsupervisedLearnGraphs.get(i);
