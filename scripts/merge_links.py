@@ -32,4 +32,3 @@ if __name__ == "__main__":
     res["scores"] = scores
     df = pandas.DataFrame(res)
     df.to_csv("vist_req_code_raw.csv")
-    print("Finished")

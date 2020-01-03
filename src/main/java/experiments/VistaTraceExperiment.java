@@ -17,14 +17,13 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static core.graphPipeline.basic.Graph.syncSymbolValues;
-import static org.apache.spark.sql.functions.col;
 import static utils.DataReadUtil.*;
 
 /**
  *
  */
 public class VistaTraceExperiment extends SparkTraceJob {
-    int batch_size = 9000;
+    int batch_size = 40000;
     List<Path> codeFilePaths;
     Dataset<Row> requirement, CCHIT, HIPPA;
     private static String outputDir = "results/vista";
@@ -75,18 +74,16 @@ public class VistaTraceExperiment extends SparkTraceJob {
         int iterNum = codeFilePaths.size() / batch_size;
         long start = System.currentTimeMillis();
         int index = 0;
-//        codeFilePaths = codeFilePaths.stream().filter(x -> x.endsWith("OOPSGUIT.m")).collect(Collectors.toList());
         for (int i = 0; i <= iterNum; i++) {
-            long batch_start = System.currentTimeMillis();
+//            long batch_start = System.currentTimeMillis();
 //            List<Row> rows = readCode(codeFilePaths.subList(i * batch_size, Math.min((i + 1) * batch_size, codeFilePaths.size())));
             List<Row> rows = readCode(codeFilePaths.subList(index, Math.min(index + batch_size, codeFilePaths.size())));
             index += batch_size;
             Dataset code = createVistaDataset(CODE_ID, CODE_CONTENT, rows, sparkSession);
-//            requirement = requirement.filter(col("req_id").equalTo("WV-HPS-VIM-012"));
             trace(CODE_ID, CODE_CONTENT, REQ_ID, REQ_CONTENT, code, requirement, "code_req_" + i);
-            long batch_end = System.currentTimeMillis();
-            Logger.getLogger("").info(String.format("code-req batch %s time = %s", i, batch_end - batch_start));
-            code.unpersist();
+//            long batch_end = System.currentTimeMillis();
+//            Logger.getLogger("").info(String.format("code-req batch %s time = %s", i, batch_end - batch_start));
+//            code.unpersist();
         }
         long end = System.currentTimeMillis();
         return end - start;
