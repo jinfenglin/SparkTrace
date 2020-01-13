@@ -112,10 +112,10 @@ class Preprocessor():
         for wd in res:
             tokens.extend(self.split_camal_case(wd))
         tokens = [x.lower() for x in tokens]
-        tokens = self.remove_java_keyword(tokens)
-        tokens = self.remove_stop_word(tokens, language=language)
+        # tokens = self.remove_java_keyword(tokens)
+        # tokens = self.remove_stop_word(tokens, language=language)
         tokens = self.remove_stop_word(tokens, language="en")
-        tokens = self.remove_stop_word(tokens, stop_words=self.customized_stop_words)
+        # tokens = self.remove_stop_word(tokens, stop_words=self.customized_stop_words)
         # tokens = limit_token_min_length(tokens)
         return tokens
 

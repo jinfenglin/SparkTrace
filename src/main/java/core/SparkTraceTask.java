@@ -205,8 +205,10 @@ public class SparkTraceTask extends SGraph {
                               Dataset<?> targetArtifacts) {
         Dataset<Row> sourceSDFeatureVecs = sourceSDFModel.transform(sourceArtifacts);
         Dataset<Row> targetSDFeatureVecs = targetSDFModel.transform(targetArtifacts);
-        sourceSDFeatureVecs = sourceSDFeatureVecs.drop("code_content");
-        targetSDFeatureVecs = targetSDFeatureVecs.drop("issue_content");
+
+        sourceSDFeatureVecs = sourceSDFeatureVecs.drop(config.get("s_text"));
+        targetSDFeatureVecs = targetSDFeatureVecs.drop(config.get("t_text"));
+
         int i = 0;
         for (PipelineModel unsupervisedModel : this.unsupervisedModels) {
             SGraph unsupervisedLearnGraph = this.unsupervisedLearnGraphs.get(i);

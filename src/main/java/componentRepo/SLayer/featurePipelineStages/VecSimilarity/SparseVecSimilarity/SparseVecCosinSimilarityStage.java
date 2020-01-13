@@ -53,7 +53,7 @@ public class SparseVecCosinSimilarityStage extends VecSimilarityTransformer {
             }
             return productScore / (Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum));
         }, DataTypes.DoubleType);
-        Logger.getLogger(this.getClass().getName()).info(String.format("finished sparseVecsim with "));
+        Logger.getLogger(this.getClass().getName()).info(String.format("finished sparseVecSim"));
         return getSimilarityScore(dataset, COSIN_SIMILAIRY_UDF);
     }
 

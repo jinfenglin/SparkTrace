@@ -83,7 +83,7 @@ if __name__ == "__main__":
         preprocessor = Preprocessor()
         for code_id in code_list:
             with open(code_path[code_id], encoding='utf8', errors="ignore") as fin:
-                code_content[code_id] = " ".join(preprocessor.get_stemmed_tokens(fin.read(), "en"))
+                code_content[code_id] = " ".join(preprocessor.get_tokens(fin.read(), "en"))
         code_df = pd.DataFrame(list(code_content.items()), columns=default_df_schema)
         code_df.to_csv(code_df_file_name)
 

@@ -2,7 +2,8 @@ import os
 import pandas
 
 if __name__ == "__main__":
-    data_dir = "../results/vista"
+    # data_dir = "../results/vista"
+    data_dir = "D:\spark_res"
     dirs = os.listdir(data_dir)
     cnt = 0
     code_ids = []

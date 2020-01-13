@@ -20,6 +20,8 @@ public class LDAGraphPipeline {
 
         LDAWithIO lda = new LDAWithIO();
         SNode ldaNode = new SNode(lda, "LDA");
+        lda.setMaxIter(100);
+        lda.setK(20);
         ldaNode.addInputField(INPUT1);
         ldaNode.addInputField(INPUT2);
         ldaNode.addOutputField(OUTPUT1);
