@@ -40,9 +40,10 @@ public class CleanStage extends Transformer implements HasInputCol, HasOutputCol
     public Dataset<Row> transform(Dataset<?> dataset) {
         String input = getInputCol();
         dataset.sqlContext().udf().register(CLEAN_STAGE, (String text) -> {
-            text = text.replaceAll("[^A-Za-z0-9]", " ");
-            text = text.toLowerCase();
-            return text;
+                text = text.replaceAll("[^A-Za-z0-9]", " ");
+                text = text.toLowerCase();
+                return text;
+
         }, DataTypes.StringType);
         return dataset.withColumn(getOutputCol(), callUDF(CLEAN_STAGE, dataset.col(input)));
     }

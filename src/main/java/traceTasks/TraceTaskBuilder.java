@@ -16,4 +16,7 @@ public interface TraceTaskBuilder {
     SparkTraceTask getTask(String sourceId, String targetId) throws Exception;
 
     String getOutputColName();
+
+    default void setDebugFlag(boolean flag) {
+    }
 }

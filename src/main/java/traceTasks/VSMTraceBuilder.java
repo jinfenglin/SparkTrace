@@ -12,9 +12,13 @@ import java.util.Arrays;
  *
  */
 public class VSMTraceBuilder implements TraceTaskBuilder {
+    private boolean debug = false;
     public static String INPUT_TEXT1 = "s_text";
     public static String INPUT_TEXT2 = "t_text";
     public static String OUTPUT = "vsm_sim";
+
+    public static String DEBUG_OUTPUT1 = "s_idf";
+    public static String DEBUG_OUTPUT2 = "t_idf";
 
     @Override
     public SGraph createSDF() throws Exception {
@@ -43,6 +47,10 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
         task.connect(task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.OUTPUT1, task.getDdfGraph(), SparseCosinSimilarityPipeline.INPUT1);
         task.connect(task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.OUTPUT2, task.getDdfGraph(), SparseCosinSimilarityPipeline.INPUT2);
         task.connect(task.getDdfGraph(), SparseCosinSimilarityPipeline.OUTPUT, task.sinkNode, OUTPUT);
+        if (debug) {
+            task.connect(task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.OUTPUT1, task.sinkNode, DEBUG_OUTPUT1);
+            task.connect(task.getUnsupervisedLearnGraph().get(0), IDFGraphPipeline.OUTPUT2, task.sinkNode, DEBUG_OUTPUT2);
+        }
         return task;
     }
 
@@ -56,6 +64,9 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
         task.setVertexLabel("VSM");
         task.addInputField(INPUT_TEXT1).addInputField(INPUT_TEXT2);
         task.addOutputField(OUTPUT);
+        if (debug) {
+            task.addOutputField(DEBUG_OUTPUT1).addOutputField(DEBUG_OUTPUT2);
+        }
         connectTask(task);
         return task;
     }
@@ -63,5 +74,9 @@ public class VSMTraceBuilder implements TraceTaskBuilder {
     @Override
     public String getOutputColName() {
         return OUTPUT;
+    }
+
+    public void setDebugFlag(boolean flag) {
+        this.debug = flag;
     }
 }

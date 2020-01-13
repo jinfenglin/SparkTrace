@@ -61,10 +61,9 @@ public class VistaTraceExperiment extends SparkTraceJob {
         Dataset<Row> result = trace(tracer, s_id, s_text, t_id, t_text, sourceData, targetData);
         String vsmScore = tracer.getOutputField(tracerBuilder.getOutputColName()).getFieldSymbol().getSymbolValue();
         result.select(s_id, t_id, vsmScore).write()
-                .format("parquet")
+                .format("csv")
                 .option("header", "true").mode("overwrite")
-                .save(outputDir + "/" + linkDir);
-        result.count();
+                .save(linkDir);
         result.unpersist();
     }
 
@@ -90,7 +89,7 @@ public class VistaTraceExperiment extends SparkTraceJob {
             List<Row> rows = readCode(codeFilePaths.subList(index, Math.min(index + batch_size, codeFilePaths.size())));
             index += batch_size;
             Dataset code = createVistaDataset(CODE_ID, CODE_CONTENT, rows, sparkSession);
-            trace(CODE_ID, CODE_CONTENT, REQ_ID, REQ_CONTENT, code, requirement, "code_req_" + i);
+            trace(CODE_ID, CODE_CONTENT, REQ_ID, REQ_CONTENT, code, requirement, outputDir + "code_req_" + i);
             long batch_end = System.currentTimeMillis();
             Logger.getLogger("").info(String.format("code-req batch %s time = %s", i, batch_end - batch_start));
             code.unpersist();
@@ -107,7 +106,7 @@ public class VistaTraceExperiment extends SparkTraceJob {
             Logger.getLogger(this.getClass().getName()).warning(String.format("Processing code-HIPPA in batch %s", i));
             List<Row> rows = readCode(codeFilePaths.subList(i * batch_size, Math.min((i + 1) * batch_size, codeFilePaths.size())));
             Dataset code = createVistaDataset(CODE_ID, CODE_CONTENT, rows, sparkSession);
-            trace(CODE_ID, CODE_CONTENT, HIPPA_ID, HIPPA_CONTENT, code, HIPPA, "code_HIPPA_" + i);
+            trace(CODE_ID, CODE_CONTENT, HIPPA_ID, HIPPA_CONTENT, code, HIPPA, outputDir + "code_HIPPA_" + i);
             long batch_end = System.currentTimeMillis();
             Logger.getLogger("").info(String.format("code-req batch %s time = %s", i, batch_end - batch_start));
         }
@@ -122,7 +121,7 @@ public class VistaTraceExperiment extends SparkTraceJob {
             long batch_start = System.currentTimeMillis();
             List<Row> rows = readCode(codeFilePaths.subList(i * batch_size, Math.min((i + 1) * batch_size, codeFilePaths.size())));
             Dataset code = createVistaDataset(CODE_ID, CODE_CONTENT, rows, sparkSession);
-            trace(CODE_ID, CODE_CONTENT, CCHIT_ID, CCHIT_CONTENT, code, CCHIT, "code_CCHIT" + i);
+            trace(CODE_ID, CODE_CONTENT, CCHIT_ID, CCHIT_CONTENT, code, CCHIT, outputDir + "code_CCHIT" + i);
             long batch_end = System.currentTimeMillis();
             Logger.getLogger("").info(String.format("code-req batch %s time = %s", i, batch_end - batch_start));
         }
@@ -132,14 +131,14 @@ public class VistaTraceExperiment extends SparkTraceJob {
 
     public long TraceReqHIPPA() throws Exception {
         long start = System.currentTimeMillis();
-        trace(REQ_ID, REQ_CONTENT, HIPPA_ID, HIPPA_CONTENT, requirement, HIPPA, "req_HIPPA");
+        trace(REQ_ID, REQ_CONTENT, HIPPA_ID, HIPPA_CONTENT, requirement, HIPPA, outputDir + "req_HIPPA");
         long end = System.currentTimeMillis();
         return end - start;
     }
 
     public long TraceReqCCHIT() throws Exception {
         long start = System.currentTimeMillis();
-        trace(REQ_ID, REQ_CONTENT, CCHIT_ID, CCHIT_CONTENT, requirement, CCHIT, "req_CCHIT");
+        trace(REQ_ID, REQ_CONTENT, CCHIT_ID, CCHIT_CONTENT, requirement, CCHIT, outputDir + "req_CCHIT");
         long end = System.currentTimeMillis();
         return end - start;
     }
@@ -147,7 +146,7 @@ public class VistaTraceExperiment extends SparkTraceJob {
 
     public long TraceHIPPAToCCHIT() throws Exception {
         long start = System.currentTimeMillis();
-        trace(CCHIT_ID, CCHIT_CONTENT, HIPPA_ID, HIPPA_CONTENT, CCHIT, HIPPA, "HIPPA_CCHIT");
+        trace(CCHIT_ID, CCHIT_CONTENT, HIPPA_ID, HIPPA_CONTENT, CCHIT, HIPPA, outputDir + "HIPPA_CCHIT");
         long end = System.currentTimeMillis();
         return end - start;
     }
