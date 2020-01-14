@@ -48,10 +48,13 @@ public class SparseVecCosinSimilarityStage extends VecSimilarityTransformer {
                     i2 += 1;
                 }
             }
-            double sim = productScore / (Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum));
+            double deno = Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum);
+            double sim = 0;
+            if (deno > 0) {
+                sim = productScore / deno;
+            }
             return sim;
         }, DataTypes.DoubleType);
-        Logger.getLogger(this.getClass().getName()).info(String.format("finished sparseVecSim"));
         return getSimilarityScore(dataset, COSIN_SIMILARITY_UDF);
     }
 

@@ -9,12 +9,9 @@ import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.expressions.WindowSpec;
 import traceTasks.VSMTraceBuilder;
 
-import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -27,7 +24,7 @@ import static utils.DataReadUtil.REQ_CONTENT;
  */
 public class ICPC_Query2 extends VistaTraceExperiment {
     private static String outputDir = "results/vista_query2";
-    private static String secure_code_dir = outputDir + "/" + "security_code/*/*.csv";
+    private static String secure_code_dir = outputDir + "/" + "security_code";
     private static String code_req_link_dir = outputDir + "/" + "code_req_links";
     Dataset<Row> query_data;
     String QUERY_ID = "query_id", QUERY_CONTENT = "query_content";
@@ -45,52 +42,49 @@ public class ICPC_Query2 extends VistaTraceExperiment {
     }
 
     public long traceQueryCode() throws Exception {
-//        if (Files.isDirectory(Paths.get(secure_code_dir))) {
-//            Files.walk(Paths.get(secure_code_dir))
-//                    .sorted(Comparator.reverseOrder())
-//                    .map(Path::toFile)
-//                    .forEach(File::delete);
-//        }
         int iterNum = codeFilePaths.size() / batch_size;
         long time_without_io = 0;
-        String CODE_ID_SE = "CODE_ID_SE";
+        String VSM_SCORE = "QUERY_CODE_VSM_SCORE";
         long start = System.currentTimeMillis();
-        int index = 2 * batch_size;
-        for (int i = 2; i <= iterNum; i++) {
-            long batch_start = System.currentTimeMillis();
+        Dataset select_code = null;
+        int index = 0;
+        for (int i = 0; i <= iterNum; i++) {
             List<Row> rows = readCode(codeFilePaths.subList(index, Math.min(index + batch_size, codeFilePaths.size())));
             index += batch_size;
             Dataset code = createVistaDataset(CODE_ID, CODE_CONTENT, rows, sparkSession);
             SparkTraceTask tracer = tracerBuilder.getTask(sourceId, targetId);
-            tracer.indexOn = 1;
+            long batch_start = System.currentTimeMillis();
             Dataset result = trace(tracer, QUERY_ID, QUERY_CONTENT, CODE_ID, CODE_CONTENT, query_data, code);
             String vsmScore = tracer.getOutputField(tracerBuilder.getOutputColName()).getFieldSymbol().getSymbolValue();
-            result = result.drop(col(QUERY_ID));
-            result = result.filter(col(vsmScore).geq(0.05));
-            result = result.withColumnRenamed(CODE_ID, CODE_ID_SE);
-            result = result.join(code, code.col(CODE_ID).equalTo(result.col(CODE_ID_SE)), "left_outer");
-//            result.count(); // invoke computation to compute time
+
+            result = result.select(CODE_ID, vsmScore).withColumnRenamed(vsmScore, VSM_SCORE);
+            result = result.filter(col(VSM_SCORE).gt(0.05));
+
+            if (select_code == null) {
+                select_code = result;
+            } else {
+                select_code = select_code.union(result);
+            }
             long batch_end = System.currentTimeMillis();
             long batch_time = batch_end - batch_start;
             Logger.getLogger("").info(String.format("code-req batch %s time = %s", i, batch_end - batch_start));
-            result.select(CODE_ID, CODE_CONTENT, vsmScore).write()
-                    .format("csv")
-                    .option("header", "true").mode("overwrite")
-                    .save(secure_code_dir + "/query_code_" + i);
             time_without_io += batch_time;
             code.unpersist();
-            Logger.getLogger("").info(String.format("finished writing %s", i));
         }
         long end = System.currentTimeMillis();
+        select_code.select(CODE_ID).write()
+                .format("csv")
+                .option("header", "true").mode("overwrite")
+                .save(secure_code_dir + "/query_code");
         return time_without_io;
     }
 
     public long traceCodeReq() throws Exception {
         Dataset selected_code = sparkSession.read().option("parserLib", "univocity")
-                .option("multiLine", "true").option("header", "true").csv(secure_code_dir);
+                .option("multiLine", "true").option("header", "true").csv(secure_code_dir + "/query_code/");
         long start = System.currentTimeMillis();
         SparkTraceTask tracer = tracerBuilder.getTask(sourceId, targetId);
-        tracer.indexOn = 0;
+        tracer.indexOn = 1;
         Dataset<Row> result = trace(tracer, CODE_ID, CODE_CONTENT, REQ_ID, REQ_CONTENT, selected_code, requirement);
         String vsmScore = tracer.getOutputField(tracerBuilder.getOutputColName()).getFieldSymbol().getSymbolValue();
         WindowSpec wind = Window.partitionBy(col(CODE_ID)).orderBy(desc(vsmScore));
@@ -105,14 +99,14 @@ public class ICPC_Query2 extends VistaTraceExperiment {
 
 
     public static void main(String[] args) throws Exception {
-        String codePath = "G:\\download\\VistA-M-master\\Packages";
-        String reqPath = "G:\\Download\\Vista\\Processed\\vista_requirement.csv"; // # = 1115
-        String cchitPath = "G:\\Download\\Vista\\Processed\\Processed-CCHIT-NEW-For-Poirot.xml"; //# = 462
-        String hippaPath = "G:\\Download\\Vista\\Processed\\11HIPAA_Goal_Model.xml"; // # = 10
+        String codePath = "F:\\download\\VistA-M-master\\Packages";
+        String reqPath = "F:\\Download\\Vista\\Processed\\vista_requirement.csv"; // # = 1115
+        String cchitPath = "F:\\Download\\Vista\\Processed\\Processed-CCHIT-NEW-For-Poirot.xml"; //# = 462
+        String hippaPath = "F:\\Download\\Vista\\Processed\\11HIPAA_Goal_Model.xml"; // # = 10
         ICPC_Query2 exp = new ICPC_Query2(codePath, reqPath, cchitPath, hippaPath);
         long t1 = 0, t2 = 0;
-//        t1 = exp.traceQueryCode();
-        t2 = exp.traceCodeReq();
+        t1 = exp.traceQueryCode();
+//        t2 = exp.traceCodeReq();
         String info = String.format("query_code:%s, code_req:%s", t1, t2);
         Files.write(Paths.get(outputDir + "/time.txt"), info.getBytes());
     }

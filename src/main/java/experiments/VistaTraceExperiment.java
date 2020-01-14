@@ -38,11 +38,8 @@ public class VistaTraceExperiment extends SparkTraceJob {
         //code = DataReadUtil.readVistaCode(codePath, sparkSession);
         codeFilePaths = Files.walk(Paths.get(codePath)).filter(Files::isRegularFile).collect(Collectors.toList());
         requirement = DataReadUtil.readVistaReq(reqPath, sparkSession).cache();
-        CCHIT = DataReadUtil.readVistaCCHIT(cchitPath, sparkSession).cache();
+        CCHIT = DataReadUtil.readVistaCCHIT(cchitPath, sparkSession);
         HIPPA = DataReadUtil.readVistaHIPPA(hippaPath, sparkSession).cache();
-        requirement.cache().count();
-        CCHIT.cache().count();
-        HIPPA.cache().count();
         tracerBuilder = new VSMTraceBuilder();
     }
 

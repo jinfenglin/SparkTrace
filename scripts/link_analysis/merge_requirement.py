@@ -5,7 +5,7 @@ requirement file have duplicated id
 import re
 import pandas as pd
 
-with open("G:\Download\Vista\Processed\Processed-Vista-NEW.xml", encoding="utf8") as fin:
+with open("F:\Download\Vista\Processed\Processed-Vista-NEW.xml", encoding="utf8") as fin:
     visited = set()
     cnt = 1
     df = pd.DataFrame()
@@ -25,4 +25,4 @@ with open("G:\Download\Vista\Processed\Processed-Vista-NEW.xml", encoding="utf8"
             print(id, artTitle)
     df["req_id"] = ids
     df["req_content"] = content
-    df.to_csv("G:\\Download\\Vista\\Processed\\vista_requirement.csv", index=False)
+    df.to_csv("F:\\Download\\Vista\\Processed\\vista_requirement.csv", index=False)
