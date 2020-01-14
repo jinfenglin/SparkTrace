@@ -40,7 +40,10 @@ public class VistaTraceExperiment extends SparkTraceJob {
         requirement = DataReadUtil.readVistaReq(reqPath, sparkSession).cache();
         CCHIT = DataReadUtil.readVistaCCHIT(cchitPath, sparkSession).cache();
         HIPPA = DataReadUtil.readVistaHIPPA(hippaPath, sparkSession).cache();
-        tracerBuilder = new LDATraceBuilder();
+        requirement.cache().count();
+        CCHIT.cache().count();
+        HIPPA.cache().count();
+        tracerBuilder = new VSMTraceBuilder();
     }
 
     protected Dataset trace(SparkTraceTask tracer, String s_id, String s_text, String t_id, String t_text, Dataset sourceData, Dataset targetData) throws Exception {
@@ -60,10 +63,10 @@ public class VistaTraceExperiment extends SparkTraceJob {
         SparkTraceTask tracer = tracerBuilder.getTask(sourceId, targetId);
         Dataset<Row> result = trace(tracer, s_id, s_text, t_id, t_text, sourceData, targetData);
         String vsmScore = tracer.getOutputField(tracerBuilder.getOutputColName()).getFieldSymbol().getSymbolValue();
-        result.select(s_id, t_id, vsmScore).write()
-                .format("csv")
-                .option("header", "true").mode("overwrite")
-                .save(linkDir);
+//        result.select(s_id, t_id, vsmScore).write()
+//                .format("csv")
+//                .option("header", "true").mode("overwrite")
+//                .save(linkDir);
         result.unpersist();
     }
 
@@ -163,8 +166,8 @@ public class VistaTraceExperiment extends SparkTraceJob {
 //        t2 = exp.traceCodeReq(); //SC->REQ
 //        t3 = exp.TraceCodeCCHIT();
         t5 = exp.TraceReqCCHIT();//REQ->CHT
-        t4 = exp.TraceReqHIPPA(); //HP->REQ
-        t6 = exp.TraceHIPPAToCCHIT(); //HP->CHT
+//        t4 = exp.TraceReqHIPPA(); //HP->REQ
+//        t6 = exp.TraceHIPPAToCCHIT(); //HP->CHT
         String info = String.format("code_hippa:%s, code_req:%s, code_cchit:%s,req_hippa:%s,req_cchit:%s, hippa_cchit:%s", t1, t2, t3, t4, t5, t6);
         Files.write(Paths.get(outputDir + "/time.txt"), info.getBytes());
 
