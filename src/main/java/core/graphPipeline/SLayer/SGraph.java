@@ -126,11 +126,11 @@ public class SGraph extends Graph implements SDFInterface, SLayerComponent {
                         }
                         int remainDemand = demandTable.get(sourceCellSymbolValue) - 1;
                         demandTable.put(sourceCellSymbolValue, remainDemand);
-                        if (remainDemand == 0 && sourceCell.isRemovable()) {
-                            SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
-                            removalStage.setInputCols(new String[]{sourceCellSymbolValue});
-                            stages.add(removalStage);
-                        }
+//                        if (remainDemand == 0 && sourceCell.isRemovable()) {
+//                            SGraphColumnRemovalStage removalStage = new SGraphColumnRemovalStage();
+//                            removalStage.setInputCols(new String[]{sourceCellSymbolValue});
+//                            stages.add(removalStage);
+//                        }
                     }
                 }
             }

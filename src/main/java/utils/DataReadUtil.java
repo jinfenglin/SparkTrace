@@ -11,7 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -65,8 +67,7 @@ public class DataReadUtil {
     }
 
     public static Dataset<Row> readVistaReq(String reqPath, SparkSession sparkSession) throws IOException {
-        List<Row> rows = readVistaDoc(reqPath);
-        return createVistaDataset(REQ_ID, REQ_CONTENT, rows, sparkSession);
+        return sparkSession.read().format("csv").option("header", "true").load(reqPath);
     }
 
     public static Dataset<Row> readVistaCCHIT(String cchitPath, SparkSession sparkSession) throws IOException {
@@ -78,4 +79,6 @@ public class DataReadUtil {
         List<Row> rows = readVistaDoc(hippaPath);
         return createVistaDataset(HIPPA_ID, HIPPA_CONTENT, rows, sparkSession);
     }
+
+
 }

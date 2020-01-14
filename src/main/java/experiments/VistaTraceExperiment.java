@@ -153,7 +153,7 @@ public class VistaTraceExperiment extends SparkTraceJob {
 
     public static void main(String[] args) throws Exception {
         String codePath = "G:\\Download\\VistA-M-master";
-        String reqPath = "G:\\Download\\Vista\\Processed\\Processed-Vista-NEW.xml"; // # = 1115
+        String reqPath = "G:\\Download\\Vista\\Processed\\vista_requirement.csv"; // # = 1115
         String cchitPath = "G:\\Download\\Vista\\Processed\\Processed-CCHIT-NEW-For-Poirot.xml"; //# = 462
         String hippaPath = "G:\\Download\\Vista\\Processed\\11HIPAA_Goal_Model.xml"; // # = 10
         VistaTraceExperiment exp = new VistaTraceExperiment(codePath, reqPath, cchitPath, hippaPath);

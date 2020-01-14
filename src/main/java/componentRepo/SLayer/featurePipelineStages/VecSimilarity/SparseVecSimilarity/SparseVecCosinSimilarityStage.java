@@ -8,12 +8,9 @@ import org.apache.spark.sql.types.DataTypes;
 
 import java.util.logging.Logger;
 
-import static org.apache.spark.sql.functions.callUDF;
-
 public class SparseVecCosinSimilarityStage extends VecSimilarityTransformer {
     private static final long serialVersionUID = 5667889784880518528L;
-    private static final String COSIN_SIMILAIRY_UDF = "cosin_similarity_UDF";
-
+    private static final String COSIN_SIMILARITY_UDF = "cosin_similarity_UDF";
 
     public SparseVecCosinSimilarityStage() {
         super();
@@ -22,7 +19,7 @@ public class SparseVecCosinSimilarityStage extends VecSimilarityTransformer {
     @Override
     public Dataset<Row> transform(Dataset<?> dataset) {
         transformSchema(dataset.schema());
-        dataset.sqlContext().udf().register(COSIN_SIMILAIRY_UDF, (SparseVector v1, SparseVector v2) -> {
+        dataset.sqlContext().udf().register(COSIN_SIMILARITY_UDF, (SparseVector v1, SparseVector v2) -> {
             int[] sv1Indices = v1.indices();
             double[] sv1Value = v1.values();
             int[] sv2Indices = v2.indices();
@@ -34,27 +31,28 @@ public class SparseVecCosinSimilarityStage extends VecSimilarityTransformer {
             double productScore = 0;
             double v1SquSum = 0;
             double v2SquSum = 0;
-            for (int v1IndexCursor = 0, v2IndexCursor = 0; v1IndexCursor < v1Length || v2IndexCursor < v2Length; ) {
-                while (v1IndexCursor < v1Length && (v2IndexCursor >= v2Length || sv1Indices[v1IndexCursor] < sv2Indices[v2IndexCursor])) {
-                    v1SquSum += sv1Value[v1IndexCursor] * sv1Value[v1IndexCursor];
-                    v1IndexCursor += 1;
+            for (int i1 = 0, i2 = 0; i1 < v1Length || i2 < v2Length; ) {
+                while (i1 < v1Length && (i2 >= v2Length || sv1Indices[i1] < sv2Indices[i2])) {
+                    v1SquSum += sv1Value[i1] * sv1Value[i1];
+                    i1 += 1;
                 }
-                while (v2IndexCursor < v2Length && (v1IndexCursor >= v1Length || sv1Indices[v1IndexCursor] > sv2Indices[v2IndexCursor])) {
-                    v2SquSum += sv2Value[v2IndexCursor] * sv2Value[v2IndexCursor];
-                    v2IndexCursor += 1;
+                while (i2 < v2Length && (i1 >= v1Length || sv1Indices[i1] > sv2Indices[i2])) {
+                    v2SquSum += sv2Value[i2] * sv2Value[i2];
+                    i2 += 1;
                 }
-                if (v1IndexCursor < v1Length && v2IndexCursor < v2Length && sv1Indices[v1IndexCursor] == sv2Indices[v2IndexCursor]) {
-                    productScore += sv1Value[v1IndexCursor] * sv2Value[v2IndexCursor];
-                    v1SquSum += sv1Value[v1IndexCursor] * sv1Value[v1IndexCursor];
-                    v2SquSum += sv2Value[v2IndexCursor] * sv2Value[v2IndexCursor];
-                    v1IndexCursor += 1;
-                    v2IndexCursor += 1;
+                if (i1 < v1Length && i2 < v2Length && sv1Indices[i1] == sv2Indices[i2]) {
+                    productScore += sv1Value[i1] * sv2Value[i2];
+                    v1SquSum += sv1Value[i1] * sv1Value[i1];
+                    v2SquSum += sv2Value[i2] * sv2Value[i2];
+                    i1 += 1;
+                    i2 += 1;
                 }
             }
-            return productScore / (Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum));
+            double sim = productScore / (Math.sqrt(v1SquSum) * Math.sqrt(v2SquSum));
+            return sim;
         }, DataTypes.DoubleType);
         Logger.getLogger(this.getClass().getName()).info(String.format("finished sparseVecSim"));
-        return getSimilarityScore(dataset, COSIN_SIMILAIRY_UDF);
+        return getSimilarityScore(dataset, COSIN_SIMILARITY_UDF);
     }
 
     @Override
