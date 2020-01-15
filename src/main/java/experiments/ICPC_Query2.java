@@ -10,10 +10,13 @@ import org.apache.spark.sql.expressions.WindowSpec;
 import traceTasks.VSMTraceBuilder;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.*;
 import static utils.DataReadUtil.*;
@@ -28,10 +31,11 @@ public class ICPC_Query2 extends VistaTraceExperiment {
     private static String code_req_link_dir = outputDir + "/" + "code_req_links";
     Dataset<Row> query_data;
     String QUERY_ID = "query_id", QUERY_CONTENT = "query_content";
-
+    String codePath;
 
     public ICPC_Query2(String codePath, String reqPath, String cchitPath, String hippaPath) throws Exception {
         super(codePath, reqPath, cchitPath, hippaPath);
+        this.codePath = codePath;
         String query = "authenticate,authen,credential,challenge,kerberos,auth,login,otp,cred,role,permission,user,access,resource,security,secure";
 
         Row query_row = RowFactory.create("1", query);
@@ -72,16 +76,21 @@ public class ICPC_Query2 extends VistaTraceExperiment {
             code.unpersist();
         }
         long end = System.currentTimeMillis();
-        select_code.select(CODE_ID).write()
-                .format("csv")
-                .option("header", "true").mode("overwrite")
-                .save(secure_code_dir + "/query_code");
+//        select_code.select(CODE_ID).write()
+//                .format("csv")
+//                .option("header", "true").mode("overwrite")
+//                .save(secure_code_dir + "/query_code");
         return time_without_io;
     }
 
     public long traceCodeReq() throws Exception {
-        Dataset selected_code = sparkSession.read().option("parserLib", "univocity")
-                .option("multiLine", "true").option("header", "true").csv(secure_code_dir + "/query_code/");
+//        Dataset selected_code = sparkSession.read().option("parserLib", "univocity")
+//                .option("multiLine", "true").option("header", "true").csv(secure_code_dir + "/query_code/");
+        Set<String> code_ids = readCodeIdFromCSV(secure_code_dir + "/query_code/");
+        List<Path> selectedCodePaths = Files.walk(Paths.get(codePath)).filter(x -> code_ids.contains(x.getFileName().toString())).collect(Collectors.toList());
+        List<Row> rows = readCode(selectedCodePaths);
+        Dataset<Row> selected_code =  createVistaDataset(CODE_ID, CODE_CONTENT, rows, sparkSession);
+
         long start = System.currentTimeMillis();
         SparkTraceTask tracer = tracerBuilder.getTask(sourceId, targetId);
         tracer.indexOn = 1;
@@ -99,10 +108,10 @@ public class ICPC_Query2 extends VistaTraceExperiment {
 
 
     public static void main(String[] args) throws Exception {
-        String codePath = "F:\\download\\VistA-M-master\\Packages";
-        String reqPath = "F:\\Download\\Vista\\Processed\\vista_requirement.csv"; // # = 1115
-        String cchitPath = "F:\\Download\\Vista\\Processed\\Processed-CCHIT-NEW-For-Poirot.xml"; //# = 462
-        String hippaPath = "F:\\Download\\Vista\\Processed\\11HIPAA_Goal_Model.xml"; // # = 10
+        String codePath = "G:\\download\\VistA-M-master\\Packages";
+        String reqPath = "G:\\Download\\Vista\\Processed\\vista_requirement.csv"; // # = 1115
+        String cchitPath = "G:\\Download\\Vista\\Processed\\Processed-CCHIT-NEW-For-Poirot.xml"; //# = 462
+        String hippaPath = "G:\\Download\\Vista\\Processed\\11HIPAA_Goal_Model.xml"; // # = 10
         ICPC_Query2 exp = new ICPC_Query2(codePath, reqPath, cchitPath, hippaPath);
         long t1 = 0, t2 = 0;
         t1 = exp.traceQueryCode();

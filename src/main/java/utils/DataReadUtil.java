@@ -6,14 +6,12 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructType;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -45,6 +43,22 @@ public class DataReadUtil {
             }
         }
         return rows;
+    }
+
+    public static Set<String> readCodeIdFromCSV(String path) throws IOException {
+        List<Path> csvPaths = Files.walk(Paths.get(path)).filter(x -> x.toString().endsWith(".csv")).collect(Collectors.toList());
+        Set<String> code_ids = new HashSet<>();
+        for (Path p : csvPaths) {
+            int cnt = 0;
+            for (String line : Files.readAllLines(p)) {
+                cnt += 1;
+                if (cnt == 1) {
+                    continue;
+                }
+                code_ids.add(line.trim());
+            }
+        }
+        return code_ids;
     }
 
     private static List<Row> readVistaDoc(String path) throws IOException {
