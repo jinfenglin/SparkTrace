@@ -34,7 +34,7 @@ public class VistaTraceExperiment extends SparkTraceJob {
     TraceTaskBuilder tracerBuilder;
 
     public VistaTraceExperiment(String codePath, String reqPath, String cchitPath, String hippaPath) throws Exception {
-        super("local[*]", "Vista");
+        super("local[4]", "Vista");
         //code = DataReadUtil.readVistaCode(codePath, sparkSession);
         codeFilePaths = Files.walk(Paths.get(codePath)).filter(Files::isRegularFile).collect(Collectors.toList());
         requirement = DataReadUtil.readVistaReq(reqPath, sparkSession).cache();
@@ -160,9 +160,9 @@ public class VistaTraceExperiment extends SparkTraceJob {
         long t1 = 0, t2 = 0, t3 = 0, t4 = 0, t5 = 0, t6 = 0;
 
 //        t1 = exp.TraceCodeHIPPA();
-//        t2 = exp.traceCodeReq(); //SC->REQ
+        t2 = exp.traceCodeReq(); //SC->REQ
 //        t3 = exp.TraceCodeCCHIT();
-        t5 = exp.TraceReqCCHIT();//REQ->CHT
+//        t5 = exp.TraceReqCCHIT();//REQ->CHT
 //        t4 = exp.TraceReqHIPPA(); //HP->REQ
 //        t6 = exp.TraceHIPPAToCCHIT(); //HP->CHT
         String info = String.format("code_hippa:%s, code_req:%s, code_cchit:%s,req_hippa:%s,req_cchit:%s, hippa_cchit:%s", t1, t2, t3, t4, t5, t6);

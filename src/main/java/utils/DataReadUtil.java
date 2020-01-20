@@ -55,7 +55,9 @@ public class DataReadUtil {
                 if (cnt == 1) {
                     continue;
                 }
-                code_ids.add(line.trim());
+                if (Double.parseDouble(line.trim().split(",")[1]) > 0.05) {
+                    code_ids.add(line.trim().split(",")[0]);
+                }
             }
         }
         return code_ids;

@@ -197,8 +197,10 @@ public class SparkTraceTask extends SGraph {
         PipelineModel ddfModel = ddfGraph.toPipeline().fit(candidateLinks);
         this.ddfModel = ddfModel;
         if (predictGraph != null) {
-            predictModel = predictGraph.toPipeline().fit(ddfModel.transform(candidateLinks));
+            candidateLinks = ddfModel.transform(candidateLinks);
+            predictModel = predictGraph.toPipeline().fit(candidateLinks);
         }
+        candidateLinks.count();
     }
 
     public Dataset<Row> trace(Dataset<?> sourceArtifacts,
