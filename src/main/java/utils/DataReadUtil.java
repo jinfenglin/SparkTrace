@@ -45,9 +45,40 @@ public class DataReadUtil {
         return rows;
     }
 
+    public static Map<String, String> readPackageMap(String sourceCodeDir) throws IOException {
+        Map<String, String> res = new HashMap<>();
+        List<Path> packages = Files.walk(Paths.get(sourceCodeDir)).filter(Files::isDirectory).collect(Collectors.toList());
+        packages.remove(0);
+        for (Path path : packages) {
+            List<Path> packageCodeFiles = Files.walk(path).filter(Files::isRegularFile).collect(Collectors.toList());
+            for (Path code : packageCodeFiles) {
+                res.put(code.getFileName().toString(), path.getFileName().toString());
+            }
+        }
+        return res;
+    }
+
+    public static List<Row> readPackageInfo(String sourceCodeDir) throws IOException {
+        List<Path> packages = Files.walk(Paths.get(sourceCodeDir)).filter(Files::isDirectory).collect(Collectors.toList());
+        packages.remove(0);
+        List<Row> rows = new ArrayList<>();
+        for (Path path : packages) {
+            List<Path> packageCodeFiles = Files.walk(path).filter(Files::isRegularFile).collect(Collectors.toList());
+            for (Path code : packageCodeFiles) {
+                rows.add(RowFactory.create(code.getFileName().toString(), path.getFileName().toString()));
+            }
+        }
+        return rows;
+    }
+
+    public static Dataset<Row> readPackage(String sourceCodeDir, SparkSession sparkSession) throws IOException {
+        List<Row> packages = readPackageInfo(sourceCodeDir);
+        return createVistaDataset("code_id_package", "package_name", packages, sparkSession);
+    }
+
     public static Set<String> readCodeIdFromCSV(String path) throws IOException {
         List<Path> csvPaths = Files.walk(Paths.get(path)).filter(x -> x.toString().endsWith(".csv")).collect(Collectors.toList());
-        Set<String> code_ids = new HashSet<>();
+        List<String> code_ids = new ArrayList<>();
         for (Path p : csvPaths) {
             int cnt = 0;
             for (String line : Files.readAllLines(p)) {
@@ -60,7 +91,7 @@ public class DataReadUtil {
                 }
             }
         }
-        return code_ids;
+        return new HashSet<>(code_ids);
     }
 
     private static List<Row> readVistaDoc(String path) throws IOException {

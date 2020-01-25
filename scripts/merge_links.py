@@ -3,8 +3,8 @@ import pandas
 
 if __name__ == "__main__":
     # data_dir = "../results/vista"
-    #data_dir = "D:\spark_res"
-    data_dir = "../results/vista_query2/security_code"
+    # data_dir = "G:\\Projects\\SparkTrace\\results\\vista_q1_final"
+    data_dir = "../results/vista_query2/"
     dirs = os.listdir(data_dir)
     cnt = 0
     code_ids = []

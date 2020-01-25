@@ -36,7 +36,7 @@ public class ICPC_Query2 extends VistaTraceExperiment {
         super(codePath, reqPath, cchitPath, hippaPath);
         this.codePath = codePath;
         //String query = "authenticate,authen,credential,challenge,kerberos,auth,login,otp,cred,role,permission,user,access,resource,security,secure";
-        String query = "authenticate,authen,credential,kerberos,auth,login,otp,cred,role,permission,user,access,security,secure";
+        String query = "authenticate,authen,credential,kerberos,login,otp,credential,permission,access,security,secure";
         Row query_row = RowFactory.create("1", query);
         query_data = createVistaDataset(REQ_ID, REQ_CONTENT, Arrays.asList(query_row), sparkSession);
         batch_size = 8000;
@@ -92,7 +92,7 @@ public class ICPC_Query2 extends VistaTraceExperiment {
             result.count();
             long trace_end = System.currentTimeMillis();
             long batch_time = trace_end - train_start;
-            Logger.getLogger("").info(String.format("code-req batch %s time = %s", i, trace_end - train_end));
+            Logger.getLogger("").info(String.format("code-req batch %s time = %s", i, trace_end - trace_start));
 
             if (select_code == null) {
                 select_code = result;
@@ -102,13 +102,13 @@ public class ICPC_Query2 extends VistaTraceExperiment {
             time_without_io += batch_time;
             code.unpersist();
         }
-//        long ws = System.currentTimeMillis();
-//        select_code.select(CODE_ID, VSM_SCORE).write()
-//                .format("csv")
-//                .option("header", "true").mode("overwrite")
-//                .save(secure_code_dir + "/query_code");
-//        long we = System.currentTimeMillis();
-//        System.out.println(String.format("write_time = %s", we - ws));
+        long ws = System.currentTimeMillis();
+        select_code.select(CODE_ID, VSM_SCORE).write()
+                .format("csv")
+                .option("header", "true").mode("overwrite")
+                .save(secure_code_dir + "/query_code");
+        long we = System.currentTimeMillis();
+        System.out.println(String.format("write_time = %s", we - ws));
         return time_without_io;
     }
 
@@ -116,6 +116,7 @@ public class ICPC_Query2 extends VistaTraceExperiment {
 //        Dataset selected_code = sparkSession.read().option("parserLib", "univocity")
 //                .option("multiLine", "true").option("header", "true").csv(secure_code_dir + "/query_code/");
         Set<String> code_ids = readCodeIdFromCSV(secure_code_dir + "/query_code/");
+        System.out.println(String.format("total code:%s", code_ids.size()));
         List<Path> selectedCodePaths = Files.walk(Paths.get(codePath)).filter(x -> code_ids.contains(x.getFileName().toString())).collect(Collectors.toList());
         List<Row> rows = readCode(selectedCodePaths);
         Dataset<Row> selected_code = createVistaDataset(CODE_ID, CODE_CONTENT, rows, sparkSession);
@@ -124,14 +125,14 @@ public class ICPC_Query2 extends VistaTraceExperiment {
         SparkTraceTask tracer = tracerBuilder.getTask(sourceId, targetId);
         Dataset<Row> result = trace(tracer, CODE_ID, CODE_CONTENT, REQ_ID, REQ_CONTENT, selected_code, requirement);
         String vsmScore = tracer.getOutputField(tracerBuilder.getOutputColName()).getFieldSymbol().getSymbolValue();
+//        result = result.filter(col(vsmScore).gt(0.05));
         WindowSpec wind = Window.partitionBy(col(CODE_ID)).orderBy(desc(vsmScore));
         result = result.filter(col(vsmScore).gt(0).and(not(col(vsmScore).isNaN()))).withColumn("rank", rank().over(wind)).where(col("rank").lt(10));
-        result.count();
         long end = System.currentTimeMillis();
-//        result.select(CODE_ID, REQ_ID, vsmScore).write()
-//                .format("csv")
-//                .option("header", "true").mode("overwrite")
-//                .save(code_req_link_dir);
+        result.select(CODE_ID, REQ_ID, vsmScore).write()
+                .format("csv")
+                .option("header", "true").mode("overwrite")
+                .save(code_req_link_dir);
         return end - start;
     }
 
@@ -143,7 +144,7 @@ public class ICPC_Query2 extends VistaTraceExperiment {
         String hippaPath = "G:\\Download\\Vista\\Processed\\11HIPAA_Goal_Model.xml"; // # = 10
         ICPC_Query2 exp = new ICPC_Query2(codePath, reqPath, cchitPath, hippaPath);
         long t1 = 0, t2 = 0;
-        t1 = exp.traceQueryCode();
+//        t1 = exp.traceQueryCode();
         t2 = exp.traceCodeReq();
         String info = String.format("query_code:%s, code_req:%s", t1, t2);
         Files.write(Paths.get(outputDir + "/time.txt"), info.getBytes());

@@ -1,4 +1,6 @@
 import os
+import time
+
 import pandas as pd
 
 
@@ -63,11 +65,12 @@ def write_pk_topic(pk_topic: dict):
 
 
 if __name__ == "__main__":
-    data_dir = "../results/vista"
+    data_dir = "../results/vista_q1_final"
     art_dir = "G:\Download\Vista\Processed"
     dirs = os.listdir(data_dir)
-    code_index, packages = build_package_index()  # key is file name ,value is the package name
 
+    start_time = time.time()
+    code_index, packages = build_package_index()  # key is file name ,value is the package name
     pk_req = {}
     pk_topic = {}
     req_index, topics, req_content = readReqTopicIndex()
@@ -98,6 +101,8 @@ if __name__ == "__main__":
                         topic = req_index[req_id]
                         pk_req[package_name][req_id] += float(score)
                         pk_topic[package_name][topic] += float(score)
+    end_time = time.time()
+    print(end_time - start_time)
     write_pk_req(pk_req, req_content)
     write_pk_topic(pk_topic)
     print("Finish")
